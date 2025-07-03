@@ -18,15 +18,28 @@ import {
 } from "@/components/ui/sheet";
 
 const topNavItems = [
-  { href: "/penjualan", label: "Penjualan" },
-  { href: "/racik/minuman", label: "Racik" },
+  { href: "/", label: "Dasbor" },
+  { href: "/order", label: "Order" },
+  { href: "/kasir", label: "Kasir" },
+  { href: "/racik/minuman", label: "Produk" },
 ];
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isLoading, appName } = useAppContext();
   
-  const settingsHref = pathname === "/pengaturan" ? "/" : "/pengaturan";
+  const settingsHref = "/pengaturan";
+
+  const isActive = (href: string, currentPath: string) => {
+    if (href === '/') {
+      return currentPath === '/';
+    }
+    // Highlight "Produk" when on any /racik/* page
+    if (href === '/racik/minuman') {
+      return currentPath.startsWith('/racik');
+    }
+    return currentPath.startsWith(href);
+  };
 
   const MobileNav = () => (
      <Sheet>
@@ -54,7 +67,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 className={cn(
                   "hover:text-foreground",
-                  pathname.startsWith(item.href) ? "text-foreground" : "text-muted-foreground"
+                  isActive(item.href, pathname) ? "text-foreground" : "text-muted-foreground"
                 )}
               >
                 {item.label}
@@ -91,7 +104,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               href={item.href}
               className={cn(
                 "transition-colors hover:text-foreground",
-                pathname.startsWith(item.href) ? "text-foreground font-semibold" : "text-muted-foreground"
+                isActive(item.href, pathname) ? "text-foreground font-semibold" : "text-muted-foreground"
               )}
             >
               {item.label}
