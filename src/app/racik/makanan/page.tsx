@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
-import type { Food, RawMaterial } from "@/lib/types";
+import type { Food } from "@/lib/types";
 import { PlusCircle, Edit, Trash2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
@@ -110,8 +110,7 @@ const PriceSuggestionCalculator = ({ costPrice }: { costPrice: number }) => {
     );
 };
 
-
-const FoodForm = ({ onFinished }: { onFinished: () => void }) => {
+const FoodForm = React.forwardRef(({ onFinished }: { onFinished: () => void }, ref) => {
     const { addFood, updateFood, rawMaterials } = useAppContext();
     const { toast } = useToast();
     const [editingFood, setEditingFood] = useState<Food | null>(null);
@@ -148,23 +147,19 @@ const FoodForm = ({ onFinished }: { onFinished: () => void }) => {
                 toast({ title: "Sukses", description: "Makanan berhasil ditambahkan." });
             }
             onFinished();
-            form.reset();
+            setEditingFood(null);
+            form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }] });
         } catch (error) {
             toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
         }
     }
     
-    // This function will be called from the parent component
-    const handleEdit = (food: Food) => {
-        setEditingFood(food);
-        form.reset(food);
-    };
-
-    // Expose handleEdit to the parent component
-    React.useImperativeHandle(React.forwardedRef(null), () => ({
-        handleEdit
+    React.useImperativeHandle(ref, () => ({
+        handleEdit: (food: Food) => {
+            setEditingFood(food);
+            form.reset(food);
+        }
     }));
-
 
     return (
          <Form {...form}>
@@ -246,7 +241,8 @@ const FoodForm = ({ onFinished }: { onFinished: () => void }) => {
             </form>
         </Form>
     );
-};
+});
+FoodForm.displayName = 'FoodForm';
 
 
 export default function MakananPage() {
@@ -271,68 +267,12 @@ export default function MakananPage() {
 
     const handleEditClick = (food: Food) => {
         setFormVisible(true);
+        // Using a timeout to ensure the form is rendered before calling the method
         setTimeout(() => {
             formRef.current?.handleEdit(food);
-        }, 100);
+        }, 10);
     }
     
-    // A bit of a hack to get a ref to the form child to call handleEdit
-    const FoodFormWithRef = React.forwardRef((props: {onFinished: () => void}, ref) => {
-        const { addFood, updateFood, rawMaterials } = useAppContext();
-        const { toast } = useToast();
-        const [editingFood, setEditingFood] = useState<Food | null>(null);
-        
-        const form = useForm<FoodFormValues>({
-            resolver: zodResolver(foodSchema),
-            defaultValues: { name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }] },
-        });
-
-        const { fields, append, remove } = useFieldArray({
-            control: form.control,
-            name: "ingredients",
-        });
-
-        const watchedIngredients = useWatch({ control: form.control, name: 'ingredients' });
-
-        const calculatedCostPrice = useMemo(() => {
-            if (!watchedIngredients || rawMaterials.length === 0) return 0;
-            return watchedIngredients.reduce((acc, item) => {
-                const material = rawMaterials.find(m => m.id === item.rawMaterialId);
-                const cost = material ? material.costPerUnit * item.quantity : 0;
-                return acc + cost;
-            }, 0);
-        }, [watchedIngredients, rawMaterials]);
-
-        async function onSubmit(values: FoodFormValues) {
-            try {
-                const foodData = { ...values, costPrice: calculatedCostPrice };
-                if (editingFood) {
-                    await updateFood(editingFood.id, foodData);
-                    toast({ title: "Sukses", description: "Makanan berhasil diperbarui." });
-                } else {
-                    await addFood(foodData);
-                    toast({ title: "Sukses", description: "Makanan berhasil ditambahkan." });
-                }
-                props.onFinished();
-                setEditingFood(null);
-                form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }] });
-            } catch (error) {
-                toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
-            }
-        }
-        
-        React.useImperativeHandle(ref, () => ({
-            handleEdit: (food: Food) => {
-                setEditingFood(food);
-                form.reset(food);
-            }
-        }));
-
-        return <FoodForm {...props} />;
-    });
-    FoodFormWithRef.displayName = "FoodFormWithRef";
-
-
     return (
         <div className="flex flex-col gap-8">
             <div className="flex justify-between items-center">
@@ -349,7 +289,7 @@ export default function MakananPage() {
                          <CardDescription>Tambah makanan baru atau pilih dari daftar di bawah untuk mengedit.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                       <FoodFormWithRef ref={formRef} onFinished={() => setFormVisible(false)} />
+                       <FoodForm ref={formRef} onFinished={() => setFormVisible(false)} />
                     </CardContent>
                 </Card>
             )}

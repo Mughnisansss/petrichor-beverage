@@ -1,24 +1,22 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
-import type { Drink, RawMaterial } from "@/lib/types";
+import type { Drink } from "@/lib/types";
 import { PlusCircle, Edit, Trash2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { addDays, isWithinInterval, parseISO, differenceInDays } from "date-fns";
+import { addDays, isWithinInterval, parseISO } from "date-fns";
 
 const ingredientSchema = z.object({
   rawMaterialId: z.string().min(1, "Pilih bahan"),
@@ -112,9 +110,8 @@ const PriceSuggestionCalculator = ({ costPrice }: { costPrice: number }) => {
     );
 };
 
-
-const DrinkForm = ({ onFinished }: { onFinished: () => void }) => {
-    const { drinks, addDrink, updateDrink, rawMaterials } = useAppContext();
+const DrinkForm = React.forwardRef(({ onFinished }: { onFinished: () => void }, ref) => {
+    const { addDrink, updateDrink, rawMaterials } = useAppContext();
     const { toast } = useToast();
     const [editingDrink, setEditingDrink] = useState<Drink | null>(null);
     
@@ -150,16 +147,19 @@ const DrinkForm = ({ onFinished }: { onFinished: () => void }) => {
                 toast({ title: "Sukses", description: "Minuman berhasil ditambahkan." });
             }
             onFinished();
-            form.reset();
+            setEditingDrink(null);
+            form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }] });
         } catch (error) {
             toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
         }
     }
 
-    const handleEdit = (drink: Drink) => {
-        setEditingDrink(drink);
-        form.reset(drink);
-    };
+    React.useImperativeHandle(ref, () => ({
+        handleEdit: (drink: Drink) => {
+            setEditingDrink(drink);
+            form.reset(drink);
+        }
+    }));
 
     return (
          <Form {...form}>
@@ -236,12 +236,13 @@ const DrinkForm = ({ onFinished }: { onFinished: () => void }) => {
                 
                 <Button type="submit">{editingDrink ? "Simpan Perubahan" : "Tambah Minuman"}</Button>
                  {editingDrink && (
-                    <Button type="button" variant="ghost" onClick={() => { setEditingDrink(null); form.reset(); }}>Batal Edit</Button>
+                    <Button type="button" variant="ghost" onClick={() => { setEditingDrink(null); form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }] }); }}>Batal Edit</Button>
                 )}
             </form>
         </Form>
     );
-};
+});
+DrinkForm.displayName = 'DrinkForm';
 
 
 export default function MinumanPage() {
@@ -266,13 +267,10 @@ export default function MinumanPage() {
 
     const handleEditClick = (drink: Drink) => {
         setFormVisible(true);
-        // A bit of a hack to call a method on the child component
-        // In a larger app, state management (like Zustand or Redux) would be better
+        // Using a timeout to ensure the form is rendered before calling the method
         setTimeout(() => {
-            if (formRef.current) {
-                formRef.current.handleEdit(drink);
-            }
-        }, 100);
+            formRef.current?.handleEdit(drink);
+        }, 10);
     }
   
     return (
@@ -291,20 +289,7 @@ export default function MinumanPage() {
                          <CardDescription>Tambah minuman baru atau pilih dari daftar di bawah untuk mengedit.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {/* A bit of a hack to get a ref to the form child to call handleEdit */}
-                        {React.createElement(React.forwardRef((props, ref) => {
-                           React.useImperativeHandle(ref, () => ({
-                            handleEdit: (drink: Drink) => {
-                                const formInstance = (formRef.current as any)?.form;
-                                if (formInstance) {
-                                    formInstance.reset(drink);
-                                     const setEditingDrink = (formRef.current as any)?.setEditingDrink;
-                                     if(setEditingDrink) setEditingDrink(drink)
-                                }
-                            }
-                           }));
-                           return <DrinkForm onFinished={() => setFormVisible(false)} ref={formRef as any} />
-                        }))}
+                       <DrinkForm ref={formRef} onFinished={() => setFormVisible(false)} />
                     </CardContent>
                 </Card>
             )}
