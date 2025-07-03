@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
 import type { RawMaterial } from "@/lib/types";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
@@ -125,7 +126,22 @@ export default function BahanBakuPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Satuan Resep</FormLabel>
-                      <FormControl><Input {...field} placeholder="cth: gram, ml, buah" /></FormControl>
+                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Pilih satuan..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="gram">gram</SelectItem>
+                          <SelectItem value="ml">ml</SelectItem>
+                          <SelectItem value="liter">liter</SelectItem>
+                          <SelectItem value="kg">kg</SelectItem>
+                          <SelectItem value="pcs">pcs</SelectItem>
+                          <SelectItem value="buah">buah</SelectItem>
+                          <SelectItem value="botol">botol</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormDescription>Satuan yang akan Anda gunakan saat membuat resep.</FormDescription>
                       <FormMessage />
                     </FormItem>
