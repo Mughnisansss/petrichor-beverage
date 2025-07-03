@@ -211,7 +211,7 @@ export default function PengaturanPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button onClick={handleSaveSettings} disabled={!hasChanges || isLoading}>
+            <Button onClick={handleSaveSettings} disabled={!hasChanges}>
               Simpan Pengaturan
             </Button>
           </CardFooter>
