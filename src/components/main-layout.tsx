@@ -31,13 +31,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const pageTitle = navItems.find(item => item.href === pathname)?.label || "Dashboard";
   const isMobile = useIsMobile();
   
-  // State for desktop sidebar
   const [isSidebarOpen, setSidebarOpen] = useState(true);
-  // State for mobile menu
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Sidebar should be open on desktop and closed on mobile by default.
     if (typeof isMobile !== 'undefined') {
       setSidebarOpen(!isMobile);
     }
