@@ -76,6 +76,18 @@ const SidebarProvider = React.forwardRef<
     const open = isControlled ? openProp : _open
     const setOpen = isControlled ? setOpenProp : _setOpen
 
+    // Set initial state from cookie on mount for uncontrolled component
+    React.useEffect(() => {
+      if (!isControlled) {
+        const cookie = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
+        if (cookie) {
+          _setOpen(cookie.split("=")[1] === "true")
+        }
+      }
+    }, [isControlled])
+
     // Effect to handle cookie side-effect for uncontrolled component
     React.useEffect(() => {
       if (!isControlled) {
