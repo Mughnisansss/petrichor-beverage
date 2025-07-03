@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readDb, writeDb } from '@/lib/db';
-import type { RawMaterial, Drink } from '@/lib/types';
+import type { RawMaterial, Drink, Food } from '@/lib/types';
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   const { id } = params;
@@ -33,6 +33,23 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       drink.costPrice = newCostPrice;
     }
   });
+  
+  // Find foods that use this material and update their costPrice
+  if (data.foods) {
+    data.foods.forEach((food: Food) => {
+        const usesMaterial = food.ingredients.some(ing => ing.rawMaterialId === id);
+        if (usesMaterial) {
+            let newCostPrice = 0;
+            food.ingredients.forEach(ing => {
+                const material = data.rawMaterials.find(m => m.id === ing.rawMaterialId);
+                if (material) {
+                    newCostPrice += material.costPerUnit * ing.quantity;
+                }
+            });
+            food.costPrice = newCostPrice;
+        }
+    });
+  }
 
   await writeDb(data);
   return NextResponse.json(updatedMaterial);
@@ -46,14 +63,18 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
      return NextResponse.json({ message: 'Raw material storage not found' }, { status: 500 });
   }
 
-  // Check if any drink uses this raw material
-  const isInUse = data.drinks.some((drink: Drink) => 
+  // Check if any drink or food uses this raw material
+  const isUsedInDrink = data.drinks.some((drink: Drink) => 
     drink.ingredients.some(ingredient => ingredient.rawMaterialId === id)
   );
 
-  if (isInUse) {
+  const isUsedInFood = data.foods && data.foods.some((food: Food) => 
+    food.ingredients.some(ingredient => ingredient.rawMaterialId === id)
+  );
+
+  if (isUsedInDrink || isUsedInFood) {
     return NextResponse.json(
-      { message: 'Bahan baku tidak dapat dihapus karena digunakan dalam resep minuman.' },
+      { message: 'Bahan baku tidak dapat dihapus karena masih digunakan dalam resep.' },
       { status: 400 }
     );
   }
@@ -66,5 +87,5 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   }
   
   await writeDb(data);
-  return NextResponse.json({ message: 'Raw material deleted' }, { status: 200 });
+  return NextResponse.json({ message: 'Bahan baku berhasil dihapus' }, { status: 200 });
 }
