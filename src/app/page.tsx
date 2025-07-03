@@ -1,38 +1,80 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { addDays, isWithinInterval, parseISO } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  isWithinInterval,
+  parseISO,
+  startOfToday,
+  endOfToday,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  subDays,
+} from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { MainLayout } from "@/components/main-layout";
 
 export default function DashboardPage() {
   const { sales, drinks, operationalCosts } = useAppContext();
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: addDays(new Date(), -30),
-    to: new Date(),
-  });
+  const [filter, setFilter] = useState<string>("last_30_days");
+  const [date, setDate] = useState<DateRange | undefined>(undefined);
 
-  const filterByDate = (items: Array<{ date: string }>) => {
-     if (!date?.from || !date?.to) return items;
-     const endOfDay = new Date(date.to);
-     endOfDay.setHours(23, 59, 59, 999);
-     return items.filter(item => {
-        const itemDate = parseISO(item.date);
-        return isWithinInterval(itemDate, { start: date!.from!, end: endOfDay });
-     });
-  };
+  useEffect(() => {
+    const now = new Date();
+    let from: Date;
+    let to: Date = endOfToday();
 
-  const filteredSales = useMemo(() => filterByDate(sales), [sales, date]);
-  const filteredOperationalCosts = useMemo(() => filterByDate(operationalCosts), [operationalCosts, date]);
+    switch (filter) {
+      case "today":
+        from = startOfToday();
+        to = endOfToday();
+        break;
+      case "this_week":
+        from = startOfWeek(now, { weekStartsOn: 1 }); // Monday start
+        to = endOfWeek(now, { weekStartsOn: 1 });
+        break;
+      case "this_month":
+        from = startOfMonth(now);
+        to = endOfMonth(now);
+        break;
+      case "last_7_days":
+        from = subDays(startOfToday(), 6);
+        to = endOfToday();
+        break;
+      case "last_30_days":
+      default:
+        from = subDays(startOfToday(), 29);
+        to = endOfToday();
+        break;
+    }
+    setDate({ from, to });
+  }, [filter]);
+
+  const filterByDate = useCallback((items: Array<{ date: string }>) => {
+    if (!date?.from || !date?.to) {
+      return []; // Return empty array while date range is being calculated
+    }
+    return items.filter(item => {
+      const itemDate = parseISO(item.date);
+      return isWithinInterval(itemDate, { start: date.from!, end: date.to! });
+    });
+  }, [date]);
+
+  const filteredSales = useMemo(() => filterByDate(sales), [sales, filterByDate]);
+  const filteredOperationalCosts = useMemo(() => filterByDate(operationalCosts), [operationalCosts, filterByDate]);
 
   const { totalRevenue, totalCost, totalOperationalCost, netProfit, bestSellingDrink } = useMemo(() => {
     let revenue = 0;
@@ -75,44 +117,18 @@ export default function DashboardPage() {
             <CardTitle>Filter Laporan</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="date"
-                    variant={"outline"}
-                    className={cn(
-                      "w-[300px] justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date?.from ? (
-                      date.to ? (
-                        <>
-                          {formatDate(date.from.toISOString(), "LLL dd, y")} -{" "}
-                          {formatDate(date.to.toISOString(), "LLL dd, y")}
-                        </>
-                      ) : (
-                        formatDate(date.from.toISOString(), "LLL dd, y")
-                      )
-                    ) : (
-                      <span>Pilih tanggal</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={date?.from}
-                    selected={date}
-                    onSelect={setDate}
-                    numberOfMonths={2}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+            <Select value={filter} onValueChange={setFilter}>
+                <SelectTrigger className="w-full md:w-[280px]">
+                  <SelectValue placeholder="Pilih periode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">Hari Ini</SelectItem>
+                  <SelectItem value="this_week">Minggu Ini</SelectItem>
+                  <SelectItem value="this_month">Bulan Ini</SelectItem>
+                  <SelectItem value="last_7_days">7 Hari Terakhir</SelectItem>
+                  <SelectItem value="last_30_days">30 Hari Terakhir</SelectItem>
+                </SelectContent>
+            </Select>
           </CardContent>
         </Card>
 
