@@ -41,8 +41,6 @@ export default function RacikLayout({ children }: RacikLayoutProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                passHref
-                legacyBehavior
               >
                 <Button
                   variant="ghost"
