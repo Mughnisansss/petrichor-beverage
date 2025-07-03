@@ -32,3 +32,10 @@ export interface OperationalCost {
   amount: number;
   date: string;
 }
+
+export interface DbData {
+  drinks: Drink[];
+  sales: Sale[];
+  operationalCosts: OperationalCost[];
+  rawMaterials: RawMaterial[];
+}

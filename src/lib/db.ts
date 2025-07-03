@@ -1,12 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import type { Drink, Sale, OperationalCost } from './types';
-
-interface DbData {
-  drinks: Drink[];
-  sales: Sale[];
-  operationalCosts: OperationalCost[];
-}
+import type { DbData } from './types';
 
 const dbPath = path.join(process.cwd(), 'db.json');
 
@@ -16,7 +10,7 @@ export async function readDb(): Promise<DbData> {
     return JSON.parse(data);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      const defaultData: DbData = { drinks: [], sales: [], operationalCosts: [] };
+      const defaultData: DbData = { drinks: [], sales: [], operationalCosts: [], rawMaterials: [] };
       await writeDb(defaultData);
       return defaultData;
     }

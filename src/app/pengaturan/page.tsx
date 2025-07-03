@@ -6,10 +6,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/context/AppContext";
+import type { Sale, Drink, RawMaterial, OperationalCost } from "@/lib/types";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function PengaturanPage() {
   const { toast } = useToast();
-  const { drinks, sales, rawMaterials, operationalCosts, isLoading } = useAppContext();
+  const { 
+    drinks, 
+    sales, 
+    rawMaterials, 
+    operationalCosts, 
+    isLoading,
+    storageMode,
+    setStorageMode
+  } = useAppContext();
 
   const downloadFile = (content: string, filename: string, contentType: string) => {
     const blob = new Blob([content], { type: contentType });
@@ -52,10 +63,9 @@ export default function PengaturanPage() {
             if (cell === null || cell === undefined) {
                 cell = '';
             } else if (typeof cell === 'object') {
-                // Flatten nested objects/arrays for CSV
                 cell = JSON.stringify(cell);
             }
-            const cellString = String(cell).replace(/"/g, '""'); // Escape double quotes
+            const cellString = String(cell).replace(/"/g, '""');
             return `"${cellString}"`;
         });
         csvRows.push(values.join(','));
@@ -117,11 +127,41 @@ export default function PengaturanPage() {
               Kelola pengaturan umum dan data aplikasi Anda.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Mode Penyimpanan Data</h3>
+              <p className="text-sm text-muted-foreground">
+                Pilih di mana data aplikasi Anda disimpan. Perubahan akan memuat ulang data dari sumber yang dipilih.
+              </p>
+               <RadioGroup 
+                value={storageMode} 
+                onValueChange={(value) => setStorageMode(value as "local" | "server")}
+                className="space-y-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="local" id="local" />
+                  <Label htmlFor="local">Penyimpanan Browser (Lokal)</Label>
+                </div>
+                <p className="text-xs text-muted-foreground pl-6">Data disimpan hanya di browser ini. Cocok untuk penggunaan pribadi dan offline.</p>
+                
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="server" id="server" />
+                  <Label htmlFor="server">Penyimpanan Server (db.json)</Label>
+                </div>
+                 <p className="text-xs text-muted-foreground pl-6">Mode pengembangan. Data disimpan di server. Tidak untuk produksi.</p>
+
+                <div className="flex items-center space-x-2 opacity-50">
+                  <RadioGroupItem value="cloud" id="cloud" disabled />
+                  <Label htmlFor="cloud">Database Cloud (Dalam Pengembangan)</Label>
+                </div>
+                 <p className="text-xs text-muted-foreground pl-6">Sinkronkan data di berbagai perangkat. Fitur mendatang.</p>
+              </RadioGroup>
+            </div>
+            
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Ekspor Data</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Unduh semua data aplikasi dalam format JSON (untuk cadangan penuh) atau CSV (untuk diolah di spreadsheet).
+                Unduh data Anda saat ini dalam format JSON (untuk cadangan penuh) atau CSV (untuk diolah di spreadsheet).
               </p>
               
               <div className="p-4 border rounded-lg space-y-2">
@@ -142,13 +182,6 @@ export default function PengaturanPage() {
                   <Button onClick={() => exportDataAsCsv(operationalCosts, 'biaya_operasional.csv')} variant="outline" disabled={isLoading}>Biaya Operasional</Button>
                 </div>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">Mode Penyimpanan</h3>
-              <p className="text-sm text-muted-foreground">
-                Aplikasi ini saat ini menyimpan data di server dalam file `db.json`. Opsi untuk beralih ke Local Storage atau Database Cloud sedang dalam pengembangan.
-              </p>
             </div>
           </CardContent>
         </Card>
