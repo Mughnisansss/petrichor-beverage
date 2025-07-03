@@ -14,7 +14,7 @@ export default function DashboardPage() {
 
   const todaySales = useMemo(() => sales.filter(sale => isToday(parseISO(sale.date))), [sales]);
 
-  const { totalRevenue, totalCost, netProfit } = useMemo(() => {
+  const { totalRevenue, totalCost, grossProfit } = useMemo(() => {
     let revenue = 0;
     let cost = 0;
     
@@ -26,7 +26,7 @@ export default function DashboardPage() {
       }
     });
 
-    return { totalRevenue: revenue, totalCost: cost, netProfit: revenue - cost };
+    return { totalRevenue: revenue, totalCost: cost, grossProfit: revenue - cost };
   }, [todaySales, drinks]);
 
 
@@ -51,7 +51,7 @@ export default function DashboardPage() {
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader>
-              <CardTitle>Total Pendapatan (Hari Ini)</CardTitle>
+              <CardTitle>Pendapatan (Hari Ini)</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold">{formatCurrency(totalRevenue)}</p>
@@ -59,7 +59,7 @@ export default function DashboardPage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Total Biaya (Hari Ini)</CardTitle>
+              <CardTitle>HPP (Hari Ini)</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold">{formatCurrency(totalCost)}</p>
@@ -67,10 +67,10 @@ export default function DashboardPage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Laba Bersih (Hari Ini)</CardTitle>
+              <CardTitle>Laba Kotor (Hari Ini)</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-primary">{formatCurrency(netProfit)}</p>
+              <p className="text-3xl font-bold text-primary">{formatCurrency(grossProfit)}</p>
             </CardContent>
           </Card>
         </div>
@@ -84,10 +84,13 @@ export default function DashboardPage() {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `${value} cups`} />
-                  <Bar dataKey="quantity" fill="hsl(var(--primary))" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis tickFormatter={(value) => `${value}`} />
+                  <Tooltip
+                    formatter={(value, name) => [`${value} gelas`, "Jumlah Terjual"]}
+                    cursor={{ fill: 'hsl(var(--muted))' }}
+                  />
+                  <Bar dataKey="quantity" name="Jumlah Terjual" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -106,17 +109,25 @@ export default function DashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {todaySales.slice(0, 5).map(sale => {
-                    const drink = drinks.find(d => d.id === sale.drinkId);
-                    const total = (drink?.sellingPrice || 0) * sale.quantity * (1 - sale.discount / 100);
-                    return (
-                      <TableRow key={sale.id}>
-                        <TableCell>{drink?.name || 'N/A'}</TableCell>
-                        <TableCell>{sale.quantity}</TableCell>
-                        <TableCell>{formatCurrency(total)}</TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {todaySales.length > 0 ? (
+                    todaySales.slice(0, 5).map(sale => {
+                      const drink = drinks.find(d => d.id === sale.drinkId);
+                      const total = (drink?.sellingPrice || 0) * sale.quantity * (1 - sale.discount / 100);
+                      return (
+                        <TableRow key={sale.id}>
+                          <TableCell className="font-medium">{drink?.name || 'N/A'}</TableCell>
+                          <TableCell>{sale.quantity}</TableCell>
+                          <TableCell>{formatCurrency(total)}</TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center">
+                        Belum ada transaksi hari ini.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

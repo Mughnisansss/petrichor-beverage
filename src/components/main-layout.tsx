@@ -13,7 +13,7 @@ import {
   SidebarInset,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { CupSoda, DollarSign, LayoutDashboard, LineChart, ClipboardList } from "lucide-react";
+import { CupSoda, DollarSign, LayoutDashboard, LineChart, ClipboardList, Lightbulb } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -23,12 +23,13 @@ const navItems = [
   { href: "/minuman", label: "Minuman", icon: CupSoda },
   { href: "/penjualan", label: "Penjualan", icon: DollarSign },
   { href: "/operasional", label: "Biaya Operasional", icon: ClipboardList },
+  { href: "/saran-harga", label: "Saran Harga", icon: Lightbulb },
   { href: "/laporan", label: "Laporan", icon: LineChart },
 ];
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const pageTitle = navItems.find(item => item.href === pathname)?.label || "Dashboard";
+  const pageTitle = navItems.find(item => pathname.startsWith(item.href))?.label || "Dashboard";
   const isMobile = useIsMobile();
   
   const [isSidebarOpen, setSidebarOpen] = useState(true);

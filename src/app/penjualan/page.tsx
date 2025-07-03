@@ -64,9 +64,13 @@ export default function PenjualanPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {drinks.map(drink => (
-                              <SelectItem key={drink.id} value={drink.id}>{drink.name}</SelectItem>
-                            ))}
+                            {drinks.length > 0 ? (
+                              drinks.map(drink => (
+                                <SelectItem key={drink.id} value={drink.id}>{drink.name}</SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="-" disabled>Belum ada data minuman</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -95,7 +99,7 @@ export default function PenjualanPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full">Catat Penjualan</Button>
+                  <Button type="submit" className="w-full" disabled={drinks.length === 0}>Catat Penjualan</Button>
                 </form>
               </Form>
             </CardContent>
@@ -103,32 +107,40 @@ export default function PenjualanPage() {
         </div>
         <div className="lg:col-span-2">
           <Card>
-            <CardHeader><CardTitle>Riwayat Penjualan</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Riwayat Penjualan (Terbaru)</CardTitle></CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Tanggal</TableHead>
+                    <TableHead>Waktu</TableHead>
                     <TableHead>Minuman</TableHead>
-                    <TableHead>Jumlah</TableHead>
+                    <TableHead>Jml</TableHead>
                     <TableHead>Diskon</TableHead>
                     <TableHead>Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sales.map(sale => {
-                    const drink = drinks.find(d => d.id === sale.drinkId);
-                    const total = drink ? drink.sellingPrice * sale.quantity * (1 - sale.discount / 100) : 0;
-                    return (
-                      <TableRow key={sale.id}>
-                        <TableCell>{formatDate(sale.date, "dd MMM yyyy, HH:mm")}</TableCell>
-                        <TableCell>{drink?.name || 'N/A'}</TableCell>
-                        <TableCell>{sale.quantity}</TableCell>
-                        <TableCell>{sale.discount}%</TableCell>
-                        <TableCell>{formatCurrency(total)}</TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {sales.length > 0 ? (
+                    sales.map(sale => {
+                      const drink = drinks.find(d => d.id === sale.drinkId);
+                      const total = drink ? drink.sellingPrice * sale.quantity * (1 - sale.discount / 100) : 0;
+                      return (
+                        <TableRow key={sale.id}>
+                          <TableCell>{formatDate(sale.date, "dd MMM, HH:mm")}</TableCell>
+                          <TableCell className="font-medium">{drink?.name || 'N/A'}</TableCell>
+                          <TableCell>{sale.quantity}</TableCell>
+                          <TableCell>{sale.discount}%</TableCell>
+                          <TableCell>{formatCurrency(total)}</TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-24 text-center">
+                        Belum ada riwayat penjualan.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

@@ -37,7 +37,7 @@ export default function MinumanPage() {
 
   function onSubmit(values: z.infer<typeof drinkSchema>) {
     if (editingDrink) {
-      setDrinks(drinks.map(d => d.id === editingDrink.id ? { ...d, ...values } : d));
+      setDrinks(drinks.map(d => d.id === editingDrink.id ? { ...values, id: editingDrink.id } : d));
       toast({ title: "Sukses", description: "Minuman berhasil diperbarui." });
     } else {
       setDrinks([...drinks, { ...values, id: new Date().toISOString() }]);
@@ -68,8 +68,9 @@ export default function MinumanPage() {
   return (
     <MainLayout>
       <div className="flex flex-col gap-8">
-        <div className="flex justify-end">
-           <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-semibold">Manajemen Minuman</h1>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
              setDialogOpen(open);
              if (!open) {
                 form.reset();
@@ -91,7 +92,7 @@ export default function MinumanPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Nama Minuman</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
+                        <FormControl><Input {...field} placeholder="cth: Es Kopi Susu" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -102,7 +103,7 @@ export default function MinumanPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Harga Pokok</FormLabel>
-                        <FormControl><Input type="number" {...field} /></FormControl>
+                        <FormControl><Input type="number" {...field} placeholder="cth: 4000" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -113,7 +114,7 @@ export default function MinumanPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Harga Jual</FormLabel>
-                        <FormControl><Input type="number" {...field} /></FormControl>
+                        <FormControl><Input type="number" {...field} placeholder="cth: 18000" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -135,25 +136,33 @@ export default function MinumanPage() {
                   <TableHead>Nama Minuman</TableHead>
                   <TableHead>Harga Pokok</TableHead>
                   <TableHead>Harga Jual</TableHead>
-                  <TableHead>Aksi</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {drinks.map(drink => (
-                  <TableRow key={drink.id}>
-                    <TableCell>{drink.name}</TableCell>
-                    <TableCell>{formatCurrency(drink.costPrice)}</TableCell>
-                    <TableCell>{formatCurrency(drink.sellingPrice)}</TableCell>
-                    <TableCell className="flex gap-2">
-                      <Button variant="outline" size="icon" onClick={() => handleEdit(drink)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="destructive" size="icon" onClick={() => handleDelete(drink.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                {drinks.length > 0 ? (
+                  drinks.map(drink => (
+                    <TableRow key={drink.id}>
+                      <TableCell className="font-medium">{drink.name}</TableCell>
+                      <TableCell>{formatCurrency(drink.costPrice)}</TableCell>
+                      <TableCell>{formatCurrency(drink.sellingPrice)}</TableCell>
+                      <TableCell className="flex gap-2 justify-end">
+                        <Button variant="outline" size="icon" onClick={() => handleEdit(drink)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="destructive" size="icon" onClick={() => handleDelete(drink.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                      Belum ada data minuman.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>

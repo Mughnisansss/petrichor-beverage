@@ -38,7 +38,7 @@ export default function OperasionalPage() {
     const newCost: OperationalCost = {
       ...values,
       id: editingCost ? editingCost.id : new Date().toISOString(),
-      date: new Date().toISOString(),
+      date: editingCost ? editingCost.date : new Date().toISOString(),
     };
     
     if (editingCost) {
@@ -73,7 +73,8 @@ export default function OperasionalPage() {
   return (
     <MainLayout>
       <div className="flex flex-col gap-8">
-        <div className="flex justify-end">
+        <div className="flex justify-between items-center">
+           <h1 className="text-2xl font-semibold">Manajemen Biaya Operasional</h1>
            <Dialog open={isDialogOpen} onOpenChange={(open) => {
              setDialogOpen(open);
              if (!open) {
@@ -96,7 +97,7 @@ export default function OperasionalPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Deskripsi Biaya</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
+                        <FormControl><Input {...field} placeholder="cth: Gaji Karyawan" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -107,7 +108,7 @@ export default function OperasionalPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Jumlah (Rp)</FormLabel>
-                        <FormControl><Input type="number" {...field} /></FormControl>
+                        <FormControl><Input type="number" {...field} placeholder="cth: 1500000" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -129,25 +130,33 @@ export default function OperasionalPage() {
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Deskripsi</TableHead>
                   <TableHead>Jumlah</TableHead>
-                  <TableHead>Aksi</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {operationalCosts.map(cost => (
-                  <TableRow key={cost.id}>
-                    <TableCell>{formatDate(cost.date, "dd MMM yyyy")}</TableCell>
-                    <TableCell>{cost.description}</TableCell>
-                    <TableCell>{formatCurrency(cost.amount)}</TableCell>
-                    <TableCell className="flex gap-2">
-                      <Button variant="outline" size="icon" onClick={() => handleEdit(cost)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="destructive" size="icon" onClick={() => handleDelete(cost.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                {operationalCosts.length > 0 ? (
+                  operationalCosts.map(cost => (
+                    <TableRow key={cost.id}>
+                      <TableCell>{formatDate(cost.date, "dd MMM yyyy")}</TableCell>
+                      <TableCell className="font-medium">{cost.description}</TableCell>
+                      <TableCell>{formatCurrency(cost.amount)}</TableCell>
+                      <TableCell className="flex gap-2 justify-end">
+                        <Button variant="outline" size="icon" onClick={() => handleEdit(cost)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="destructive" size="icon" onClick={() => handleDelete(cost.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                      Belum ada biaya operasional.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>

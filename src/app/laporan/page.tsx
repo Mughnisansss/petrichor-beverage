@@ -23,9 +23,11 @@ export default function LaporanPage() {
 
   const filterByDate = (items: Array<{ date: string }>) => {
      if (!date?.from || !date?.to) return items;
+     const endOfDay = new Date(date.to);
+     endOfDay.setHours(23, 59, 59, 999);
      return items.filter(item => {
         const itemDate = parseISO(item.date);
-        return isWithinInterval(itemDate, { start: date!.from!, end: date!.to! });
+        return isWithinInterval(itemDate, { start: date!.from!, end: endOfDay });
      });
   };
 
@@ -109,7 +111,7 @@ export default function LaporanPage() {
             <CardContent><p className="text-2xl font-bold">{formatCurrency(totalRevenue)}</p></CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Total Biaya Pokok</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Total HPP</CardTitle></CardHeader>
             <CardContent><p className="text-2xl font-bold">{formatCurrency(totalCost)}</p></CardContent>
           </Card>
           <Card>
@@ -121,70 +123,76 @@ export default function LaporanPage() {
             <CardContent><p className="text-2xl font-bold text-primary">{formatCurrency(netProfit)}</p></CardContent>
           </Card>
         </div>
-
-        <div className="grid gap-4 lg:grid-cols-1">
-          <Card>
-            <CardHeader><CardTitle>Detail Transaksi Penjualan</CardTitle></CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Minuman</TableHead>
-                    <TableHead>Jml</TableHead>
-                    <TableHead>Diskon</TableHead>
-                    <TableHead>Harga Pokok</TableHead>
-                    <TableHead>Pendapatan</TableHead>
-                    <TableHead>Laba</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredSales.map(sale => {
-                     const drink = drinks.find(d => d.id === sale.drinkId);
-                     const revenue = drink ? drink.sellingPrice * sale.quantity * (1 - sale.discount / 100) : 0;
-                     const cost = drink ? drink.costPrice * sale.quantity : 0;
-                     const profit = revenue - cost;
-                     return (
-                      <TableRow key={sale.id}>
-                        <TableCell>{formatDate(sale.date, "dd MMM yyyy")}</TableCell>
-                        <TableCell>{drink?.name || 'N/A'}</TableCell>
-                        <TableCell>{sale.quantity}</TableCell>
-                        <TableCell>{sale.discount}%</TableCell>
-                        <TableCell>{formatCurrency(cost)}</TableCell>
-                        <TableCell>{formatCurrency(revenue)}</TableCell>
-                        <TableCell>{formatCurrency(profit)}</TableCell>
+        
+        <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader><CardTitle>Detail Penjualan</CardTitle></CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Minuman</TableHead>
+                      <TableHead>Jml</TableHead>
+                      <TableHead className="text-right">Pendapatan</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredSales.length > 0 ? (
+                      filteredSales.map(sale => {
+                         const drink = drinks.find(d => d.id === sale.drinkId);
+                         const revenue = drink ? drink.sellingPrice * sale.quantity * (1 - sale.discount / 100) : 0;
+                         return (
+                          <TableRow key={sale.id}>
+                            <TableCell>{formatDate(sale.date, "dd MMM yyyy")}</TableCell>
+                            <TableCell className="font-medium">{drink?.name || 'N/A'}</TableCell>
+                            <TableCell>{sale.quantity}</TableCell>
+                            <TableCell className="text-right">{formatCurrency(revenue)}</TableCell>
+                          </TableRow>
+                         );
+                      })
+                    ) : (
+                      <TableRow>
+                          <TableCell colSpan={4} className="h-24 text-center">
+                              Belum ada data penjualan pada rentang ini.
+                          </TableCell>
                       </TableRow>
-                     );
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-1">
-          <Card>
-            <CardHeader><CardTitle>Detail Biaya Operasional</CardTitle></CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Deskripsi</TableHead>
-                    <TableHead>Jumlah</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredOperationalCosts.map(cost => (
-                      <TableRow key={cost.id}>
-                        <TableCell>{formatDate(cost.date, "dd MMM yyyy")}</TableCell>
-                        <TableCell>{cost.description}</TableCell>
-                        <TableCell>{formatCurrency(cost.amount)}</TableCell>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Detail Biaya Operasional</CardTitle></CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Deskripsi</TableHead>
+                      <TableHead className="text-right">Jumlah</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredOperationalCosts.length > 0 ? (
+                      filteredOperationalCosts.map(cost => (
+                        <TableRow key={cost.id}>
+                          <TableCell>{formatDate(cost.date, "dd MMM yyyy")}</TableCell>
+                          <TableCell className="font-medium">{cost.description}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(cost.amount)}</TableCell>
+                        </TableRow>
+                       ))
+                    ) : (
+                      <TableRow>
+                          <TableCell colSpan={3} className="h-24 text-center">
+                              Belum ada biaya operasional pada rentang ini.
+                          </TableCell>
                       </TableRow>
-                     ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
         </div>
       </div>
     </MainLayout>
