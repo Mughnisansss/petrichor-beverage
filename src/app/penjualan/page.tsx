@@ -11,9 +11,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useLocalStorage } from "@/hooks/use-local-storage";
-import type { Drink, Sale } from "@/lib/types";
+import { useAppContext } from "@/context/AppContext";
+import type { Sale } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 
 const saleSchema = z.object({
@@ -22,17 +23,8 @@ const saleSchema = z.object({
   discount: z.coerce.number().min(0, "Diskon tidak boleh negatif").max(100, "Diskon maksimal 100%").default(0),
 });
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(value);
-};
-
 export default function PenjualanPage() {
-  const [sales, setSales] = useLocalStorage<Sale[]>("sales", []);
-  const [drinks] = useLocalStorage<Drink[]>("drinks", []);
+  const { sales, setSales, drinks } = useAppContext();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof saleSchema>>({

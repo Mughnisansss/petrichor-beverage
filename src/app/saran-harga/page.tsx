@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,52 +9,73 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { SuggestOptimalPricingOutput } from "@/ai/flows/suggest-optimal-pricing";
 import { getPricingSuggestion } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 import { Lightbulb, Loader2 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+import { useAppContext } from "@/context/AppContext";
 
 const pricingSchema = z.object({
-  drinkName: z.string().min(1, "Nama minuman harus diisi."),
+  drinkName: z.string().min(1, "Nama minuman harus dipilih."),
   salesData: z.string().min(1, "Data penjualan harus diisi."),
   ingredientCosts: z.string().min(1, "Biaya bahan harus diisi."),
   competitorPrices: z.string().min(1, "Harga kompetitor harus diisi."),
 });
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(value);
-};
-
 export default function SaranHargaPage() {
   const [isPending, startTransition] = useTransition();
   const [suggestion, setSuggestion] = useState<SuggestOptimalPricingOutput | null>(null);
   const { toast } = useToast();
+  const { drinks, sales } = useAppContext();
+  const [selectedDrinkId, setSelectedDrinkId] = useState<string>('');
 
   const form = useForm<z.infer<typeof pricingSchema>>({
     resolver: zodResolver(pricingSchema),
     defaultValues: {
       drinkName: "",
-      salesData: "Contoh: 50 cup terjual dalam seminggu dengan harga Rp 15,000.",
-      ingredientCosts: "Contoh: Total biaya bahan per cup Rp 7,000.",
-      competitorPrices: "Contoh: Kompetitor A menjual Rp 14,000, Kompetitor B menjual Rp 16,000.",
+      salesData: "",
+      ingredientCosts: "",
+      competitorPrices: "Contoh: Kompetitor A menjual Rp 14.000, Kompetitor B menjual Rp 16.000.",
     },
   });
+
+  useEffect(() => {
+    if (selectedDrinkId) {
+      const drink = drinks.find(d => d.id === selectedDrinkId);
+      if (drink) {
+        form.setValue("drinkName", drink.name);
+        form.setValue("ingredientCosts", `Harga pokok per porsi: ${formatCurrency(drink.costPrice)}`);
+
+        const drinkSales = sales.filter(s => s.drinkId === drink.id);
+        const totalQuantity = drinkSales.reduce((acc, s) => acc + s.quantity, 0);
+        const salesSummary = totalQuantity > 0 
+          ? `Terjual ${totalQuantity} cup. Harga jual saat ini ${formatCurrency(drink.sellingPrice)}.`
+          : `Belum ada data penjualan untuk minuman ini. Harga jual saat ini ${formatCurrency(drink.sellingPrice)}.`;
+        form.setValue("salesData", salesSummary);
+      }
+    } else {
+        form.reset({
+            drinkName: "",
+            salesData: "",
+            ingredientCosts: "",
+            competitorPrices: "Contoh: Kompetitor A menjual Rp 14.000, Kompetitor B menjual Rp 16.000.",
+        });
+    }
+  }, [selectedDrinkId, drinks, sales, form]);
 
   function onSubmit(values: z.infer<typeof pricingSchema>) {
     startTransition(async () => {
       const result = await getPricingSuggestion(values);
-      if (result.success) {
+      if (result.success && result.data) {
         setSuggestion(result.data);
         toast({ title: "Saran Harga Diterima!", description: "AI telah memberikan saran harga optimal." });
       } else {
         toast({
           title: "Terjadi Kesalahan",
-          description: result.error,
+          description: result.error || "Gagal mendapatkan saran harga.",
           variant: "destructive",
         });
       }
@@ -70,27 +91,32 @@ export default function SaranHargaPage() {
               <CardHeader>
                 <CardTitle>Saran Harga Cerdas</CardTitle>
                 <CardDescription>
-                  Dapatkan rekomendasi harga optimal dari AI untuk memaksimalkan keuntungan Anda.
+                  Pilih minuman untuk mendapatkan rekomendasi harga optimal dari AI.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="drinkName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nama Minuman</FormLabel>
-                      <FormControl><Input {...field} placeholder="Cth: Es Kopi Susu" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                 <FormItem>
+                   <FormLabel>Pilih Minuman</FormLabel>
+                    <Select onValueChange={setSelectedDrinkId} value={selectedDrinkId}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih minuman untuk dianalisis..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {drinks.map(drink => (
+                          <SelectItem key={drink.id} value={drink.id}>{drink.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                 </FormItem>
+
                 <FormField
                   control={form.control}
                   name="salesData"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Data Penjualan</FormLabel>
+                      <FormLabel>Data Penjualan (Otomatis)</FormLabel>
                       <FormControl><Textarea {...field} rows={3} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -101,8 +127,8 @@ export default function SaranHargaPage() {
                   name="ingredientCosts"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Biaya Bahan per Porsi</FormLabel>
-                      <FormControl><Textarea {...field} rows={3} /></FormControl>
+                      <FormLabel>Biaya Bahan (Otomatis)</FormLabel>
+                      <FormControl><Textarea {...field} rows={2} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -120,7 +146,7 @@ export default function SaranHargaPage() {
                 />
               </CardContent>
               <CardFooter>
-                <Button type="submit" disabled={isPending}>
+                <Button type="submit" disabled={isPending || !selectedDrinkId}>
                   {isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
@@ -140,7 +166,7 @@ export default function SaranHargaPage() {
             <Card className="w-full bg-accent">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Lightbulb/> Rekomendasi Harga
+                  <Lightbulb/> Rekomendasi untuk {form.getValues("drinkName")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -161,7 +187,7 @@ export default function SaranHargaPage() {
           {!isPending && !suggestion && (
             <div className="text-center text-muted-foreground">
               <Lightbulb className="mx-auto h-12 w-12" />
-              <p className="mt-4">Hasil saran harga akan muncul di sini.</p>
+              <p className="mt-4">{selectedDrinkId ? "Hasil saran harga akan muncul di sini." : "Pilih minuman untuk memulai."}</p>
             </div>
           )}
         </div>

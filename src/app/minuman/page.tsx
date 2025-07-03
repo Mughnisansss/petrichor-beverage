@@ -8,13 +8,14 @@ import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useAppContext } from "@/context/AppContext";
 import type { Drink } from "@/lib/types";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/lib/utils";
 
 const drinkSchema = z.object({
   id: z.string().optional(),
@@ -23,16 +24,8 @@ const drinkSchema = z.object({
   sellingPrice: z.coerce.number().min(0, "Harga jual tidak boleh negatif"),
 });
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(value);
-};
-
 export default function MinumanPage() {
-  const [drinks, setDrinks] = useLocalStorage<Drink[]>("drinks", []);
+  const { drinks, setDrinks } = useAppContext();
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingDrink, setEditingDrink] = useState<Drink | null>(null);
   const { toast } = useToast();
@@ -79,8 +72,8 @@ export default function MinumanPage() {
            <Dialog open={isDialogOpen} onOpenChange={(open) => {
              setDialogOpen(open);
              if (!open) {
+                form.reset();
                 setEditingDrink(null);
-                form.reset({ name: "", costPrice: 0, sellingPrice: 0 });
              }
            }}>
             <Button onClick={handleAddNew}>

@@ -1,51 +1,49 @@
 "use client";
 
+import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { MainLayout } from "@/components/main-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useLocalStorage } from "@/hooks/use-local-storage";
-import type { Drink, Sale } from "@/lib/types";
-import { format, isToday, parseISO } from "date-fns";
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(value);
-};
+import { useAppContext } from "@/context/AppContext";
+import { formatCurrency } from "@/lib/utils";
+import { isToday, parseISO } from "date-fns";
 
 export default function DashboardPage() {
-  const [sales] = useLocalStorage<Sale[]>("sales", []);
-  const [drinks] = useLocalStorage<Drink[]>("drinks", []);
+  const { sales, drinks } = useAppContext();
 
-  const todaySales = sales.filter(sale => isToday(parseISO(sale.date)));
+  const todaySales = useMemo(() => sales.filter(sale => isToday(parseISO(sale.date))), [sales]);
 
-  const totalRevenue = todaySales.reduce((sum, sale) => {
-    const drink = drinks.find(d => d.id === sale.drinkId);
-    return sum + (drink?.sellingPrice || 0) * sale.quantity * (1 - sale.discount / 100);
-  }, 0);
+  const { totalRevenue, totalCost, netProfit } = useMemo(() => {
+    let revenue = 0;
+    let cost = 0;
+    
+    todaySales.forEach(sale => {
+      const drink = drinks.find(d => d.id === sale.drinkId);
+      if (drink) {
+        revenue += drink.sellingPrice * sale.quantity * (1 - sale.discount / 100);
+        cost += drink.costPrice * sale.quantity;
+      }
+    });
 
-  const totalCost = todaySales.reduce((sum, sale) => {
-    const drink = drinks.find(d => d.id === sale.drinkId);
-    return sum + (drink?.costPrice || 0) * sale.quantity;
-  }, 0);
+    return { totalRevenue: revenue, totalCost: cost, netProfit: revenue - cost };
+  }, [todaySales, drinks]);
 
-  const netProfit = totalRevenue - totalCost;
 
-  const salesByDrink = todaySales.reduce((acc, sale) => {
-    const drink = drinks.find(d => d.id === sale.drinkId);
-    if (drink) {
-      acc[drink.name] = (acc[drink.name] || 0) + sale.quantity;
-    }
-    return acc;
-  }, {} as { [key: string]: number });
+  const chartData = useMemo(() => {
+    const salesByDrink = todaySales.reduce((acc, sale) => {
+      const drink = drinks.find(d => d.id === sale.drinkId);
+      if (drink) {
+        acc[drink.name] = (acc[drink.name] || 0) + sale.quantity;
+      }
+      return acc;
+    }, {} as { [key: string]: number });
 
-  const chartData = Object.entries(salesByDrink)
-    .map(([name, quantity]) => ({ name, quantity }))
-    .sort((a, b) => b.quantity - a.quantity)
-    .slice(0, 5);
+    return Object.entries(salesByDrink)
+      .map(([name, quantity]) => ({ name, quantity }))
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5);
+  }, [todaySales, drinks]);
 
   return (
     <MainLayout>

@@ -1,52 +1,46 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { useLocalStorage } from "@/hooks/use-local-storage";
-import type { Drink, Sale } from "@/lib/types";
+import { useAppContext } from "@/context/AppContext";
+import { formatCurrency } from "@/lib/utils";
 import { addDays, format, isWithinInterval, parseISO } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DateRange } from "react-day-picker";
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(value);
-};
+import type { DateRange } from "react-day-picker";
 
 export default function LaporanPage() {
-  const [sales] = useLocalStorage<Sale[]>("sales", []);
-  const [drinks] = useLocalStorage<Drink[]>("drinks", []);
+  const { sales, drinks } = useAppContext();
   const [date, setDate] = useState<DateRange | undefined>({
     from: addDays(new Date(), -30),
     to: new Date(),
   });
 
-  const filteredSales = sales.filter(sale => {
+  const filteredSales = useMemo(() => sales.filter(sale => {
     if (!date?.from || !date?.to) return true;
     const saleDate = parseISO(sale.date);
     return isWithinInterval(saleDate, { start: date.from, end: date.to });
-  });
+  }), [sales, date]);
 
-  const totalRevenue = filteredSales.reduce((sum, sale) => {
-    const drink = drinks.find(d => d.id === sale.drinkId);
-    return sum + (drink?.sellingPrice || 0) * sale.quantity * (1 - sale.discount / 100);
-  }, 0);
+  const { totalRevenue, totalCost, netProfit } = useMemo(() => {
+    let revenue = 0;
+    let cost = 0;
 
-  const totalCost = filteredSales.reduce((sum, sale) => {
-    const drink = drinks.find(d => d.id === sale.drinkId);
-    return sum + (drink?.costPrice || 0) * sale.quantity;
-  }, 0);
-  
-  const netProfit = totalRevenue - totalCost;
+    filteredSales.forEach(sale => {
+      const drink = drinks.find(d => d.id === sale.drinkId);
+      if (drink) {
+        revenue += drink.sellingPrice * sale.quantity * (1 - sale.discount / 100);
+        cost += drink.costPrice * sale.quantity;
+      }
+    });
+    
+    return { totalRevenue: revenue, totalCost: cost, netProfit: revenue - cost };
+  }, [filteredSales, drinks]);
 
   return (
     <MainLayout>
