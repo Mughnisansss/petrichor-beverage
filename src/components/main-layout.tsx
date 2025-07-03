@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/sheet";
 
 const topNavItems = [
-  { href: "/", label: "Dasbor" },
   { href: "/order", label: "Order" },
   { href: "/kasir", label: "Kasir" },
   { href: "/racik/minuman", label: "Produk" },
