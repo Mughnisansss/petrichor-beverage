@@ -72,10 +72,15 @@ export default function MinumanPage() {
   const handleDelete = async (id: string) => {
     try {
       const response = await fetch(`/api/drinks/${id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Gagal menghapus minuman');
+      
+      if (!response.ok) {
+        // Handle specific error messages from the backend
+        const errorData = await response.json().catch(() => ({ message: 'Gagal menghapus minuman. Coba lagi.' }));
+        throw new Error(errorData.message);
+      }
       
       await fetchData();
-      toast({ title: "Sukses", description: "Minuman berhasil dihapus.", variant: "destructive" });
+      toast({ title: "Sukses", description: "Minuman berhasil dihapus." });
     } catch (error) {
        toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
     }

@@ -5,7 +5,9 @@ import type { Sale } from '@/lib/types';
 
 export async function GET() {
   const data = await readDb();
-  return NextResponse.json(data.sales);
+  // Sort sales by date in descending order (newest first)
+  const sortedSales = data.sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  return NextResponse.json(sortedSales);
 }
 
 export async function POST(request: Request) {

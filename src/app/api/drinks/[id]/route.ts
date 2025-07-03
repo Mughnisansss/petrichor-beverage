@@ -12,7 +12,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ message: 'Drink not found' }, { status: 404 });
   }
 
-  const updatedDrink: Drink = { ...updatedDrinkData, id };
+  // Ensure we merge existing data with the update payload
+  const updatedDrink: Drink = { ...data.drinks[drinkIndex], ...updatedDrinkData, id };
   data.drinks[drinkIndex] = updatedDrink;
   
   await writeDb(data);
@@ -22,6 +23,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   const { id } = params;
   const data = await readDb();
+
+  // Data integrity check: prevent deletion if sales records exist
+  const hasAssociatedSales = data.sales.some(sale => sale.drinkId === id);
+  if (hasAssociatedSales) {
+    return NextResponse.json(
+      { message: 'Minuman tidak dapat dihapus karena memiliki riwayat penjualan.' },
+      { status: 400 } // Use 400 for a client error
+    );
+  }
   
   const initialLength = data.drinks.length;
   data.drinks = data.drinks.filter(d => d.id !== id);

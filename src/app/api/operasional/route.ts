@@ -5,7 +5,9 @@ import type { OperationalCost } from '@/lib/types';
 
 export async function GET() {
   const data = await readDb();
-  return NextResponse.json(data.operationalCosts);
+  // Sort costs by date in descending order (newest first)
+  const sortedCosts = data.operationalCosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  return NextResponse.json(sortedCosts);
 }
 
 export async function POST(request: Request) {
