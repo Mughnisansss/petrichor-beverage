@@ -1,0 +1,174 @@
+"use client";
+
+import React, { useState } from "react";
+import { MainLayout } from "@/components/main-layout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import type { Drink, Sale } from "@/lib/types";
+import { addDays, format, isWithinInterval, parseISO } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { DateRange } from "react-day-picker";
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(value);
+};
+
+export default function LaporanPage() {
+  const [sales] = useLocalStorage<Sale[]>("sales", []);
+  const [drinks] = useLocalStorage<Drink[]>("drinks", []);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: addDays(new Date(), -30),
+    to: new Date(),
+  });
+
+  const filteredSales = sales.filter(sale => {
+    if (!date?.from || !date?.to) return true;
+    const saleDate = parseISO(sale.date);
+    return isWithinInterval(saleDate, { start: date.from, end: date.to });
+  });
+
+  const totalRevenue = filteredSales.reduce((sum, sale) => {
+    const drink = drinks.find(d => d.id === sale.drinkId);
+    return sum + (drink?.sellingPrice || 0) * sale.quantity * (1 - sale.discount / 100);
+  }, 0);
+
+  const totalCost = filteredSales.reduce((sum, sale) => {
+    const drink = drinks.find(d => d.id === sale.drinkId);
+    return sum + (drink?.costPrice || 0) * sale.quantity;
+  }, 0);
+  
+  const netProfit = totalRevenue - totalCost;
+
+  return (
+    <MainLayout>
+      <div className="flex flex-col gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Filter Laporan</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="date"
+                    variant={"outline"}
+                    className={cn(
+                      "w-[300px] justify-start text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date?.from ? (
+                      date.to ? (
+                        <>
+                          {format(date.from, "LLL dd, y")} -{" "}
+                          {format(date.to, "LLL dd, y")}
+                        </>
+                      ) : (
+                        format(date.from, "LLL dd, y")
+                      )
+                    ) : (
+                      <span>Pilih tanggal</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={date?.from}
+                    selected={date}
+                    onSelect={setDate}
+                    numberOfMonths={2}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader><CardTitle>Total Pendapatan</CardTitle></CardHeader>
+            <CardContent><p className="text-2xl font-bold">{formatCurrency(totalRevenue)}</p></CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Total Biaya</CardTitle></CardHeader>
+            <CardContent><p className="text-2xl font-bold">{formatCurrency(totalCost)}</p></CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Laba Bersih</CardTitle></CardHeader>
+            <CardContent><p className="text-2xl font-bold text-primary">{formatCurrency(netProfit)}</p></CardContent>
+          </Card>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader><CardTitle>Laporan Pendapatan</CardTitle></CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead>Minuman</TableHead>
+                    <TableHead>Pendapatan</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredSales.map(sale => {
+                     const drink = drinks.find(d => d.id === sale.drinkId);
+                     const revenue = drink ? drink.sellingPrice * sale.quantity * (1 - sale.discount / 100) : 0;
+                     return (
+                      <TableRow key={sale.id}>
+                        <TableCell>{format(parseISO(sale.date), "dd MMM yyyy")}</TableCell>
+                        <TableCell>{drink?.name || 'N/A'}</TableCell>
+                        <TableCell>{formatCurrency(revenue)}</TableCell>
+                      </TableRow>
+                     );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Laporan Biaya</CardTitle></CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead>Minuman</TableHead>
+                    <TableHead>Biaya</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredSales.map(sale => {
+                     const drink = drinks.find(d => d.id === sale.drinkId);
+                     const cost = drink ? drink.costPrice * sale.quantity : 0;
+                     return (
+                      <TableRow key={sale.id}>
+                        <TableCell>{format(parseISO(sale.date), "dd MMM yyyy")}</TableCell>
+                        <TableCell>{drink?.name || 'N/A'}</TableCell>
+                        <TableCell>{formatCurrency(cost)}</TableCell>
+                      </TableRow>
+                     );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </MainLayout>
+  );
+}

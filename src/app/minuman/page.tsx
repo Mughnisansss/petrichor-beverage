@@ -1,0 +1,171 @@
+"use client";
+
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { MainLayout } from "@/components/main-layout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import type { Drink } from "@/lib/types";
+import { PlusCircle, Edit, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+const drinkSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Nama minuman tidak boleh kosong"),
+  costPrice: z.coerce.number().min(0, "Harga pokok tidak boleh negatif"),
+  sellingPrice: z.coerce.number().min(0, "Harga jual tidak boleh negatif"),
+});
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(value);
+};
+
+export default function MinumanPage() {
+  const [drinks, setDrinks] = useLocalStorage<Drink[]>("drinks", []);
+  const [isDialogOpen, setDialogOpen] = useState(false);
+  const [editingDrink, setEditingDrink] = useState<Drink | null>(null);
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof drinkSchema>>({
+    resolver: zodResolver(drinkSchema),
+    defaultValues: { name: "", costPrice: 0, sellingPrice: 0 },
+  });
+
+  function onSubmit(values: z.infer<typeof drinkSchema>) {
+    if (editingDrink) {
+      setDrinks(drinks.map(d => d.id === editingDrink.id ? { ...d, ...values } : d));
+      toast({ title: "Sukses", description: "Minuman berhasil diperbarui." });
+    } else {
+      setDrinks([...drinks, { ...values, id: new Date().toISOString() }]);
+      toast({ title: "Sukses", description: "Minuman baru berhasil ditambahkan." });
+    }
+    setDialogOpen(false);
+    setEditingDrink(null);
+    form.reset({ name: "", costPrice: 0, sellingPrice: 0 });
+  }
+
+  const handleEdit = (drink: Drink) => {
+    setEditingDrink(drink);
+    form.reset(drink);
+    setDialogOpen(true);
+  };
+  
+  const handleAddNew = () => {
+    setEditingDrink(null);
+    form.reset({ name: "", costPrice: 0, sellingPrice: 0 });
+    setDialogOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    setDrinks(drinks.filter(d => d.id !== id));
+    toast({ title: "Sukses", description: "Minuman berhasil dihapus.", variant: "destructive" });
+  };
+  
+  return (
+    <MainLayout>
+      <div className="flex flex-col gap-8">
+        <div className="flex justify-end">
+           <Dialog open={isDialogOpen} onOpenChange={(open) => {
+             setDialogOpen(open);
+             if (!open) {
+                setEditingDrink(null);
+                form.reset({ name: "", costPrice: 0, sellingPrice: 0 });
+             }
+           }}>
+            <Button onClick={handleAddNew}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Tambah Minuman
+            </Button>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{editingDrink ? "Edit Minuman" : "Tambah Minuman Baru"}</DialogTitle>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nama Minuman</FormLabel>
+                        <FormControl><Input {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="costPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Harga Pokok</FormLabel>
+                        <FormControl><Input type="number" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="sellingPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Harga Jual</FormLabel>
+                        <FormControl><Input type="number" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit">{editingDrink ? "Simpan Perubahan" : "Tambah"}</Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Daftar Minuman</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nama Minuman</TableHead>
+                  <TableHead>Harga Pokok</TableHead>
+                  <TableHead>Harga Jual</TableHead>
+                  <TableHead>Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {drinks.map(drink => (
+                  <TableRow key={drink.id}>
+                    <TableCell>{drink.name}</TableCell>
+                    <TableCell>{formatCurrency(drink.costPrice)}</TableCell>
+                    <TableCell>{formatCurrency(drink.sellingPrice)}</TableCell>
+                    <TableCell className="flex gap-2">
+                      <Button variant="outline" size="icon" onClick={() => handleEdit(drink)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="destructive" size="icon" onClick={() => handleDelete(drink.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    </MainLayout>
+  );
+}
