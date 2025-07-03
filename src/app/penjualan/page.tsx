@@ -21,26 +21,20 @@ const saleSchema = z.object({
   discount: z.coerce.number().min(0, "Diskon tidak boleh negatif").max(100, "Diskon maksimal 100%").default(0),
 });
 
+type SaleFormValues = z.infer<typeof saleSchema>;
+
 export default function PenjualanPage() {
-  const { sales, drinks, fetchData } = useAppContext();
+  const { sales, drinks, addSale } = useAppContext();
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof saleSchema>>({
+  const form = useForm<SaleFormValues>({
     resolver: zodResolver(saleSchema),
     defaultValues: { drinkId: undefined, quantity: 1, discount: 0 },
   });
 
-  async function onSubmit(values: z.infer<typeof saleSchema>) {
+  async function onSubmit(values: SaleFormValues) {
     try {
-      const response = await fetch('/api/sales', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      });
-
-      if (!response.ok) throw new Error('Gagal mencatat penjualan');
-
-      await fetchData();
+      await addSale(values);
       toast({ title: "Sukses", description: "Penjualan berhasil dicatat." });
       form.reset({ drinkId: undefined, quantity: 1, discount: 0 });
     } catch (error) {

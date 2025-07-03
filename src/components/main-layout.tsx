@@ -13,7 +13,7 @@ import {
   SidebarInset,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { CupSoda, DollarSign, LayoutDashboard, LineChart, ClipboardList, Lightbulb } from "lucide-react";
+import { CupSoda, DollarSign, LayoutDashboard, LineChart, ClipboardList, Lightbulb, Settings } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,7 @@ const navItems = [
   { href: "/operasional", label: "Biaya Operasional", icon: ClipboardList },
   { href: "/saran-harga", label: "Saran Harga", icon: Lightbulb },
   { href: "/laporan", label: "Laporan", icon: LineChart },
+  { href: "/pengaturan", label: "Pengaturan", icon: Settings },
 ];
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
