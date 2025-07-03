@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -98,6 +99,20 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
+       <div className="relative flex overflow-x-hidden bg-primary text-primary-foreground">
+        <div className="animate-marquee whitespace-nowrap py-2">
+          <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+          <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+          <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+          <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+        </div>
+        <div className="absolute top-0 animate-marquee2 whitespace-nowrap py-2">
+           <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+           <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+           <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+           <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+        </div>
+      </div>
       <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           <Link
