@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readDb, writeDb } from '@/lib/db';
+import { hasDrinkAssociatedSales } from '@/lib/data-logic';
 import type { Drink } from '@/lib/types';
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
@@ -25,9 +26,8 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   const { id } = params;
   const data = await readDb();
 
-  // Data integrity check: prevent deletion if sales records exist
-  const hasAssociatedSales = data.sales.some(sale => sale.drinkId === id);
-  if (hasAssociatedSales) {
+  // Use centralized logic to check for sales records
+  if (hasDrinkAssociatedSales(data, id)) {
     return NextResponse.json(
       { message: 'Minuman tidak dapat dihapus karena memiliki riwayat penjualan.' },
       { status: 400 } // Use 400 for a client error

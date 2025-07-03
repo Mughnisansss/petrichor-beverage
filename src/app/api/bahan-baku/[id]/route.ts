@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readDb, writeDb } from '@/lib/db';
+import { isRawMaterialInUse, recalculateDependentProductCosts } from '@/lib/data-logic';
 import type { RawMaterial, Drink, Food } from '@/lib/types';
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
@@ -16,40 +17,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ message: 'Raw material not found' }, { status: 404 });
   }
 
+  // Update the material
   const updatedMaterial: RawMaterial = { ...data.rawMaterials[materialIndex], ...updatedMaterialData, id };
   data.rawMaterials[materialIndex] = updatedMaterial;
 
-  // Find drinks that use this material and update their costPrice
-  data.drinks.forEach((drink: Drink) => {
-    const usesMaterial = drink.ingredients.some(ing => ing.rawMaterialId === id);
-    if (usesMaterial) {
-      let newCostPrice = 0;
-      drink.ingredients.forEach(ing => {
-        const material = data.rawMaterials.find(m => m.id === ing.rawMaterialId);
-        if (material) {
-          newCostPrice += material.costPerUnit * ing.quantity;
-        }
-      });
-      drink.costPrice = newCostPrice;
-    }
-  });
-  
-  // Find foods that use this material and update their costPrice
-  if (data.foods) {
-    data.foods.forEach((food: Food) => {
-        const usesMaterial = food.ingredients.some(ing => ing.rawMaterialId === id);
-        if (usesMaterial) {
-            let newCostPrice = 0;
-            food.ingredients.forEach(ing => {
-                const material = data.rawMaterials.find(m => m.id === ing.rawMaterialId);
-                if (material) {
-                    newCostPrice += material.costPerUnit * ing.quantity;
-                }
-            });
-            food.costPrice = newCostPrice;
-        }
-    });
-  }
+  // Use centralized logic to update all dependent product costs
+  recalculateDependentProductCosts(data, id);
 
   await writeDb(data);
   return NextResponse.json(updatedMaterial);
@@ -63,16 +36,8 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
      return NextResponse.json({ message: 'Raw material storage not found' }, { status: 500 });
   }
 
-  // Check if any drink or food uses this raw material
-  const isUsedInDrink = data.drinks.some((drink: Drink) => 
-    drink.ingredients.some(ingredient => ingredient.rawMaterialId === id)
-  );
-
-  const isUsedInFood = data.foods && data.foods.some((food: Food) => 
-    food.ingredients.some(ingredient => ingredient.rawMaterialId === id)
-  );
-
-  if (isUsedInDrink || isUsedInFood) {
+  // Use centralized logic to check if material is in use
+  if (isRawMaterialInUse(data, id)) {
     return NextResponse.json(
       { message: 'Bahan baku tidak dapat dihapus karena masih digunakan dalam resep.' },
       { status: 400 }

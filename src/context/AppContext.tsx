@@ -4,6 +4,11 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { nanoid } from 'nanoid';
 import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { 
+  isRawMaterialInUse, 
+  hasDrinkAssociatedSales, 
+  recalculateDependentProductCosts 
+} from '@/lib/data-logic';
 
 type StorageMode = 'local' | 'server';
 
@@ -100,35 +105,21 @@ const localStorageService = {
     const data = getLocalData();
     const index = data.rawMaterials.findIndex(m => m.id === id);
     if (index === -1) throw new Error("Material not found");
+    
+    // Update the material
     const updatedMaterial = { ...data.rawMaterials[index], ...materialUpdate };
     data.rawMaterials[index] = updatedMaterial;
 
-    // Recalculate cost price for affected drinks and foods
-    data.drinks.forEach(drink => {
-      if (drink.ingredients.some(i => i.rawMaterialId === id)) {
-        drink.costPrice = drink.ingredients.reduce((acc, ing) => {
-          const mat = data.rawMaterials.find(m => m.id === ing.rawMaterialId);
-          return acc + (mat ? mat.costPerUnit * ing.quantity : 0);
-        }, 0);
-      }
-    });
-     data.foods.forEach(food => {
-      if (food.ingredients.some(i => i.rawMaterialId === id)) {
-        food.costPrice = food.ingredients.reduce((acc, ing) => {
-          const mat = data.rawMaterials.find(m => m.id === ing.rawMaterialId);
-          return acc + (mat ? mat.costPerUnit * ing.quantity : 0);
-        }, 0);
-      }
-    });
+    // Use centralized logic to update dependent product costs
+    recalculateDependentProductCosts(data, id);
     
     setLocalData(data);
     return Promise.resolve(updatedMaterial);
   },
   deleteRawMaterial: async (id: string) => {
     const data = getLocalData();
-    const isDrinkInUse = data.drinks.some(d => d.ingredients.some(i => i.rawMaterialId === id));
-    const isFoodInUse = data.foods.some(f => f.ingredients.some(i => i.rawMaterialId === id));
-    if (isDrinkInUse || isFoodInUse) {
+    // Use centralized logic to check if material is in use
+    if (isRawMaterialInUse(data, id)) {
       return Promise.resolve({ ok: false, message: 'Bahan baku tidak dapat dihapus karena digunakan dalam resep.' });
     }
     data.rawMaterials = data.rawMaterials.filter(m => m.id !== id);
@@ -153,7 +144,8 @@ const localStorageService = {
   },
   deleteDrink: async (id: string) => {
     const data = getLocalData();
-    if (data.sales.some(s => s.drinkId === id)) {
+    // Use centralized logic to check for associated sales
+    if (hasDrinkAssociatedSales(data, id)) {
       return Promise.resolve({ ok: false, message: 'Minuman tidak dapat dihapus karena memiliki riwayat penjualan.' });
     }
     data.drinks = data.drinks.filter(d => d.id !== id);

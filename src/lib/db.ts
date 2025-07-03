@@ -7,10 +7,16 @@ const dbPath = path.join(process.cwd(), 'db.json');
 export async function readDb(): Promise<DbData> {
   try {
     const data = await fs.readFile(dbPath, 'utf8');
-    return JSON.parse(data);
+    const parsedData = JSON.parse(data);
+    // Ensure foods array exists for backward compatibility
+    if (!parsedData.foods) {
+      parsedData.foods = [];
+    }
+    return parsedData;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      const defaultData: DbData = { drinks: [], sales: [], operationalCosts: [], rawMaterials: [] };
+      // If the file doesn't exist, create it with a default structure
+      const defaultData: DbData = { drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
       await writeDb(defaultData);
       return defaultData;
     }
