@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
 import type { OperationalCost } from "@/lib/types";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
@@ -19,9 +20,17 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 const costSchema = z.object({
   description: z.string().min(1, "Deskripsi tidak boleh kosong"),
   amount: z.coerce.number().min(1, "Jumlah biaya harus lebih dari 0"),
+  recurrence: z.enum(['sekali', 'harian', 'mingguan', 'bulanan']),
 });
 
 type CostFormValues = z.infer<typeof costSchema>;
+
+const recurrenceLabels: Record<OperationalCost['recurrence'], string> = {
+  sekali: 'Sekali Bayar',
+  harian: 'Harian',
+  mingguan: 'Mingguan',
+  bulanan: 'Bulanan',
+};
 
 export default function OperasionalPage() {
   const { operationalCosts, addOperationalCost, updateOperationalCost, deleteOperationalCost } = useAppContext();
@@ -31,7 +40,7 @@ export default function OperasionalPage() {
 
   const form = useForm<CostFormValues>({
     resolver: zodResolver(costSchema),
-    defaultValues: { description: "", amount: 0 },
+    defaultValues: { description: "", amount: 0, recurrence: "sekali" },
   });
 
   async function onSubmit(values: CostFormValues) {
@@ -51,13 +60,17 @@ export default function OperasionalPage() {
 
   const handleEdit = (cost: OperationalCost) => {
     setEditingCost(cost);
-    form.reset(cost);
+    form.reset({
+      description: cost.description,
+      amount: cost.amount,
+      recurrence: cost.recurrence || 'sekali' // Fallback for safety
+    });
     setDialogOpen(true);
   };
   
   const handleAddNew = () => {
     setEditingCost(null);
-    form.reset({ description: "", amount: 0 });
+    form.reset({ description: "", amount: 0, recurrence: "sekali" });
     setDialogOpen(true);
   };
 
@@ -116,6 +129,29 @@ export default function OperasionalPage() {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="recurrence"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Jenis Tagihan</FormLabel>
+                         <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Pilih jenis tagihan" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="sekali">Sekali Bayar</SelectItem>
+                            <SelectItem value="harian">Harian</SelectItem>
+                            <SelectItem value="mingguan">Mingguan</SelectItem>
+                            <SelectItem value="bulanan">Bulanan</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <Button type="submit">{editingCost ? "Simpan Perubahan" : "Tambah"}</Button>
                 </form>
               </Form>
@@ -132,6 +168,7 @@ export default function OperasionalPage() {
                 <TableRow>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Deskripsi</TableHead>
+                  <TableHead>Jenis</TableHead>
                   <TableHead>Jumlah</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
@@ -142,6 +179,7 @@ export default function OperasionalPage() {
                     <TableRow key={cost.id}>
                       <TableCell>{formatDate(cost.date, "dd MMM yyyy")}</TableCell>
                       <TableCell className="font-medium">{cost.description}</TableCell>
+                      <TableCell>{recurrenceLabels[cost.recurrence] || 'Sekali Bayar'}</TableCell>
                       <TableCell>{formatCurrency(cost.amount)}</TableCell>
                       <TableCell className="flex gap-2 justify-end">
                         <Button variant="outline" size="icon" onClick={() => handleEdit(cost)}>
@@ -155,7 +193,7 @@ export default function OperasionalPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
+                    <TableCell colSpan={5} className="h-24 text-center">
                       Belum ada biaya operasional.
                     </TableCell>
                   </TableRow>

@@ -5,8 +5,13 @@ import type { OperationalCost } from '@/lib/types';
 
 export async function GET() {
   const data = await readDb();
+  // Add default for backward compatibility
+  const costsWithDefaults = (data.operationalCosts || []).map(cost => ({
+    ...cost,
+    recurrence: cost.recurrence || 'sekali'
+  }));
   // Sort costs by date in descending order (newest first)
-  const sortedCosts = data.operationalCosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const sortedCosts = costsWithDefaults.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   return NextResponse.json(sortedCosts);
 }
 

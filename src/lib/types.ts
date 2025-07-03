@@ -42,6 +42,7 @@ export interface OperationalCost {
   description: string;
   amount: number;
   date: string;
+  recurrence: 'sekali' | 'harian' | 'mingguan' | 'bulanan';
 }
 
 export interface DbData {

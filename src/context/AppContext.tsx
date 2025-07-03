@@ -59,7 +59,25 @@ const getLocalData = (): DbData => {
   }
   const data = window.localStorage.getItem(LOCAL_STORAGE_KEY);
   try {
-    return data ? JSON.parse(data) : { drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
+    const parsedData = data ? JSON.parse(data) : { drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
+
+    // Add default recurrence for backward compatibility with older local storage data
+    if (parsedData.operationalCosts) {
+      parsedData.operationalCosts = parsedData.operationalCosts.map((cost: any) => ({
+        ...cost,
+        recurrence: cost.recurrence || 'sekali'
+      }));
+    } else {
+      parsedData.operationalCosts = [];
+    }
+
+    // Ensure all other arrays exist
+    parsedData.drinks = parsedData.drinks || [];
+    parsedData.foods = parsedData.foods || [];
+    parsedData.sales = parsedData.sales || [];
+    parsedData.rawMaterials = parsedData.rawMaterials || [];
+
+    return parsedData;
   } catch {
     return { drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
   }
@@ -178,6 +196,7 @@ const localStorageService = {
   addOperationalCost: async (cost: Omit<OperationalCost, 'id' | 'date'>): Promise<OperationalCost> => {
     const data = getLocalData();
     const newCost = { ...cost, id: nanoid(), date: new Date().toISOString() };
+    if(!data.operationalCosts) data.operationalCosts = [];
     data.operationalCosts.unshift(newCost);
     setLocalData(data);
     return Promise.resolve(newCost);
