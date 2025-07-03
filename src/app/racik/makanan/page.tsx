@@ -16,7 +16,6 @@ import { PlusCircle, Edit, Trash2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { addDays, isWithinInterval, parseISO } from "date-fns";
 
 const ingredientSchema = z.object({
   rawMaterialId: z.string().min(1, "Pilih bahan"),
@@ -32,67 +31,20 @@ const foodSchema = z.object({
 type FoodFormValues = z.infer<typeof foodSchema>;
 
 const PriceSuggestionCalculator = ({ costPrice }: { costPrice: number }) => {
-    const { sales, operationalCosts } = useAppContext();
-    const [days, setDays] = useState(30);
-
-    const { opCostPerUnit, totalOpCost, totalUnitsSold } = useMemo(() => {
-        const dateTo = new Date();
-        const dateFrom = addDays(dateTo, -days);
-
-        const relevantSales = sales.filter(s => isWithinInterval(parseISO(s.date), {start: dateFrom, end: dateTo}));
-        const relevantOpCosts = operationalCosts.filter(c => isWithinInterval(parseISO(c.date), {start: dateFrom, end: dateTo}));
-        
-        const totalOpCost = relevantOpCosts.reduce((acc, cost) => acc + cost.amount, 0);
-        const totalUnitsSold = relevantSales.reduce((acc, sale) => acc + sale.quantity, 0);
-
-        if (totalUnitsSold === 0) return { opCostPerUnit: 0, totalOpCost, totalUnitsSold };
-
-        return { opCostPerUnit: totalOpCost / totalUnitsSold, totalOpCost, totalUnitsSold };
-    }, [days, sales, operationalCosts]);
-
-    const totalCost = costPrice + opCostPerUnit;
-
     const getSuggestedPrice = (margin: number) => {
-        if (margin >= 100) return Infinity;
-        return totalCost / (1 - (margin / 100));
+        if (costPrice <= 0 || margin >= 100) return 0;
+        return costPrice / (1 - (margin / 100));
     }
 
     return (
         <Card className="bg-muted/50">
             <CardHeader>
-                <CardTitle className="text-lg">Kalkulator Saran Harga</CardTitle>
-                <CardDescription>Berdasarkan HPP dan alokasi biaya operasional.</CardDescription>
+                <CardTitle className="text-lg">Saran Harga Jual</CardTitle>
+                <CardDescription>Berdasarkan HPP di samping.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Periode Analisis</span>
-                    <Select value={String(days)} onValueChange={(val) => setDays(Number(val))}>
-                        <SelectTrigger className="w-[120px]">
-                            <SelectValue/>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="7">7 Hari</SelectItem>
-                            <SelectItem value="30">30 Hari</SelectItem>
-                            <SelectItem value="90">90 Hari</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">Harga Pokok (HPP)</span>
-                    <span className="font-semibold">{formatCurrency(costPrice)}</span>
-                </div>
-                 <div className="flex justify-between items-center text-sm" title={`${formatCurrency(totalOpCost)} / ${totalUnitsSold} unit terjual`}>
-                    <span className="text-muted-foreground">Biaya Operasional / Unit</span>
-                    <span className="font-semibold">{formatCurrency(opCostPerUnit)}</span>
-                </div>
-                <Separator/>
-                 <div className="flex justify-between items-center text-base">
-                    <span className="font-bold">Total Biaya / Unit</span>
-                    <span className="font-bold">{formatCurrency(totalCost)}</span>
-                </div>
-                <Separator/>
-                <div className="space-y-2 pt-2">
-                    <div className="flex justify-between items-center text-sm">
+            <CardContent>
+                <div className="space-y-2">
+                     <div className="flex justify-between items-center text-sm">
                         <span className="text-muted-foreground">Margin 50%</span>
                         <span className="font-bold text-primary">{formatCurrency(getSuggestedPrice(50))}</span>
                     </div>
