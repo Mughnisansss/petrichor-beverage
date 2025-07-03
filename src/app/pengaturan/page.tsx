@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -22,20 +23,25 @@ export default function PengaturanPage() {
     setStorageMode
   } = useAppContext();
 
-  // Local state to manage the setting before saving
-  const [selectedMode, setSelectedMode] = useState<"local" | "server" | "cloud">(storageMode);
+  // State lokal untuk menampung pilihan pengguna sebelum disimpan.
+  // Diinisialisasi dengan mode penyimpanan saat ini dari konteks.
+  const [selectedMode, setSelectedMode] = useState(storageMode);
 
-  // Sync local state if context changes
+  // Jika mode penyimpanan di konteks berubah (misalnya setelah disimpan),
+  // sinkronkan state lokal ini agar UI tetap konsisten.
   useEffect(() => {
     setSelectedMode(storageMode);
   }, [storageMode]);
 
   const handleSaveSettings = () => {
+    // Hanya proses jika ada perubahan.
     if (selectedMode !== storageMode) {
-      setStorageMode(selectedMode as "local" | "server");
+      // Panggil fungsi dari konteks untuk mengubah mode penyimpanan secara global.
+      // Konteks akan secara otomatis menangani pemuatan ulang data.
+      setStorageMode(selectedMode);
       toast({
         title: "Pengaturan Disimpan",
-        description: "Mode penyimpanan data telah berhasil diperbarui.",
+        description: `Mode penyimpanan data telah diubah ke ${selectedMode === 'local' ? 'Penyimpanan Browser' : 'Penyimpanan Server'}.`,
       });
     }
   };
@@ -135,6 +141,8 @@ export default function PengaturanPage() {
     });
   }
 
+  const hasChanges = selectedMode !== storageMode;
+
   return (
     <MainLayout>
       <div className="flex justify-center items-start pt-8">
@@ -203,7 +211,7 @@ export default function PengaturanPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button onClick={handleSaveSettings} disabled={selectedMode === storageMode || isLoading}>
+            <Button onClick={handleSaveSettings} disabled={!hasChanges || isLoading}>
               Simpan Pengaturan
             </Button>
           </CardFooter>
