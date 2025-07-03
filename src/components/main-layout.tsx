@@ -17,6 +17,8 @@ import { CupSoda, DollarSign, LayoutDashboard, LineChart, ClipboardList, Lightbu
 import { Logo } from "@/components/logo";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { useAppContext } from "@/context/AppContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -31,6 +33,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const pageTitle = navItems.find(item => pathname.startsWith(item.href))?.label || "Dashboard";
   const isMobile = useIsMobile();
+  const { isLoading } = useAppContext();
   
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -88,7 +91,19 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           <h1 className="text-lg font-semibold">{pageTitle}</h1>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8 bg-muted/40">
-          {children}
+          {isLoading ? (
+            <div className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Skeleton className="h-28 rounded-lg" />
+                <Skeleton className="h-28 rounded-lg" />
+                <Skeleton className="h-28 rounded-lg" />
+                <Skeleton className="h-28 rounded-lg" />
+              </div>
+              <Skeleton className="h-80 rounded-lg" />
+            </div>
+          ) : (
+            children
+          )}
         </main>
       </SidebarInset>
     </div>

@@ -24,7 +24,7 @@ const costSchema = z.object({
 });
 
 export default function OperasionalPage() {
-  const { operationalCosts, setOperationalCosts } = useAppContext();
+  const { operationalCosts, fetchData } = useAppContext();
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingCost, setEditingCost] = useState<OperationalCost | null>(null);
   const { toast } = useToast();
@@ -34,23 +34,26 @@ export default function OperasionalPage() {
     defaultValues: { description: "", amount: 0 },
   });
 
-  function onSubmit(values: z.infer<typeof costSchema>) {
-    const newCost: OperationalCost = {
-      ...values,
-      id: editingCost ? editingCost.id : new Date().toISOString(),
-      date: editingCost ? editingCost.date : new Date().toISOString(),
-    };
-    
-    if (editingCost) {
-      setOperationalCosts(operationalCosts.map(c => c.id === editingCost.id ? newCost : c));
-      toast({ title: "Sukses", description: "Biaya operasional berhasil diperbarui." });
-    } else {
-      setOperationalCosts([newCost, ...operationalCosts]);
-      toast({ title: "Sukses", description: "Biaya operasional berhasil ditambahkan." });
+  async function onSubmit(values: z.infer<typeof costSchema>) {
+    const { id, ...payload } = values;
+    const url = editingCost ? `/api/operasional/${editingCost.id}` : '/api/operasional';
+    const method = editingCost ? 'PUT' : 'POST';
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error('Gagal menyimpan biaya operasional');
+
+      await fetchData();
+      toast({ title: "Sukses", description: `Biaya operasional berhasil ${editingCost ? 'diperbarui' : 'ditambahkan'}.` });
+      setDialogOpen(false);
+    } catch (error) {
+      toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
     }
-    setDialogOpen(false);
-    setEditingCost(null);
-    form.reset({ description: "", amount: 0 });
   }
 
   const handleEdit = (cost: OperationalCost) => {
@@ -65,9 +68,16 @@ export default function OperasionalPage() {
     setDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setOperationalCosts(operationalCosts.filter(c => c.id !== id));
-    toast({ title: "Sukses", description: "Biaya operasional berhasil dihapus.", variant: "destructive" });
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/operasional/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Gagal menghapus biaya operasional');
+      
+      await fetchData();
+      toast({ title: "Sukses", description: "Biaya operasional berhasil dihapus.", variant: "destructive" });
+    } catch (error) {
+      toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
+    }
   };
   
   return (

@@ -12,7 +12,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
-import type { Sale } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -23,7 +22,7 @@ const saleSchema = z.object({
 });
 
 export default function PenjualanPage() {
-  const { sales, setSales, drinks } = useAppContext();
+  const { sales, drinks, fetchData } = useAppContext();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof saleSchema>>({
@@ -31,15 +30,22 @@ export default function PenjualanPage() {
     defaultValues: { drinkId: undefined, quantity: 1, discount: 0 },
   });
 
-  function onSubmit(values: z.infer<typeof saleSchema>) {
-    const newSale: Sale = {
-      ...values,
-      id: new Date().toISOString(),
-      date: new Date().toISOString(),
-    };
-    setSales([newSale, ...sales]);
-    toast({ title: "Sukses", description: "Penjualan berhasil dicatat." });
-    form.reset({ drinkId: undefined, quantity: 1, discount: 0 });
+  async function onSubmit(values: z.infer<typeof saleSchema>) {
+    try {
+      const response = await fetch('/api/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) throw new Error('Gagal mencatat penjualan');
+
+      await fetchData();
+      toast({ title: "Sukses", description: "Penjualan berhasil dicatat." });
+      form.reset({ drinkId: undefined, quantity: 1, discount: 0 });
+    } catch (error) {
+      toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
+    }
   }
 
   return (

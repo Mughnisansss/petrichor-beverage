@@ -25,7 +25,7 @@ const drinkSchema = z.object({
 });
 
 export default function MinumanPage() {
-  const { drinks, setDrinks } = useAppContext();
+  const { drinks, fetchData } = useAppContext();
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingDrink, setEditingDrink] = useState<Drink | null>(null);
   const { toast } = useToast();
@@ -35,17 +35,26 @@ export default function MinumanPage() {
     defaultValues: { name: "", costPrice: 0, sellingPrice: 0 },
   });
 
-  function onSubmit(values: z.infer<typeof drinkSchema>) {
-    if (editingDrink) {
-      setDrinks(drinks.map(d => d.id === editingDrink.id ? { ...values, id: editingDrink.id } : d));
-      toast({ title: "Sukses", description: "Minuman berhasil diperbarui." });
-    } else {
-      setDrinks([...drinks, { ...values, id: new Date().toISOString() }]);
-      toast({ title: "Sukses", description: "Minuman baru berhasil ditambahkan." });
+  async function onSubmit(values: z.infer<typeof drinkSchema>) {
+    const { id, ...payload } = values;
+    const url = editingDrink ? `/api/drinks/${editingDrink.id}` : '/api/drinks';
+    const method = editingDrink ? 'PUT' : 'POST';
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error('Gagal menyimpan data minuman');
+
+      await fetchData();
+      toast({ title: "Sukses", description: `Minuman berhasil ${editingDrink ? 'diperbarui' : 'ditambahkan'}.` });
+      setDialogOpen(false);
+    } catch (error) {
+      toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
     }
-    setDialogOpen(false);
-    setEditingDrink(null);
-    form.reset({ name: "", costPrice: 0, sellingPrice: 0 });
   }
 
   const handleEdit = (drink: Drink) => {
@@ -60,9 +69,16 @@ export default function MinumanPage() {
     setDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setDrinks(drinks.filter(d => d.id !== id));
-    toast({ title: "Sukses", description: "Minuman berhasil dihapus.", variant: "destructive" });
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/drinks/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Gagal menghapus minuman');
+      
+      await fetchData();
+      toast({ title: "Sukses", description: "Minuman berhasil dihapus.", variant: "destructive" });
+    } catch (error) {
+       toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
+    }
   };
   
   return (
