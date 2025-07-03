@@ -9,6 +9,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  // The client will calculate costPrice based on ingredients and send it
   const newDrink: Omit<Drink, 'id'> = await request.json();
   const data = await readDb();
   

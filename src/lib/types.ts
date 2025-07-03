@@ -1,7 +1,20 @@
+export interface RawMaterial {
+  id: string;
+  name: string;
+  unit: string; // e.g., gram, ml, pcs
+  costPerUnit: number;
+}
+
+export interface Ingredient {
+  rawMaterialId: string;
+  quantity: number;
+}
+
 export interface Drink {
   id: string;
   name: string;
-  costPrice: number;
+  ingredients: Ingredient[];
+  costPrice: number; // Calculated from ingredients, stored for historical accuracy
   sellingPrice: number;
 }
 

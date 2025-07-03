@@ -3,15 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  CupSoda,
-  DollarSign,
-  LayoutDashboard,
-  ClipboardList,
-  Lightbulb,
-  Settings,
-  Menu,
-} from "lucide-react";
+import { Menu } from "lucide-react";
 
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
@@ -19,128 +11,104 @@ import { useAppContext } from "@/context/AppContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useLocalStorage } from "@/hooks/use-local-storage";
 import {
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarTrigger,
-  SidebarInset,
-} from "@/components/ui/sidebar";
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
-const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/penjualan", label: "Penjualan", icon: DollarSign },
-  { href: "/minuman", label: "Minuman", icon: CupSoda },
-  { href: "/operasional", label: "Biaya Operasional", icon: ClipboardList },
-  { href: "/saran-harga", label: "Saran Harga", icon: Lightbulb },
+const topNavItems = [
+  { href: "/penjualan", label: "Penjualan" },
+  { href: "/racik/minuman", label: "Racik" },
 ];
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isLoading } = useAppContext();
-  const isMobile = useIsMobile();
-  
-  const [isSidebarOpen, setSidebarOpen] = useLocalStorage("sidebar-open", true);
-  const [isMobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!isSidebarOpen);
-  };
-  
-  const NavLinks = () => (
-    <SidebarMenu>
-      {navItems.map((item) => (
-        <SidebarMenuItem key={item.href}>
-          <Link href={item.href} passHref legacyBehavior>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === item.href}
-              tooltip={item.label}
-              isSidebarOpen={isSidebarOpen || isMobile}
-              onClick={() => isMobile && setMobileMenuOpen(false)}
-            >
-              <a>
-                <item.icon className="h-5 w-5" />
-                {(isSidebarOpen || isMobile) && <span>{item.label}</span>}
-              </a>
-            </SidebarMenuButton>
-          </Link>
-        </SidebarMenuItem>
-      ))}
-    </SidebarMenu>
-  );
-
-  return (
-    <div className="flex min-h-screen w-full bg-muted/40">
-      <Sidebar
-        isMobile={isMobile}
-        isSidebarOpen={isSidebarOpen}
-        isMobileMenuOpen={isMobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-      >
-        <SidebarHeader isSidebarOpen={isSidebarOpen || isMobile}>
-          <Link href="/" className="flex items-center gap-2 font-semibold text-foreground">
-            <Logo />
-          </Link>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarInset>
-            <NavLinks />
-          </SidebarInset>
-        </SidebarContent>
-      </Sidebar>
-
-      <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
-           <Button
+  const MobileNav = () => (
+     <Sheet>
+        <SheetTrigger asChild>
+          <Button
             variant="outline"
             size="icon"
             className="shrink-0 md:hidden"
-            onClick={() => setMobileMenuOpen(true)}
           >
             <Menu className="h-5 w-5" />
-            <span className="sr-only">Buka Menu</span>
+            <span className="sr-only">Buka menu navigasi</span>
           </Button>
-           <SidebarTrigger
-            onClick={toggleSidebar}
-            className="hidden md:flex"
-           />
-          <div className="flex w-full items-center justify-end gap-2">
-            <Link href="/pengaturan" aria-label="Pengaturan">
-              <Button
-                variant="ghost"
-                size="icon"
+        </SheetTrigger>
+        <SheetContent side="left">
+          <nav className="grid gap-6 text-lg font-medium">
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-lg font-semibold"
+            >
+              <Logo />
+            </Link>
+            {topNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
                 className={cn(
-                  pathname === "/pengaturan" && "bg-accent text-accent-foreground"
+                  "hover:text-foreground",
+                  pathname.startsWith(item.href) ? "text-foreground" : "text-muted-foreground"
                 )}
               >
-                <Settings className="h-5 w-5" />
-              </Button>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </SheetContent>
+      </Sheet>
+  )
+
+  return (
+    <div className="flex min-h-screen w-full flex-col">
+      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
+        <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-lg font-semibold md:text-base"
+          >
+            <Logo />
+            <span className="sr-only">Petrichor</span>
+          </Link>
+          {topNavItems.map(item => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "transition-colors hover:text-foreground",
+                pathname.startsWith(item.href) ? "text-foreground font-semibold" : "text-muted-foreground"
+              )}
+            >
+              {item.label}
             </Link>
-            <ThemeToggle />
-          </div>
-        </header>
-        <main className="flex-1 overflow-auto p-4 sm:p-6">
-          {isLoading ? (
-            <div className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Skeleton className="h-28 rounded-lg" />
-                <Skeleton className="h-28 rounded-lg" />
-                <Skeleton className="h-28 rounded-lg" />
-                <Skeleton className="h-28 rounded-lg" />
-              </div>
-              <Skeleton className="h-80 rounded-lg" />
+          ))}
+        </nav>
+        <div className="flex md:hidden">
+            <MobileNav />
+        </div>
+        <div className="flex w-full items-center justify-end gap-4">
+          <ThemeToggle />
+        </div>
+      </header>
+      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+        {isLoading ? (
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Skeleton className="h-28 rounded-lg" />
+              <Skeleton className="h-28 rounded-lg" />
+              <Skeleton className="h-28 rounded-lg" />
+              <Skeleton className="h-28 rounded-lg" />
             </div>
-          ) : (
-            children
-          )}
-        </main>
-      </div>
+            <Skeleton className="h-80 rounded-lg" />
+          </div>
+        ) : (
+          children
+        )}
+      </main>
     </div>
   );
 }

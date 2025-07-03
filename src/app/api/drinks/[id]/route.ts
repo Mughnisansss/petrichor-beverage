@@ -4,6 +4,7 @@ import type { Drink } from '@/lib/types';
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   const { id } = params;
+  // The client will recalculate costPrice based on ingredients and send it
   const updatedDrinkData: Omit<Drink, 'id'> = await request.json();
   const data = await readDb();
   
