@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/main-layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/context/AppContext";
@@ -21,6 +21,24 @@ export default function PengaturanPage() {
     storageMode,
     setStorageMode
   } = useAppContext();
+
+  // Local state to manage the setting before saving
+  const [selectedMode, setSelectedMode] = useState<"local" | "server" | "cloud">(storageMode);
+
+  // Sync local state if context changes
+  useEffect(() => {
+    setSelectedMode(storageMode);
+  }, [storageMode]);
+
+  const handleSaveSettings = () => {
+    if (selectedMode !== storageMode) {
+      setStorageMode(selectedMode as "local" | "server");
+      toast({
+        title: "Pengaturan Disimpan",
+        description: "Mode penyimpanan data telah berhasil diperbarui.",
+      });
+    }
+  };
 
   const downloadFile = (content: string, filename: string, contentType: string) => {
     const blob = new Blob([content], { type: contentType });
@@ -124,18 +142,18 @@ export default function PengaturanPage() {
           <CardHeader>
             <CardTitle>Pengaturan Aplikasi</CardTitle>
             <CardDescription>
-              Kelola pengaturan umum dan data aplikasi Anda.
+              Kelola pengaturan umum dan data aplikasi Anda. Klik "Simpan Pengaturan" untuk menerapkan perubahan.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Mode Penyimpanan Data</h3>
               <p className="text-sm text-muted-foreground">
-                Pilih di mana data aplikasi Anda disimpan. Perubahan akan memuat ulang data dari sumber yang dipilih.
+                Pilih di mana data aplikasi Anda disimpan. Perubahan akan diterapkan setelah menekan tombol simpan.
               </p>
                <RadioGroup 
-                value={storageMode} 
-                onValueChange={(value) => setStorageMode(value as "local" | "server")}
+                value={selectedMode} 
+                onValueChange={(value) => setSelectedMode(value as "local" | "server")}
                 className="space-y-2"
               >
                 <div className="flex items-center space-x-2">
@@ -184,6 +202,11 @@ export default function PengaturanPage() {
               </div>
             </div>
           </CardContent>
+          <CardFooter>
+            <Button onClick={handleSaveSettings} disabled={selectedMode === storageMode || isLoading}>
+              Simpan Pengaturan
+            </Button>
+          </CardFooter>
         </Card>
       </div>
     </MainLayout>
