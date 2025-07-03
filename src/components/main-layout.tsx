@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import { Menu, Settings } from "lucide-react";
 
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
@@ -58,6 +58,15 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 {item.label}
               </Link>
             ))}
+            <Link
+                href="/pengaturan"
+                className={cn(
+                  "hover:text-foreground",
+                  pathname.startsWith('/pengaturan') ? "text-foreground" : "text-muted-foreground"
+                )}
+              >
+                Pengaturan
+            </Link>
           </nav>
         </SheetContent>
       </Sheet>
@@ -90,8 +99,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <div className="flex md:hidden">
             <MobileNav />
         </div>
-        <div className="flex w-full items-center justify-end gap-4">
+        <div className="flex w-full items-center justify-end gap-2">
           <ThemeToggle />
+          <Link href="/pengaturan" passHref>
+              <Button variant="ghost" size="icon">
+                <Settings className="h-5 w-5" />
+                <span className="sr-only">Pengaturan</span>
+              </Button>
+            </Link>
         </div>
       </header>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
