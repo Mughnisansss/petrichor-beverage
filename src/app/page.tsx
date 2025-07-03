@@ -2,8 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -12,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import {
   isWithinInterval,
   parseISO,
@@ -23,9 +22,18 @@ import {
   startOfMonth,
   endOfMonth,
   subDays,
+  addDays,
+  format,
 } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { MainLayout } from "@/components/main-layout";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 export default function DashboardPage() {
   const { sales, drinks, operationalCosts } = useAppContext();
@@ -109,6 +117,40 @@ export default function DashboardPage() {
     };
   }, [filteredSales, drinks, filteredOperationalCosts]);
 
+  const salesChartData = useMemo(() => {
+    if (!date?.from || !date?.to) return [];
+
+    const dailyRevenue = new Map<string, number>();
+    filteredSales.forEach(sale => {
+      const saleDate = format(parseISO(sale.date), "yyyy-MM-dd");
+      const drink = drinks.find(d => d.id === sale.drinkId);
+      if (drink) {
+        const revenue = drink.sellingPrice * sale.quantity * (1 - sale.discount / 100);
+        dailyRevenue.set(saleDate, (dailyRevenue.get(saleDate) || 0) + revenue);
+      }
+    });
+
+    const chartData: { date: string; revenue: number }[] = [];
+    let currentDate = date.from;
+    while (currentDate <= date.to) {
+      const fullDateStr = format(currentDate, "yyyy-MM-dd");
+      const shortDateStr = format(currentDate, "dd MMM");
+      chartData.push({
+        date: shortDateStr,
+        revenue: dailyRevenue.get(fullDateStr) || 0,
+      });
+      currentDate = addDays(currentDate, 1);
+    }
+    return chartData;
+  }, [date, filteredSales, drinks]);
+
+  const chartConfig = {
+    revenue: {
+      label: "Pendapatan",
+      color: "hsl(var(--chart-1))",
+    },
+  } satisfies ChartConfig;
+
   return (
     <MainLayout>
       <div className="flex flex-col gap-8">
@@ -160,76 +202,46 @@ export default function DashboardPage() {
             </Card>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader><CardTitle>Detail Penjualan</CardTitle></CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead>Minuman</TableHead>
-                      <TableHead>Jml</TableHead>
-                      <TableHead className="text-right">Pendapatan</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredSales.length > 0 ? (
-                      filteredSales.map(sale => {
-                         const drink = drinks.find(d => d.id === sale.drinkId);
-                         const revenue = drink ? drink.sellingPrice * sale.quantity * (1 - sale.discount / 100) : 0;
-                         return (
-                          <TableRow key={sale.id}>
-                            <TableCell>{formatDate(sale.date, "dd MMM yyyy")}</TableCell>
-                            <TableCell className="font-medium">{drink?.name || 'N/A'}</TableCell>
-                            <TableCell>{sale.quantity}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(revenue)}</TableCell>
-                          </TableRow>
-                         );
-                      })
-                    ) : (
-                      <TableRow>
-                          <TableCell colSpan={4} className="h-24 text-center">
-                              Belum ada data penjualan pada rentang ini.
-                          </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>Detail Biaya Operasional</CardTitle></CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead>Deskripsi</TableHead>
-                      <TableHead className="text-right">Jumlah</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredOperationalCosts.length > 0 ? (
-                      filteredOperationalCosts.map(cost => (
-                        <TableRow key={cost.id}>
-                          <TableCell>{formatDate(cost.date, "dd MMM yyyy")}</TableCell>
-                          <TableCell className="font-medium">{cost.description}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(cost.amount)}</TableCell>
-                        </TableRow>
-                       ))
-                    ) : (
-                      <TableRow>
-                          <TableCell colSpan={3} className="h-24 text-center">
-                              Belum ada biaya operasional pada rentang ini.
-                          </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-        </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>Analisis Pendapatan</CardTitle>
+                <CardDescription>Pendapatan harian untuk periode yang dipilih.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {salesChartData.length > 0 ? (
+                <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                    <BarChart accessibilityLayer data={salesChartData}>
+                        <CartesianGrid vertical={false} />
+                        <XAxis
+                            dataKey="date"
+                            tickLine={false}
+                            tickMargin={10}
+                            axisLine={false}
+                            fontSize={12}
+                        />
+                        <YAxis
+                            tickFormatter={(value) => formatCurrency(Number(value))}
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                        />
+                        <ChartTooltip
+                            cursor={false}
+                            content={<ChartTooltipContent
+                                formatter={(value) => formatCurrency(Number(value))}
+                                labelClassName="text-sm"
+                            />}
+                        />
+                        <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+                    </BarChart>
+                </ChartContainer>
+              ) : (
+                <div className="h-48 flex items-center justify-center text-muted-foreground">
+                  Belum ada data penjualan pada rentang ini untuk ditampilkan.
+                </div>
+              )}
+            </CardContent>
+        </Card>
       </div>
     </MainLayout>
   );
