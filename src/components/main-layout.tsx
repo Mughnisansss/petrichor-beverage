@@ -28,7 +28,9 @@ const navItems = [
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const pageTitle = navItems.find(item => item.href === pathname)?.label || "Dashboard";
+  const pageTitle = React.useMemo(() => 
+    navItems.find(item => item.href === pathname)?.label || "Dashboard"
+  , [pathname]);
   
   return (
     <SidebarProvider>
