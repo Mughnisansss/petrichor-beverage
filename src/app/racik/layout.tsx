@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { CupSoda, ClipboardList, Package, Utensils, Sparkles } from "lucide-react"
+import { CupSoda, ClipboardList, Package, Utensils } from "lucide-react"
 import { MainLayout } from "@/components/main-layout"
 
 const sidebarNavItems = [
@@ -27,11 +27,6 @@ const sidebarNavItems = [
     title: "Biaya Operasional",
     href: "/racik/operasional",
     icon: ClipboardList,
-  },
-  {
-    title: "Asisten AI",
-    href: "/racik/ai-assistant",
-    icon: Sparkles,
   },
 ]
 
