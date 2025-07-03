@@ -6,7 +6,8 @@ import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food } from '@/
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { 
   isRawMaterialInUse, 
-  hasDrinkAssociatedSales, 
+  hasDrinkAssociatedSales,
+  hasFoodAssociatedSales,
   recalculateDependentProductCosts 
 } from '@/lib/data-logic';
 
@@ -171,7 +172,10 @@ const localStorageService = {
   },
   deleteFood: async (id: string) => {
     const data = getLocalData();
-    // No sales check for food yet
+    // Use centralized logic to check for food sales
+    if (hasFoodAssociatedSales(data, id)) {
+      return Promise.resolve({ ok: false, message: 'Makanan tidak dapat dihapus karena memiliki riwayat penjualan.' });
+    }
     data.foods = data.foods.filter(d => d.id !== id);
     setLocalData(data);
     return Promise.resolve({ ok: true, message: 'Makanan berhasil dihapus.' });
@@ -252,6 +256,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const data = await currentService.getData();
+
+      // --- Migration for Sales data structure for backward compatibility ---
+      if (data.sales && Array.isArray(data.sales)) {
+        data.sales = data.sales.map((sale: any) => {
+          if (sale.drinkId && typeof sale.productId === 'undefined') {
+            const { drinkId, ...rest } = sale;
+            return {
+              ...rest,
+              productId: drinkId,
+              productType: 'drink',
+            };
+          }
+          return sale;
+        });
+      }
+      
       // Ensure all data arrays exist
       data.drinks = data.drinks || [];
       data.foods = data.foods || [];

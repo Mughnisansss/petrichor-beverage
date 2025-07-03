@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readDb, writeDb } from '@/lib/db';
+import { hasFoodAssociatedSales } from '@/lib/data-logic';
 import type { Food } from '@/lib/types';
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
@@ -32,10 +33,15 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   if (!data.foods) {
     data.foods = [];
   }
-
-  // NOTE: Sales check is omitted as food sales are not yet tracked.
-  // This can be added later if the Sale model is updated.
   
+  // Use centralized logic to check for sales records for food
+  if (hasFoodAssociatedSales(data, id)) {
+    return NextResponse.json(
+      { message: 'Makanan tidak dapat dihapus karena memiliki riwayat penjualan.' },
+      { status: 400 }
+    );
+  }
+
   const initialLength = data.foods.length;
   data.foods = data.foods.filter(d => d.id !== id);
 

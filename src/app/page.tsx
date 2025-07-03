@@ -38,7 +38,7 @@ import {
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 export default function DashboardPage() {
-  const { sales, drinks, operationalCosts } = useAppContext();
+  const { sales, drinks, foods, operationalCosts } = useAppContext();
   const [filter, setFilter] = useState<string>("last_30_days");
   const [date, setDate] = useState<DateRange | undefined>(undefined);
 
@@ -81,31 +81,35 @@ export default function DashboardPage() {
     });
   }, [sales, date]);
 
-  const { totalRevenue, totalCost, totalOperationalCost, netProfit, bestSellingDrink } = useMemo(() => {
+  const { totalRevenue, totalCost, totalOperationalCost, netProfit, bestSellingProduct } = useMemo(() => {
     if (!date?.from || !date?.to) {
-        return { totalRevenue: 0, totalCost: 0, totalOperationalCost: 0, netProfit: 0, bestSellingDrink: 'Tidak ada' };
+        return { totalRevenue: 0, totalCost: 0, totalOperationalCost: 0, netProfit: 0, bestSellingProduct: 'Tidak ada' };
     }
 
     let revenue = 0;
     let cost = 0;
-    const salesByDrink: { [key: string]: { quantity: number; name: string } } = {};
+    const salesByProduct: { [key: string]: { quantity: number; name: string } } = {};
 
     filteredSales.forEach(sale => {
-      const drink = drinks.find(d => d.id === sale.drinkId);
-      if (drink) {
-        const saleRevenue = drink.sellingPrice * sale.quantity * (1 - sale.discount / 100);
+      const { productId, productType, quantity, discount } = sale;
+      const product = productType === 'drink'
+        ? drinks.find(d => d.id === productId)
+        : foods.find(f => f.id === productId);
+      
+      if (product) {
+        const saleRevenue = product.sellingPrice * quantity * (1 - discount / 100);
         revenue += saleRevenue;
-        cost += drink.costPrice * sale.quantity;
+        cost += product.costPrice * quantity;
         
-        if (!salesByDrink[drink.id]) {
-            salesByDrink[drink.id] = { quantity: 0, name: drink.name };
+        if (!salesByProduct[product.id]) {
+            salesByProduct[product.id] = { quantity: 0, name: product.name };
         }
-        salesByDrink[drink.id].quantity += sale.quantity;
+        salesByProduct[product.id].quantity += quantity;
       }
     });
     
-    const sortedDrinks = Object.values(salesByDrink).sort((a,b) => b.quantity - a.quantity);
-    const topDrink = sortedDrinks.length > 0 ? `${sortedDrinks[0].name} (${sortedDrinks[0].quantity} terjual)` : 'Tidak ada';
+    const sortedProducts = Object.values(salesByProduct).sort((a,b) => b.quantity - a.quantity);
+    const topProduct = sortedProducts.length > 0 ? `${sortedProducts[0].name} (${sortedProducts[0].quantity} terjual)` : 'Tidak ada';
 
     // --- Accurate Operational Cost Calculation ---
     const oneTimeCosts = operationalCosts
@@ -137,9 +141,9 @@ export default function DashboardPage() {
         totalCost: cost, 
         totalOperationalCost: finalOperationalCost,
         netProfit: revenue - cost - finalOperationalCost,
-        bestSellingDrink: topDrink
+        bestSellingProduct: topProduct
     };
-  }, [filteredSales, drinks, operationalCosts, date]);
+  }, [filteredSales, drinks, foods, operationalCosts, date]);
 
   const salesChartData = useMemo(() => {
     if (!date?.from || !date?.to) return [];
@@ -147,9 +151,13 @@ export default function DashboardPage() {
     const dailyRevenue = new Map<string, number>();
     filteredSales.forEach(sale => {
       const saleDate = format(parseISO(sale.date), "yyyy-MM-dd");
-      const drink = drinks.find(d => d.id === sale.drinkId);
-      if (drink) {
-        const revenue = drink.sellingPrice * sale.quantity * (1 - sale.discount / 100);
+      const { productId, productType, quantity, discount } = sale;
+      const product = productType === 'drink'
+        ? drinks.find(d => d.id === productId)
+        : foods.find(f => f.id === productId);
+
+      if (product) {
+        const revenue = product.sellingPrice * quantity * (1 - discount / 100);
         dailyRevenue.set(saleDate, (dailyRevenue.get(saleDate) || 0) + revenue);
       }
     });
@@ -166,7 +174,7 @@ export default function DashboardPage() {
       currentDate = addDays(currentDate, 1);
     }
     return chartData;
-  }, [date, filteredSales, drinks]);
+  }, [date, filteredSales, drinks, foods]);
 
   const chartConfig = {
     revenue: {
@@ -276,10 +284,10 @@ export default function DashboardPage() {
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Minuman Terlaris</CardTitle>
+                        <CardTitle>Produk Terlaris</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-lg font-semibold">{bestSellingDrink}</p>
+                        <p className="text-lg font-semibold">{bestSellingProduct}</p>
                     </CardContent>
                 </Card>
             </div>

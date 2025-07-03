@@ -1,4 +1,5 @@
 
+
 export interface RawMaterial {
   id: string;
   name: string;
@@ -31,7 +32,8 @@ export interface Food {
 
 export interface Sale {
   id: string;
-  drinkId: string;
+  productId: string;
+  productType: 'drink' | 'food';
   quantity: number;
   discount: number;
   date: string;
