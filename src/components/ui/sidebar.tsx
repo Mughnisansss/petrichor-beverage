@@ -20,12 +20,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-const SIDEBAR_COOKIE_NAME = "sidebar_state"
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
+const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
-const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
 type SidebarContext = {
   state: "expanded" | "collapsed"
@@ -68,26 +66,13 @@ const SidebarProvider = React.forwardRef<
     const [openMobile, setOpenMobile] = React.useState(false)
     const [open, setOpen] = React.useState(defaultOpen)
 
-    React.useEffect(() => {
-        const cookie = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
-        if (cookie) {
-          setOpen(cookie.split("=")[1] === "true")
-        }
-    }, [])
-
-    React.useEffect(() => {
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${open}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
-    }, [open])
-
     const toggleSidebar = React.useCallback(() => {
       if (isMobile) {
         setOpenMobile((current) => !current)
       } else {
         setOpen((current) => !current)
       }
-    }, [isMobile])
+    }, [isMobile, setOpen, setOpenMobile])
 
     React.useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
@@ -116,7 +101,7 @@ const SidebarProvider = React.forwardRef<
         setOpenMobile,
         toggleSidebar,
       }),
-      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+      [state, open, isMobile, openMobile, toggleSidebar]
     )
 
 
