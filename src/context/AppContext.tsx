@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { nanoid } from 'nanoid';
-import type { Drink, Sale, OperationalCost, RawMaterial, DbData } from '@/lib/types';
+import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
 type StorageMode = 'local' | 'server';
@@ -11,19 +11,27 @@ type StorageMode = 'local' | 'server';
 const apiService = {
   // We make these return DbData to have a consistent interface with localStorageService
   getData: async (): Promise<DbData> => {
-    const [drinks, sales, operationalCosts, rawMaterials] = await Promise.all([
+    const [drinks, foods, sales, operationalCosts, rawMaterials] = await Promise.all([
       (await fetch('/api/drinks')).json(),
+      (await fetch('/api/foods')).json(),
       (await fetch('/api/sales')).json(),
       (await fetch('/api/operasional')).json(),
       (await fetch('/api/bahan-baku')).json(),
     ]);
-    return { drinks, sales, operationalCosts, rawMaterials };
+    return { drinks, foods, sales, operationalCosts, rawMaterials };
   },
   addDrink: async (drink: Omit<Drink, 'id'>): Promise<Drink> => (await fetch('/api/drinks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(drink) })).json(),
   updateDrink: async (id: string, drink: Omit<Drink, 'id'>): Promise<Drink> => (await fetch(`/api/drinks/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(drink) })).json(),
   deleteDrink: async (id: string) => {
     const res = await fetch(`/api/drinks/${id}`, { method: 'DELETE' });
     const data = res.ok ? { message: 'Minuman berhasil dihapus.' } : await res.json();
+    return { ok: res.ok, message: data.message };
+  },
+  addFood: async (food: Omit<Food, 'id'>): Promise<Food> => (await fetch('/api/foods', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(food) })).json(),
+  updateFood: async (id: string, food: Omit<Food, 'id'>): Promise<Food> => (await fetch(`/api/foods/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(food) })).json(),
+  deleteFood: async (id: string) => {
+    const res = await fetch(`/api/foods/${id}`, { method: 'DELETE' });
+    const data = res.ok ? { message: 'Makanan berhasil dihapus.' } : await res.json();
     return { ok: res.ok, message: data.message };
   },
   addSale: async (sale: Omit<Sale, 'id' | 'date'>): Promise<Sale> => (await fetch('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sale) })).json(),
@@ -47,13 +55,13 @@ const LOCAL_STORAGE_KEY = 'petrichor_data';
 
 const getLocalData = (): DbData => {
   if (typeof window === 'undefined') {
-    return { drinks: [], sales: [], operationalCosts: [], rawMaterials: [] };
+    return { drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
   }
   const data = window.localStorage.getItem(LOCAL_STORAGE_KEY);
   try {
-    return data ? JSON.parse(data) : { drinks: [], sales: [], operationalCosts: [], rawMaterials: [] };
+    return data ? JSON.parse(data) : { drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
   } catch {
-    return { drinks: [], sales: [], operationalCosts: [], rawMaterials: [] };
+    return { drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
   }
 };
 
@@ -77,10 +85,18 @@ const localStorageService = {
     const updatedMaterial = { ...data.rawMaterials[index], ...materialUpdate };
     data.rawMaterials[index] = updatedMaterial;
 
-    // Recalculate cost price for affected drinks
+    // Recalculate cost price for affected drinks and foods
     data.drinks.forEach(drink => {
       if (drink.ingredients.some(i => i.rawMaterialId === id)) {
         drink.costPrice = drink.ingredients.reduce((acc, ing) => {
+          const mat = data.rawMaterials.find(m => m.id === ing.rawMaterialId);
+          return acc + (mat ? mat.costPerUnit * ing.quantity : 0);
+        }, 0);
+      }
+    });
+     data.foods.forEach(food => {
+      if (food.ingredients.some(i => i.rawMaterialId === id)) {
+        food.costPrice = food.ingredients.reduce((acc, ing) => {
           const mat = data.rawMaterials.find(m => m.id === ing.rawMaterialId);
           return acc + (mat ? mat.costPerUnit * ing.quantity : 0);
         }, 0);
@@ -92,9 +108,10 @@ const localStorageService = {
   },
   deleteRawMaterial: async (id: string) => {
     const data = getLocalData();
-    const isInUse = data.drinks.some(d => d.ingredients.some(i => i.rawMaterialId === id));
-    if (isInUse) {
-      return Promise.resolve({ ok: false, message: 'Bahan baku tidak dapat dihapus karena digunakan dalam resep minuman.' });
+    const isDrinkInUse = data.drinks.some(d => d.ingredients.some(i => i.rawMaterialId === id));
+    const isFoodInUse = data.foods.some(f => f.ingredients.some(i => i.rawMaterialId === id));
+    if (isDrinkInUse || isFoodInUse) {
+      return Promise.resolve({ ok: false, message: 'Bahan baku tidak dapat dihapus karena digunakan dalam resep.' });
     }
     data.rawMaterials = data.rawMaterials.filter(m => m.id !== id);
     setLocalData(data);
@@ -124,6 +141,30 @@ const localStorageService = {
     data.drinks = data.drinks.filter(d => d.id !== id);
     setLocalData(data);
     return Promise.resolve({ ok: true, message: 'Minuman berhasil dihapus.' });
+  },
+  
+  addFood: async (food: Omit<Food, 'id'>): Promise<Food> => {
+    const data = getLocalData();
+    const newFood = { ...food, id: nanoid() };
+    if(!data.foods) data.foods = [];
+    data.foods.push(newFood);
+    setLocalData(data);
+    return Promise.resolve(newFood);
+  },
+  updateFood: async (id: string, foodUpdate: Omit<Food, 'id'>): Promise<Food> => {
+    const data = getLocalData();
+    const index = data.foods.findIndex(d => d.id === id);
+    if (index === -1) throw new Error("Food not found");
+    data.foods[index] = { ...data.foods[index], ...foodUpdate, id };
+    setLocalData(data);
+    return Promise.resolve(data.foods[index]);
+  },
+  deleteFood: async (id: string) => {
+    const data = getLocalData();
+    // No sales check for food yet
+    data.foods = data.foods.filter(d => d.id !== id);
+    setLocalData(data);
+    return Promise.resolve({ ok: true, message: 'Makanan berhasil dihapus.' });
   },
 
   addSale: async (sale: Omit<Sale, 'id' | 'date'>): Promise<Sale> => {
@@ -159,6 +200,7 @@ const localStorageService = {
 
 interface AppContextType {
   drinks: Drink[];
+  foods: Food[];
   sales: Sale[];
   operationalCosts: OperationalCost[];
   rawMaterials: RawMaterial[];
@@ -169,6 +211,9 @@ interface AppContextType {
   addDrink: (drink: Omit<Drink, 'id'>) => Promise<Drink>;
   updateDrink: (id: string, drink: Omit<Drink, 'id'>) => Promise<Drink>;
   deleteDrink: (id: string) => Promise<{ ok: boolean, message: string }>;
+  addFood: (food: Omit<Food, 'id'>) => Promise<Food>;
+  updateFood: (id: string, food: Omit<Food, 'id'>) => Promise<Food>;
+  deleteFood: (id: string) => Promise<{ ok: boolean, message: string }>;
   addSale: (sale: Omit<Sale, 'id' | 'date'>) => Promise<Sale>;
   addOperationalCost: (cost: Omit<OperationalCost, 'id' | 'date'>) => Promise<OperationalCost>;
   updateOperationalCost: (id: string, cost: Omit<OperationalCost, 'id'|'date'>) => Promise<OperationalCost>;
@@ -182,7 +227,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [storageMode, setStorageMode] = useLocalStorage<StorageMode>('petrichor_storage_mode', 'local');
-  const [dbData, setDbData] = useState<DbData>({ drinks: [], sales: [], operationalCosts: [], rawMaterials: [] });
+  const [dbData, setDbData] = useState<DbData>({ drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
   const [isLoading, setIsLoading] = useState(true);
 
   const currentService = useMemo(() => {
@@ -193,13 +238,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const data = await currentService.getData();
+      // Ensure all data arrays exist
+      data.drinks = data.drinks || [];
+      data.foods = data.foods || [];
+      data.sales = data.sales || [];
+      data.operationalCosts = data.operationalCosts || [];
+      data.rawMaterials = data.rawMaterials || [];
+
       // Ensure sales and costs are sorted descending by date
       data.sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       data.operationalCosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setDbData(data);
     } catch (error) {
       console.error("Failed to fetch data", error);
-      setDbData({ drinks: [], sales: [], operationalCosts: [], rawMaterials: [] });
+      setDbData({ drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
     } finally {
       setIsLoading(false);
     }
@@ -220,6 +272,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     
     return {
       drinks: dbData.drinks,
+      foods: dbData.foods,
       sales: dbData.sales,
       operationalCosts: dbData.operationalCosts,
       rawMaterials: dbData.rawMaterials,
@@ -230,6 +283,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addDrink: wrapWithRefetch(currentService.addDrink),
       updateDrink: wrapWithRefetch(currentService.updateDrink),
       deleteDrink: wrapWithRefetch(currentService.deleteDrink),
+      addFood: wrapWithRefetch(currentService.addFood),
+      updateFood: wrapWithRefetch(currentService.updateFood),
+      deleteFood: wrapWithRefetch(currentService.deleteFood),
       addSale: wrapWithRefetch(currentService.addSale),
       addOperationalCost: wrapWithRefetch(currentService.addOperationalCost),
       updateOperationalCost: wrapWithRefetch(currentService.updateOperationalCost),

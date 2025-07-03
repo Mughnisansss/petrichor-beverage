@@ -18,6 +18,14 @@ export interface Drink {
   sellingPrice: number;
 }
 
+export interface Food {
+  id: string;
+  name: string;
+  ingredients: Ingredient[];
+  costPrice: number; // Calculated from ingredients, stored for historical accuracy
+  sellingPrice: number;
+}
+
 export interface Sale {
   id: string;
   drinkId: string;
@@ -35,6 +43,7 @@ export interface OperationalCost {
 
 export interface DbData {
   drinks: Drink[];
+  foods: Food[];
   sales: Sale[];
   operationalCosts: OperationalCost[];
   rawMaterials: RawMaterial[];
