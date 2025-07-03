@@ -1,10 +1,11 @@
+
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
-# PENTING: Aplikasi ini menggunakan db.json untuk pengembangan.
-# Untuk produksi, Anda harus beralih ke database persisten seperti Firestore
-# karena sistem file di App Hosting bersifat sementara dan perubahan pada db.json
-# tidak akan tersimpan secara permanen.
+# PENTING: Aplikasi ini menggunakan db.json untuk pengembangan (mode "Server").
+# Untuk produksi, Anda harus beralih ke database persisten seperti Firestore.
+# Sistem file di App Hosting bersifat sementara dan perubahan pada db.json
+# tidak akan tersimpan secara permanen setelah deployment atau restart.
 
 runConfig:
   # Tingkatkan nilai ini untuk secara otomatis menaikkan jumlah instance

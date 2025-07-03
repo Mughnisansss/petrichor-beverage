@@ -29,6 +29,11 @@ function OrderanTab() {
     return cart.reduce((sum, item) => sum + item.sellingPrice * item.quantity, 0);
   }, [cart]);
 
+  const allReady = useMemo(() => {
+    if (cart.length === 0) return false;
+    return cart.every(item => completedOrders.has(item.cartId));
+  }, [cart, completedOrders]);
+
   const handleProcessOrder = async () => {
     if (cart.length === 0) return;
     try {
@@ -132,8 +137,14 @@ function OrderanTab() {
         <span>Total</span>
         <span>{formatCurrency(total)}</span>
       </div>
-      <Button className="w-full" size="lg" onClick={handleProcessOrder} disabled={isLoading || cart.length === 0}>
-        Proses & Catat Semua Penjualan
+      <Button 
+        className="w-full transition-all" 
+        size="lg" 
+        onClick={handleProcessOrder} 
+        disabled={isLoading || cart.length === 0}
+        variant={allReady ? "default" : "secondary"}
+      >
+        {allReady ? <><CheckCircle className="mr-2 h-5 w-5"/> Konfirmasi & Catat Penjualan</> : "Proses & Catat Semua Penjualan"}
       </Button>
     </div>
   );
@@ -245,7 +256,10 @@ export default function KasirPage() {
         </div>
         <div className="lg:col-span-1">
           <Card>
-            <CardHeader><CardTitle>Riwayat Penjualan (Terbaru)</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>Riwayat Penjualan (Terbaru)</CardTitle>
+              <CardDescription>Menampilkan 25 transaksi terakhir.</CardDescription>
+            </CardHeader>
             <CardContent>
               <div className="max-h-[60vh] overflow-y-auto">
                 <Table>
@@ -258,7 +272,7 @@ export default function KasirPage() {
                   </TableHeader>
                   <TableBody>
                     {sales.length > 0 ? (
-                      sales.map(sale => {
+                      sales.slice(0, 25).map(sale => {
                         const product = sale.productType === 'drink'
                             ? drinks.find(d => d.id === sale.productId)
                             : foods.find(f => f.id === sale.productId);

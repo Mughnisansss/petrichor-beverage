@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input";
 export default function PengaturanPage() {
   const { toast } = useToast();
   const { 
-    drinks, 
+    drinks,
+    foods,
     sales, 
     rawMaterials, 
     operationalCosts, 
@@ -76,7 +77,9 @@ export default function PengaturanPage() {
       return;
     }
     const allData = {
+      appName,
       drinks,
+      foods,
       sales,
       rawMaterials,
       operationalCosts,
@@ -122,29 +125,38 @@ export default function PengaturanPage() {
 
   const processSalesForCsv = (salesData: typeof sales) => {
     return salesData.map(sale => {
-      const drink = drinks.find(d => d.id === sale.drinkId);
+      const product = sale.productType === 'drink' 
+        ? drinks.find(d => d.id === sale.productId)
+        : foods.find(f => f.id === sale.productId);
+      const toppingsString = (sale.selectedToppings || []).map(t => {
+        const material = rawMaterials.find(m => m.id === t.rawMaterialId);
+        return material?.name || 'N/A';
+      }).join('; ');
+
       return {
         id: sale.id,
         tanggal: sale.date,
-        nama_minuman: drink?.name || 'ID tidak ditemukan',
+        tipe_produk: sale.productType,
+        nama_produk: product?.name || 'ID tidak ditemukan',
         jumlah: sale.quantity,
         diskon_persen: sale.discount,
-        total_pendapatan: drink ? drink.sellingPrice * sale.quantity * (1 - sale.discount / 100) : 0,
+        total_pendapatan: sale.totalSalePrice,
+        toppings: toppingsString,
       }
     });
   }
 
-  const processDrinksForCsv = (drinksData: typeof drinks) => {
-    return drinksData.map(drink => {
-      const ingredientsString = drink.ingredients.map(ing => {
+  const processProductsForCsv = (productsData: typeof drinks | typeof foods) => {
+    return productsData.map(product => {
+      const ingredientsString = product.ingredients.map(ing => {
         const material = rawMaterials.find(m => m.id === ing.rawMaterialId);
         return `${material?.name || '?'}:${ing.quantity}${material?.unit || ''}`;
       }).join('; ');
       return {
-        id: drink.id,
-        nama_minuman: drink.name,
-        harga_pokok: drink.costPrice,
-        harga_jual: drink.sellingPrice,
+        id: product.id,
+        nama_produk: product.name,
+        harga_pokok: product.costPrice,
+        harga_jual: product.sellingPrice,
         resep: ingredientsString,
       }
     });
@@ -174,7 +186,7 @@ export default function PengaturanPage() {
                   placeholder="Masukkan nama aplikasi/toko Anda"
                 />
                 <p className="text-sm text-muted-foreground">
-                  Nama ini akan muncul sebagai logo di bagian atas.
+                  Nama ini akan muncul sebagai logo dan di beberapa judul halaman.
                 </p>
               </div>
             </div>
@@ -193,13 +205,13 @@ export default function PengaturanPage() {
                   <RadioGroupItem value="local" id="local" />
                   <Label htmlFor="local">Penyimpanan Browser (Lokal)</Label>
                 </div>
-                <p className="text-xs text-muted-foreground pl-6">Data disimpan hanya di browser ini. Cocok untuk penggunaan pribadi dan offline.</p>
+                <p className="text-xs text-muted-foreground pl-6">Data disimpan hanya di browser ini. Cocok untuk penggunaan pribadi dan offline. Data tidak akan tersinkronisasi antar perangkat.</p>
                 
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="server" id="server" />
-                  <Label htmlFor="server">Penyimpanan Server (db.json)</Label>
+                  <Label htmlFor="server">Penyimpanan Server (Mode Demo)</Label>
                 </div>
-                 <p className="text-xs text-muted-foreground pl-6">Mode pengembangan. Data disimpan di server. Tidak untuk produksi.</p>
+                 <p className="text-xs text-muted-foreground pl-6">Mode pengembangan. Data disimpan di server dalam file `db.json`. **Tidak cocok untuk deployment produksi karena data bisa hilang.**</p>
 
                 <div className="flex items-center space-x-2 opacity-50">
                   <RadioGroupItem value="cloud" id="cloud" disabled />
@@ -217,7 +229,7 @@ export default function PengaturanPage() {
               
               <div className="p-4 border rounded-lg space-y-2">
                 <h4 className="font-semibold text-base">Cadangan Penuh</h4>
-                 <p className="text-xs text-muted-foreground">Unduh satu file berisi semua data. Berguna untuk backup.</p>
+                 <p className="text-xs text-muted-foreground">Unduh satu file berisi semua data (termasuk nama aplikasi). Berguna untuk backup.</p>
                 <Button onClick={handleExportJson} variant="secondary" disabled={isLoading}>
                   Ekspor Semua Data (JSON)
                 </Button>
@@ -228,7 +240,8 @@ export default function PengaturanPage() {
                 <p className="text-xs text-muted-foreground">Unduh data spesifik untuk dianalisis di Excel atau sejenisnya.</p>
                 <div className="flex flex-wrap gap-2">
                   <Button onClick={() => exportDataAsCsv(sales, 'penjualan.csv', processSalesForCsv)} variant="outline" disabled={isLoading}>Penjualan</Button>
-                  <Button onClick={() => exportDataAsCsv(drinks, 'minuman.csv', processDrinksForCsv)} variant="outline" disabled={isLoading}>Minuman</Button>
+                  <Button onClick={() => exportDataAsCsv(drinks, 'minuman.csv', processProductsForCsv)} variant="outline" disabled={isLoading}>Minuman</Button>
+                  <Button onClick={() => exportDataAsCsv(foods, 'makanan.csv', processProductsForCsv)} variant="outline" disabled={isLoading}>Makanan</Button>
                   <Button onClick={() => exportDataAsCsv(rawMaterials, 'bahan_baku.csv')} variant="outline" disabled={isLoading}>Bahan Baku</Button>
                   <Button onClick={() => exportDataAsCsv(operationalCosts, 'biaya_operasional.csv')} variant="outline" disabled={isLoading}>Biaya Operasional</Button>
                 </div>
