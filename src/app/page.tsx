@@ -24,6 +24,7 @@ import {
   subDays,
   addDays,
   format,
+  differenceInDays,
 } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { MainLayout } from "@/components/main-layout";
@@ -71,20 +72,19 @@ export default function DashboardPage() {
     setDate({ from, to });
   }, [filter]);
 
-  const filterByDate = useCallback((items: Array<{ date: string }>) => {
-    if (!date?.from || !date?.to) {
-      return []; // Return empty array while date range is being calculated
-    }
-    return items.filter(item => {
+  const filteredSales = useMemo(() => {
+    if (!date?.from || !date?.to) return [];
+    return sales.filter(item => {
       const itemDate = parseISO(item.date);
       return isWithinInterval(itemDate, { start: date.from!, end: date.to! });
     });
-  }, [date]);
-
-  const filteredSales = useMemo(() => filterByDate(sales), [sales, filterByDate]);
-  const filteredOperationalCosts = useMemo(() => filterByDate(operationalCosts), [operationalCosts, filterByDate]);
+  }, [sales, date]);
 
   const { totalRevenue, totalCost, totalOperationalCost, netProfit, bestSellingDrink } = useMemo(() => {
+    if (!date?.from || !date?.to) {
+        return { totalRevenue: 0, totalCost: 0, totalOperationalCost: 0, netProfit: 0, bestSellingDrink: 'Tidak ada' };
+    }
+
     let revenue = 0;
     let cost = 0;
     const salesByDrink: { [key: string]: { quantity: number; name: string } } = {};
@@ -106,16 +106,44 @@ export default function DashboardPage() {
     const sortedDrinks = Object.values(salesByDrink).sort((a,b) => b.quantity - a.quantity);
     const topDrink = sortedDrinks.length > 0 ? `${sortedDrinks[0].name} (${sortedDrinks[0].quantity} terjual)` : 'Tidak ada';
 
-    const operationalCost = filteredOperationalCosts.reduce((acc, curr) => acc + curr.amount, 0);
+    // --- Accurate Operational Cost Calculation ---
+    // 1. Calculate one-time costs that fall within the selected period.
+    const oneTimeCosts = operationalCosts
+      .filter(c => c.recurrence === 'sekali' && isWithinInterval(parseISO(c.date), { start: date.from!, end: date.to! }))
+      .reduce((sum, c) => sum + c.amount, 0);
+
+    // 2. Calculate the total daily rate from all active recurring costs.
+    // A recurring cost is considered active if it was created on or before the end of the period.
+    const recurringDailyRate = operationalCosts
+      .filter(c => c.recurrence !== 'sekali' && parseISO(c.date) <= date.to!)
+      .reduce((sum, c) => {
+        switch (c.recurrence) {
+          case 'harian':
+            return sum + c.amount;
+          case 'mingguan':
+            return sum + (c.amount / 7);
+          case 'bulanan':
+            return sum + (c.amount / 30); // Using 30 days for simplicity
+          default:
+            return sum;
+        }
+      }, 0);
+
+    // 3. Prorate recurring costs for the number of days in the selected period.
+    const numberOfDays = differenceInDays(date.to, date.from) + 1;
+    const totalRecurringCost = recurringDailyRate * numberOfDays;
+
+    // 4. The total operational cost is the sum of one-time and prorated recurring costs.
+    const finalOperationalCost = oneTimeCosts + totalRecurringCost;
     
     return { 
         totalRevenue: revenue, 
         totalCost: cost, 
-        totalOperationalCost: operationalCost,
-        netProfit: revenue - cost - operationalCost,
+        totalOperationalCost: finalOperationalCost,
+        netProfit: revenue - cost - finalOperationalCost,
         bestSellingDrink: topDrink
     };
-  }, [filteredSales, drinks, filteredOperationalCosts]);
+  }, [filteredSales, drinks, operationalCosts, date]);
 
   const salesChartData = useMemo(() => {
     if (!date?.from || !date?.to) return [];
