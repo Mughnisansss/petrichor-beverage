@@ -70,11 +70,16 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "hover:text-foreground",
+                  "hover:text-foreground flex items-center gap-2",
                   isActive(item.href, pathname) ? "text-foreground" : "text-muted-foreground"
                 )}
               >
                 {item.label}
+                 {item.href === '/kasir' && cart.length > 0 && (
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
+                    {cart.length}
+                  </span>
+                )}
               </Link>
             ))}
             <Link
@@ -107,11 +112,16 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               key={item.href}
               href={item.href}
               className={cn(
-                "transition-colors hover:text-foreground",
+                "transition-colors hover:text-foreground flex items-center gap-2",
                 isActive(item.href, pathname) ? "text-foreground font-semibold" : "text-muted-foreground"
               )}
             >
               {item.label}
+              {item.href === '/kasir' && cart.length > 0 && (
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
+                  {cart.length}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
@@ -120,17 +130,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex w-full items-center justify-end gap-2">
           <ThemeToggle />
-           <Link href="/kasir" passHref>
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="h-5 w-5" />
-              {cart.length > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
-                  {cart.length}
-                </span>
-              )}
-              <span className="sr-only">Keranjang Belanja</span>
-            </Button>
-          </Link>
           <Link href={settingsHref} passHref>
               <Button variant="ghost" size="icon">
                 <Settings className="h-5 w-5" />
