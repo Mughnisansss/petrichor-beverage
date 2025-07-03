@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Drink, Sale } from '@/lib/types';
 
@@ -17,12 +17,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [drinks, setDrinks] = useLocalStorage<Drink[]>("drinks", []);
   const [sales, setSales] = useLocalStorage<Sale[]>("sales", []);
 
-  const value = {
+  const value = useMemo(() => ({
     drinks,
     setDrinks,
     sales,
     setSales,
-  };
+  }), [drinks, setDrinks, sales, setSales]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
