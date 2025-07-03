@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Settings } from "lucide-react";
+import { Menu, Settings, ShoppingCart } from "lucide-react";
 
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
@@ -25,17 +25,22 @@ const topNavItems = [
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isLoading, appName } = useAppContext();
+  const { isLoading, appName, cart } = useAppContext();
   
   const settingsHref = "/pengaturan";
 
   const isActive = (href: string, currentPath: string) => {
+    // Exact match for the dashboard
     if (href === '/') {
       return currentPath === '/';
     }
     // Highlight "Produk" when on any /racik/* page
     if (href === '/racik/minuman') {
       return currentPath.startsWith('/racik');
+    }
+    // Highlight "Kasir" when on kasir page
+    if (href === '/kasir') {
+      return currentPath.startsWith('/kasir');
     }
     return currentPath.startsWith(href);
   };
@@ -115,6 +120,17 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex w-full items-center justify-end gap-2">
           <ThemeToggle />
+           <Link href="/kasir" passHref>
+            <Button variant="ghost" size="icon" className="relative">
+              <ShoppingCart className="h-5 w-5" />
+              {cart.length > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
+                  {cart.length}
+                </span>
+              )}
+              <span className="sr-only">Keranjang Belanja</span>
+            </Button>
+          </Link>
           <Link href={settingsHref} passHref>
               <Button variant="ghost" size="icon">
                 <Settings className="h-5 w-5" />

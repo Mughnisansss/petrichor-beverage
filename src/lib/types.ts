@@ -54,3 +54,12 @@ export interface DbData {
   operationalCosts: OperationalCost[];
   rawMaterials: RawMaterial[];
 }
+
+export interface CartItem {
+  cartId: string;
+  productId: string;
+  productType: 'drink' | 'food';
+  name: string;
+  quantity: number;
+  sellingPrice: number;
+}

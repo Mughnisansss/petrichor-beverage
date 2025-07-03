@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { nanoid } from 'nanoid';
-import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food } from '@/lib/types';
+import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { 
   isRawMaterialInUse, 
@@ -15,7 +15,6 @@ type StorageMode = 'local' | 'server';
 
 // --- API Service (for server/db.json) ---
 const apiService = {
-  // We make these return DbData to have a consistent interface with localStorageService
   getData: async (): Promise<DbData> => {
     const [drinks, foods, sales, operationalCosts, rawMaterials] = await Promise.all([
       (await fetch('/api/drinks')).json(),
@@ -41,6 +40,7 @@ const apiService = {
     return { ok: res.ok, message: data.message };
   },
   addSale: async (sale: Omit<Sale, 'id' | 'date'>): Promise<Sale> => (await fetch('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sale) })).json(),
+  batchAddSales: async (sales: Omit<Sale, 'id' | 'date'>[]): Promise<Sale[]> => (await fetch('/api/sales/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sales) })).json(),
   addOperationalCost: async (cost: Omit<OperationalCost, 'id' | 'date'>): Promise<OperationalCost> => (await fetch('/api/operasional', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cost) })).json(),
   updateOperationalCost: async (id: string, cost: Omit<OperationalCost, 'id' | 'date'>): Promise<OperationalCost> => (await fetch(`/api/operasional/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cost) })).json(),
   deleteOperationalCost: async (id: string) => {
@@ -66,23 +66,15 @@ const getLocalData = (): DbData => {
   const data = window.localStorage.getItem(LOCAL_STORAGE_KEY);
   try {
     const parsedData = data ? JSON.parse(data) : { drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
-
-    // Add default recurrence for backward compatibility with older local storage data
     if (parsedData.operationalCosts) {
-      parsedData.operationalCosts = parsedData.operationalCosts.map((cost: any) => ({
-        ...cost,
-        recurrence: cost.recurrence || 'sekali'
-      }));
+      parsedData.operationalCosts = parsedData.operationalCosts.map((cost: any) => ({ ...cost, recurrence: cost.recurrence || 'sekali' }));
     } else {
       parsedData.operationalCosts = [];
     }
-
-    // Ensure all other arrays exist
     parsedData.drinks = parsedData.drinks || [];
     parsedData.foods = parsedData.foods || [];
     parsedData.sales = parsedData.sales || [];
     parsedData.rawMaterials = parsedData.rawMaterials || [];
-
     return parsedData;
   } catch {
     return { drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
@@ -106,20 +98,14 @@ const localStorageService = {
     const data = getLocalData();
     const index = data.rawMaterials.findIndex(m => m.id === id);
     if (index === -1) throw new Error("Material not found");
-    
-    // Update the material
     const updatedMaterial = { ...data.rawMaterials[index], ...materialUpdate };
     data.rawMaterials[index] = updatedMaterial;
-
-    // Use centralized logic to update dependent product costs
     recalculateDependentProductCosts(data, id);
-    
     setLocalData(data);
     return Promise.resolve(updatedMaterial);
   },
   deleteRawMaterial: async (id: string) => {
     const data = getLocalData();
-    // Use centralized logic to check if material is in use
     if (isRawMaterialInUse(data, id)) {
       return Promise.resolve({ ok: false, message: 'Bahan baku tidak dapat dihapus karena digunakan dalam resep.' });
     }
@@ -145,7 +131,6 @@ const localStorageService = {
   },
   deleteDrink: async (id: string) => {
     const data = getLocalData();
-    // Use centralized logic to check for associated sales
     if (hasDrinkAssociatedSales(data, id)) {
       return Promise.resolve({ ok: false, message: 'Minuman tidak dapat dihapus karena memiliki riwayat penjualan.' });
     }
@@ -172,7 +157,6 @@ const localStorageService = {
   },
   deleteFood: async (id: string) => {
     const data = getLocalData();
-    // Use centralized logic to check for food sales
     if (hasFoodAssociatedSales(data, id)) {
       return Promise.resolve({ ok: false, message: 'Makanan tidak dapat dihapus karena memiliki riwayat penjualan.' });
     }
@@ -184,11 +168,18 @@ const localStorageService = {
   addSale: async (sale: Omit<Sale, 'id' | 'date'>): Promise<Sale> => {
     const data = getLocalData();
     const newSale = { ...sale, id: nanoid(), date: new Date().toISOString() };
-    data.sales.unshift(newSale); // Add to beginning
+    data.sales.unshift(newSale);
     setLocalData(data);
     return Promise.resolve(newSale);
   },
-
+  batchAddSales: async (sales: Omit<Sale, 'id' | 'date'>[]): Promise<Sale[]> => {
+    const data = getLocalData();
+    const newSales = sales.map(s => ({ ...s, id: nanoid(), date: new Date().toISOString() }));
+    data.sales.unshift(...newSales);
+    data.sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    setLocalData(data);
+    return Promise.resolve(newSales);
+  },
   addOperationalCost: async (cost: Omit<OperationalCost, 'id' | 'date'>): Promise<OperationalCost> => {
     const data = getLocalData();
     const newCost = { ...cost, id: nanoid(), date: new Date().toISOString() };
@@ -219,6 +210,7 @@ interface AppContextType {
   sales: Sale[];
   operationalCosts: OperationalCost[];
   rawMaterials: RawMaterial[];
+  cart: CartItem[];
   isLoading: boolean;
   storageMode: StorageMode;
   setStorageMode: (mode: StorageMode) => void;
@@ -232,12 +224,17 @@ interface AppContextType {
   updateFood: (id: string, food: Omit<Food, 'id'>) => Promise<Food>;
   deleteFood: (id: string) => Promise<{ ok: boolean, message: string }>;
   addSale: (sale: Omit<Sale, 'id' | 'date'>) => Promise<Sale>;
+  batchAddSales: (sales: Omit<Sale, 'id' | 'date'>[]) => Promise<Sale[]>;
   addOperationalCost: (cost: Omit<OperationalCost, 'id' | 'date'>) => Promise<OperationalCost>;
   updateOperationalCost: (id: string, cost: Omit<OperationalCost, 'id'|'date'>) => Promise<OperationalCost>;
   deleteOperationalCost: (id: string) => Promise<{ ok: boolean, message: string }>;
   addRawMaterial: (material: Omit<RawMaterial, 'id'>) => Promise<RawMaterial>;
   updateRawMaterial: (id: string, material: Omit<RawMaterial, 'id'>) => Promise<RawMaterial>;
   deleteRawMaterial: (id: string) => Promise<{ ok: boolean, message: string }>;
+  addToCart: (product: Drink | Food, type: 'drink' | 'food') => void;
+  updateCartItemQuantity: (cartId: string, quantity: number) => void;
+  removeFromCart: (cartId: string) => void;
+  clearCart: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -245,6 +242,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [storageMode, setStorageMode] = useLocalStorage<StorageMode>('sipsavvy_storage_mode', 'local');
   const [appName, setAppName] = useLocalStorage<string>('sipsavvy_appName', 'SipSavvy');
+  const [cart, setCart] = useLocalStorage<CartItem[]>('sipsavvy_cart', []);
   const [dbData, setDbData] = useState<DbData>({ drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -256,30 +254,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const data = await currentService.getData();
-
-      // --- Migration for Sales data structure for backward compatibility ---
       if (data.sales && Array.isArray(data.sales)) {
         data.sales = data.sales.map((sale: any) => {
           if (sale.drinkId && typeof sale.productId === 'undefined') {
             const { drinkId, ...rest } = sale;
-            return {
-              ...rest,
-              productId: drinkId,
-              productType: 'drink',
-            };
+            return { ...rest, productId: drinkId, productType: 'drink' };
           }
           return sale;
         });
       }
-      
-      // Ensure all data arrays exist
       data.drinks = data.drinks || [];
       data.foods = data.foods || [];
       data.sales = data.sales || [];
       data.operationalCosts = data.operationalCosts || [];
       data.rawMaterials = data.rawMaterials || [];
-
-      // Ensure sales and costs are sorted descending by date
       data.sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       data.operationalCosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setDbData(data);
@@ -294,12 +282,57 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+  
+  const addToCart = useCallback((product: Drink | Food, type: 'drink' | 'food') => {
+    setCart(prevCart => {
+        const existingItem = prevCart.find(item => item.productId === product.id);
+        if (existingItem) {
+            return prevCart.map(item => 
+                item.productId === product.id 
+                ? { ...item, quantity: item.quantity + 1 }
+                : item
+            );
+        } else {
+            const newItem: CartItem = {
+                cartId: nanoid(),
+                productId: product.id,
+                productType: type,
+                name: product.name,
+                quantity: 1,
+                sellingPrice: product.sellingPrice
+            };
+            return [...prevCart, newItem];
+        }
+    });
+  }, [setCart]);
+
+  const updateCartItemQuantity = useCallback((cartId: string, quantity: number) => {
+    setCart(prevCart => {
+        if (quantity <= 0) {
+            return prevCart.filter(item => item.cartId !== cartId);
+        }
+        return prevCart.map(item => 
+            item.cartId === cartId 
+            ? { ...item, quantity }
+            : item
+        );
+    });
+  }, [setCart]);
+
+  const removeFromCart = useCallback((cartId: string) => {
+    setCart(prevCart => prevCart.filter(item => item.cartId !== cartId));
+  }, [setCart]);
+
+  const clearCart = useCallback(() => {
+    setCart([]);
+  }, [setCart]);
+
 
   const contextValue = useMemo(() => {
     const wrapWithRefetch = <T extends (...args: any[]) => Promise<any>>(fn: T) => {
       return async (...args: Parameters<T>): Promise<ReturnType<T>> => {
         const result = await fn(...args);
-        await fetchData(); // Refetch all data after any modification
+        await fetchData();
         return result;
       };
     };
@@ -310,6 +343,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       sales: dbData.sales,
       operationalCosts: dbData.operationalCosts,
       rawMaterials: dbData.rawMaterials,
+      cart,
       isLoading,
       fetchData,
       storageMode,
@@ -323,14 +357,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateFood: wrapWithRefetch(currentService.updateFood),
       deleteFood: wrapWithRefetch(currentService.deleteFood),
       addSale: wrapWithRefetch(currentService.addSale),
+      batchAddSales: wrapWithRefetch(currentService.batchAddSales),
       addOperationalCost: wrapWithRefetch(currentService.addOperationalCost),
       updateOperationalCost: wrapWithRefetch(currentService.updateOperationalCost),
       deleteOperationalCost: wrapWithRefetch(currentService.deleteOperationalCost),
       addRawMaterial: wrapWithRefetch(currentService.addRawMaterial),
       updateRawMaterial: wrapWithRefetch(currentService.updateRawMaterial),
       deleteRawMaterial: wrapWithRefetch(currentService.deleteRawMaterial),
+      addToCart,
+      updateCartItemQuantity,
+      removeFromCart,
+      clearCart,
     };
-  }, [dbData, isLoading, fetchData, storageMode, setStorageMode, appName, setAppName, currentService]);
+  }, [dbData, cart, isLoading, fetchData, storageMode, setStorageMode, appName, setAppName, currentService, addToCart, updateCartItemQuantity, removeFromCart, clearCart]);
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 }

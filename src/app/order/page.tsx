@@ -8,15 +8,19 @@ import { formatCurrency } from "@/lib/utils";
 import { CupSoda, Utensils } from "lucide-react";
 import { MainLayout } from "@/components/main-layout";
 import { Separator } from "@/components/ui/separator";
+import type { Drink, Food } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
 export default function OrderPage() {
-  const { drinks, foods, appName } = useAppContext();
+  const { drinks, foods, appName, addToCart } = useAppContext();
+  const { toast } = useToast();
 
-  // A simple toast handler for the "Pesan" button for now.
-  const handleOrderClick = (itemName: string) => {
-    // In a real app, this would add to a cart.
-    // For now, we can just show a placeholder alert.
-    alert(`${itemName} telah ditambahkan ke pesanan (fitur keranjang belum diimplementasikan).`);
+  const handleOrderClick = (product: Drink | Food, type: 'drink' | 'food') => {
+    addToCart(product, type);
+    toast({
+      title: "Ditambahkan ke Orderan",
+      description: `1x ${product.name} telah ditambahkan.`,
+    });
   };
 
   return (
@@ -44,7 +48,7 @@ export default function OrderPage() {
                                 <p className="text-xl font-semibold text-primary">{formatCurrency(item.sellingPrice)}</p>
                             </CardContent>
                             <CardFooter>
-                                <Button className="w-full" onClick={() => handleOrderClick(item.name)}>
+                                <Button className="w-full" onClick={() => handleOrderClick(item, 'drink')}>
                                     Pesan
                                 </Button>
                             </CardFooter>
@@ -75,7 +79,7 @@ export default function OrderPage() {
                                 <p className="text-xl font-semibold text-primary">{formatCurrency(item.sellingPrice)}</p>
                             </CardContent>
                             <CardFooter>
-                                <Button className="w-full" onClick={() => handleOrderClick(item.name)}>
+                                <Button className="w-full" onClick={() => handleOrderClick(item, 'food')}>
                                     Pesan
                                 </Button>
                             </CardFooter>

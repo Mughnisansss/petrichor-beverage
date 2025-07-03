@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,127 +9,96 @@ import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Plus, PlusCircle, CupSoda, Utensils } from "lucide-react";
+import { Plus, PlusCircle, CupSoda, Utensils, ShoppingCart, Trash2 } from "lucide-react";
 import type { Drink, Food } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 
-const manualSaleSchema = z.object({
-  productId: z.string().min(1, "Pilih produk yang dijual."),
-  quantity: z.coerce.number().min(1, "Jumlah minimal 1."),
-  discount: z.coerce.number().min(0, "Diskon tidak boleh negatif.").max(100, "Diskon maksimal 100.").default(0),
-});
-type ManualSaleFormValues = z.infer<typeof manualSaleSchema>;
-
-// --- Helper Component: Manual Sale Form ---
-function ManualSaleForm() {
-  const { drinks, foods, addSale } = useAppContext();
+// --- Helper Component: Orderan Tab ---
+function OrderanTab() {
+  const { cart, updateCartItemQuantity, removeFromCart, batchAddSales, clearCart, isLoading } = useAppContext();
   const { toast } = useToast();
 
-  const form = useForm<ManualSaleFormValues>({
-    resolver: zodResolver(manualSaleSchema),
-    defaultValues: { productId: "", quantity: 1, discount: 0 },
-  });
+  const total = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.sellingPrice * item.quantity, 0);
+  }, [cart]);
 
-  async function onSubmit(values: ManualSaleFormValues) {
-    const [productType, productId] = values.productId.split(':');
-    const product = productType === 'drink'
-      ? drinks.find(d => d.id === productId)
-      : foods.find(f => f.id === productId);
-
-    if (!product) {
-      toast({ title: "Error", description: "Produk tidak ditemukan.", variant: "destructive" });
-      return;
-    }
-
+  const handleProcessOrder = async () => {
+    if (cart.length === 0) return;
     try {
-      await addSale({
-        productId,
-        productType: productType as 'drink' | 'food',
-        quantity: values.quantity,
-        discount: values.discount,
-      });
+      const salesPayload = cart.map(item => ({
+        productId: item.productId,
+        productType: item.productType,
+        quantity: item.quantity,
+        discount: 0,
+      }));
+      await batchAddSales(salesPayload);
+      clearCart();
       toast({
-        title: "Penjualan Dicatat",
-        description: `${values.quantity}x ${product.name} berhasil dijual.`,
+        title: "Sukses",
+        description: `${cart.length} orderan berhasil diproses dan dicatat sebagai penjualan.`,
       });
-      form.reset();
     } catch (error) {
       toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
     }
+  };
+
+  if (cart.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <ShoppingCart className="w-16 h-16 mb-4 text-muted-foreground" />
+        <h3 className="text-xl font-semibold">Tidak Ada Orderan</h3>
+        <p className="text-muted-foreground">Pelanggan dapat membuat orderan dari halaman 'Order'.</p>
+      </div>
+    );
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="productId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Produk</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih minuman atau makanan..." />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {drinks.length > 0 && (
-                    <SelectGroup>
-                      <FormLabel className="px-2 py-1.5 text-sm font-semibold">Minuman</FormLabel>
-                      {drinks.map(drink => (
-                        <SelectItem key={drink.id} value={`drink:${drink.id}`}>{drink.name}</SelectItem>
-                      ))}
-                    </SelectGroup>
-                  )}
-                  {foods.length > 0 && (
-                     <SelectGroup>
-                      <FormLabel className="px-2 py-1.5 text-sm font-semibold">Makanan</FormLabel>
-                      {foods.map(food => (
-                        <SelectItem key={food.id} value={`food:${food.id}`}>{food.name}</SelectItem>
-                      ))}
-                    </SelectGroup>
-                  )}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="quantity"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Jumlah</FormLabel>
-                <FormControl><Input type="number" {...field} /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-           <FormField
-            control={form.control}
-            name="discount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Diskon (%)</FormLabel>
-                <FormControl><Input type="number" {...field} /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <Button type="submit"><PlusCircle className="mr-2 h-4 w-4" /> Catat Penjualan</Button>
-      </form>
-    </Form>
+    <div className="space-y-4">
+      <div className="max-h-[45vh] overflow-y-auto pr-2">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Produk</TableHead>
+              <TableHead className="w-[120px] text-center">Jumlah</TableHead>
+              <TableHead className="text-right">Subtotal</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {cart.map(item => (
+              <TableRow key={item.cartId}>
+                <TableCell className="font-medium">{item.name}</TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-center gap-2">
+                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateCartItemQuantity(item.cartId, item.quantity - 1)}>-</Button>
+                    <span className="w-8 text-center">{item.quantity}</span>
+                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateCartItemQuantity(item.cartId, item.quantity + 1)}>+</Button>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">{formatCurrency(item.sellingPrice * item.quantity)}</TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.cartId)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <Separator />
+      <div className="flex justify-between items-center font-bold text-lg">
+        <span>Total</span>
+        <span>{formatCurrency(total)}</span>
+      </div>
+      <Button className="w-full" size="lg" onClick={handleProcessOrder} disabled={isLoading}>
+        Proses & Catat Semua Penjualan
+      </Button>
+    </div>
   );
 }
 
@@ -188,7 +157,7 @@ export default function KasirPage() {
           <Tabs defaultValue="cepat" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">
                   <TabsTrigger value="cepat">Penjualan Cepat</TabsTrigger>
-                  <TabsTrigger value="manual">Input Manual</TabsTrigger>
+                  <TabsTrigger value="orderan">Orderan</TabsTrigger>
               </TabsList>
               
               <TabsContent value="cepat">
@@ -221,14 +190,14 @@ export default function KasirPage() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="manual">
+              <TabsContent value="orderan">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Input Penjualan Manual</CardTitle>
-                        <CardDescription>Gunakan formulir ini untuk mencatat penjualan dengan kuantitas dan diskon spesifik.</CardDescription>
+                        <CardTitle>Daftar Orderan</CardTitle>
+                        <CardDescription>Proses orderan yang masuk dari halaman 'Order' pelanggan.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ManualSaleForm />
+                        <OrderanTab />
                     </CardContent>
                 </Card>
               </TabsContent>
