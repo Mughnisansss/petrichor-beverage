@@ -12,6 +12,7 @@ import { addDays, isWithinInterval, parseISO } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
+import { MainLayout } from "@/components/main-layout";
 
 export default function DashboardPage() {
   const { sales, drinks, operationalCosts } = useAppContext();
@@ -67,7 +68,8 @@ export default function DashboardPage() {
   }, [filteredSales, drinks, filteredOperationalCosts]);
 
   return (
-    <div className="flex flex-col gap-8">
+    <MainLayout>
+      <div className="flex flex-col gap-8">
         <Card>
           <CardHeader>
             <CardTitle>Filter Laporan</CardTitle>
@@ -213,5 +215,6 @@ export default function DashboardPage() {
             </Card>
         </div>
       </div>
+    </MainLayout>
   );
 }
