@@ -26,6 +26,7 @@ const materialSchema = z.object({
   category: z.enum(['main', 'packaging', 'topping'], {
     required_error: "Kategori harus dipilih",
   }),
+  sellingPrice: z.coerce.number().min(0, "Harga jual tidak boleh negatif").optional(),
 });
 
 type MaterialFormValues = z.infer<typeof materialSchema>;
@@ -44,8 +45,10 @@ export default function BahanBakuPage() {
 
   const form = useForm<MaterialFormValues>({
     resolver: zodResolver(materialSchema),
-    defaultValues: { name: "", unit: "", totalQuantity: 1, totalCost: 0, category: 'main' },
+    defaultValues: { name: "", unit: "", totalQuantity: 1, totalCost: 0, category: 'main', sellingPrice: 0 },
   });
+  
+  const watchedCategory = form.watch("category");
 
   async function onSubmit(values: MaterialFormValues) {
     try {
@@ -73,13 +76,14 @@ export default function BahanBakuPage() {
       totalQuantity: material.totalQuantity,
       totalCost: material.totalCost,
       category: material.category || 'main',
+      sellingPrice: material.sellingPrice || 0,
     });
     setDialogOpen(true);
   };
   
   const handleAddNew = () => {
     setEditingMaterial(null);
-    form.reset({ name: "", unit: "", totalQuantity: 1, totalCost: 0, category: 'main' });
+    form.reset({ name: "", unit: "", totalQuantity: 1, totalCost: 0, category: 'main', sellingPrice: 0 });
     setDialogOpen(true);
   };
 
@@ -206,6 +210,20 @@ export default function BahanBakuPage() {
                     )}
                   />
                 </div>
+                {watchedCategory === 'topping' && (
+                  <FormField
+                    control={form.control}
+                    name="sellingPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Harga Jual Topping (Rp)</FormLabel>
+                        <FormControl><Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber || 0)} placeholder="cth: 3000" /></FormControl>
+                        <FormDescription>Harga yang dibayar pelanggan untuk tambahan topping ini.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 <Button type="submit">{editingMaterial ? "Simpan Perubahan" : "Tambah"}</Button>
               </form>
             </Form>
@@ -223,6 +241,7 @@ export default function BahanBakuPage() {
                 <TableHead>Nama Bahan</TableHead>
                 <TableHead>Kategori</TableHead>
                 <TableHead>Detail Biaya</TableHead>
+                <TableHead>Harga Jual</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
@@ -236,6 +255,9 @@ export default function BahanBakuPage() {
                       {formatCurrency(material.totalCost)} / {material.totalQuantity} {material.unit}
                       <p className="text-xs text-muted-foreground">({formatCurrency(material.costPerUnit)} per {material.unit})</p>
                     </TableCell>
+                    <TableCell>
+                      {material.category === 'topping' && material.sellingPrice ? formatCurrency(material.sellingPrice) : 'N/A'}
+                    </TableCell>
                     <TableCell className="flex gap-2 justify-end">
                       <Button variant="outline" size="icon" onClick={() => handleEdit(material)}>
                         <Edit className="h-4 w-4" />
@@ -248,7 +270,7 @@ export default function BahanBakuPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell colSpan={5} className="h-24 text-center">
                     Belum ada data bahan baku.
                   </TableCell>
                 </TableRow>

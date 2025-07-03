@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState } from "react";
@@ -14,7 +15,7 @@ import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Plus, PlusCircle, CupSoda, Utensils, ShoppingCart, Trash2, CheckCircle } from "lucide-react";
-import type { Drink, Food } from "@/lib/types";
+import type { Drink, Food, Sale } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 
 // --- Helper Component: Orderan Tab ---
@@ -24,19 +25,25 @@ function OrderanTab() {
   const [completedOrders, setCompletedOrders] = useState<Set<string>>(new Set());
 
   const total = useMemo(() => {
+    // sellingPrice in cart item already includes toppings
     return cart.reduce((sum, item) => sum + item.sellingPrice * item.quantity, 0);
   }, [cart]);
 
   const handleProcessOrder = async () => {
     if (cart.length === 0) return;
     try {
-      const salesPayload = cart.map(item => ({
-        productId: item.productId,
-        productType: item.productType,
-        quantity: item.quantity,
-        discount: 0,
-        selectedToppings: item.selectedToppings,
-      }));
+      const salesPayload = cart.map(item => {
+        // The final price for the sale record, assuming 0 discount from this flow
+        const totalSalePrice = item.sellingPrice * item.quantity;
+        return {
+          productId: item.productId,
+          productType: item.productType,
+          quantity: item.quantity,
+          discount: 0,
+          selectedToppings: item.selectedToppings,
+          totalSalePrice: totalSalePrice,
+        };
+      });
       await batchAddSales(salesPayload);
       clearCart();
       setCompletedOrders(new Set());
@@ -82,11 +89,14 @@ function OrderanTab() {
                   {item.name}
                   {item.selectedToppings && item.selectedToppings.length > 0 && (
                     <ul className="text-xs text-muted-foreground list-disc pl-4 mt-1">
-                      {item.selectedToppings.map(topping => (
-                        <li key={topping.rawMaterialId}>
-                          {rawMaterials.find(m => m.id === topping.rawMaterialId)?.name || '...'}
-                        </li>
-                      ))}
+                      {item.selectedToppings.map(topping => {
+                         const toppingInfo = rawMaterials.find(m => m.id === topping.rawMaterialId);
+                         return (
+                           <li key={topping.rawMaterialId}>
+                            {toppingInfo?.name || '...'}
+                           </li>
+                         );
+                      })}
                     </ul>
                   )}
                 </TableCell>
@@ -122,7 +132,7 @@ function OrderanTab() {
         <span>Total</span>
         <span>{formatCurrency(total)}</span>
       </div>
-      <Button className="w-full" size="lg" onClick={handleProcessOrder} disabled={isLoading}>
+      <Button className="w-full" size="lg" onClick={handleProcessOrder} disabled={isLoading || cart.length === 0}>
         Proses & Catat Semua Penjualan
       </Button>
     </div>
@@ -132,18 +142,20 @@ function OrderanTab() {
 
 // --- Main Page Component ---
 export default function KasirPage() {
-  const { sales, drinks, foods, addSale } = useAppContext();
+  const { sales, drinks, foods, addSale, rawMaterials } = useAppContext();
   const { toast } = useToast();
 
   async function handleQuickSell(product: Drink | Food, type: 'drink' | 'food') {
     try {
-      await addSale({
+      const salePayload: Omit<Sale, 'id' | 'date'> = {
         productId: product.id,
         productType: type,
         quantity: 1,
         discount: 0,
-        selectedToppings: []
-      });
+        selectedToppings: [],
+        totalSalePrice: product.sellingPrice // For a quick sale, total price is just the product's base price
+      };
+      await addSale(salePayload);
       toast({
         title: "Penjualan Dicatat",
         description: `1x ${product.name} berhasil dijual.`,
@@ -250,11 +262,22 @@ export default function KasirPage() {
                         const product = sale.productType === 'drink'
                             ? drinks.find(d => d.id === sale.productId)
                             : foods.find(f => f.id === sale.productId);
-                        const total = product ? product.sellingPrice * sale.quantity * (1 - sale.discount / 100) : 0;
+                        // Use the stored totalSalePrice for accuracy. Fallback for old data.
+                        const total = sale.totalSalePrice ?? (product ? product.sellingPrice * sale.quantity * (1 - sale.discount / 100) : 0);
                         return (
                           <TableRow key={sale.id}>
                             <TableCell>{formatDate(sale.date, "HH:mm")}</TableCell>
-                            <TableCell className="font-medium">{product?.name || 'N/A'}</TableCell>
+                            <TableCell className="font-medium">
+                              {product?.name || 'N/A'}
+                               {sale.selectedToppings && sale.selectedToppings.length > 0 && (
+                                <ul className="text-xs text-muted-foreground list-disc pl-4 mt-1">
+                                  {sale.selectedToppings.map(topping => {
+                                      const toppingInfo = rawMaterials.find(m => m.id === topping.rawMaterialId);
+                                      return <li key={topping.rawMaterialId}>{toppingInfo?.name || '...'}</li>
+                                  })}
+                                </ul>
+                              )}
+                            </TableCell>
                             <TableCell className="text-right">{formatCurrency(total)}</TableCell>
                           </TableRow>
                         );

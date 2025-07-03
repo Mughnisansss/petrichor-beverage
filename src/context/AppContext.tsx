@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
@@ -237,7 +238,7 @@ interface AppContextType {
   addRawMaterial: (material: Omit<RawMaterial, 'id'>) => Promise<RawMaterial>;
   updateRawMaterial: (id: string, material: Omit<RawMaterial, 'id'>) => Promise<RawMaterial>;
   deleteRawMaterial: (id: string) => Promise<{ ok: boolean, message: string }>;
-  addToCart: (product: Drink | Food, type: 'drink' | 'food', selectedToppings: Ingredient[]) => void;
+  addToCart: (product: Drink | Food, type: 'drink' | 'food', selectedToppings: Ingredient[], finalUnitPrice: number) => void;
   updateCartItemQuantity: (cartId: string, quantity: number) => void;
   removeFromCart: (cartId: string) => void;
   clearCart: () => void;
@@ -296,16 +297,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fetchData();
   }, [fetchData]);
   
-  const addToCart = useCallback((product: Drink | Food, type: 'drink' | 'food', selectedToppings: Ingredient[]) => {
+  const addToCart = useCallback((product: Drink | Food, type: 'drink' | 'food', selectedToppings: Ingredient[], finalUnitPrice: number) => {
     setCart(prevCart => {
-        // For customized items, always add as a new, unique item in the cart.
         const newItem: CartItem = {
             cartId: nanoid(),
             productId: product.id,
             productType: type,
             name: product.name,
-            quantity: 1, // Start with quantity 1
-            sellingPrice: product.sellingPrice,
+            quantity: 1,
+            sellingPrice: finalUnitPrice, // Use the calculated price (base + toppings)
             selectedToppings: selectedToppings
         };
         return [...prevCart, newItem];

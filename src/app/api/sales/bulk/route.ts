@@ -5,7 +5,7 @@ import { readDb, writeDb } from '@/lib/db';
 import type { Sale } from '@/lib/types';
 
 export async function POST(request: Request) {
-  // Now expecting sales to potentially have `selectedToppings`
+  // Now expecting sales to have `totalSalePrice` and optionally `selectedToppings`
   const salesToAdd: Omit<Sale, 'id' | 'date'>[] = await request.json();
   const data = await readDb();
   

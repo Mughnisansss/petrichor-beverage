@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { readDb, writeDb } from '@/lib/db';

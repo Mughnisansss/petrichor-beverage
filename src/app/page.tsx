@@ -1,7 +1,7 @@
+
 "use client";
 
-import React, { useState, useMemo, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Select,
@@ -92,15 +92,18 @@ export default function DashboardPage() {
     const salesByProduct: { [key: string]: { name: string; quantity: number; revenue: number } } = {};
 
     filteredSales.forEach(sale => {
-      const { productId, productType, quantity, discount, selectedToppings } = sale;
+      const { productId, productType, quantity, selectedToppings, totalSalePrice } = sale;
       const product = productType === 'drink'
         ? drinks.find(d => d.id === productId)
         : foods.find(f => f.id === productId);
       
+      // --- Revenue Calculation ---
+      // Use the stored totalSalePrice for accuracy. Fallback for older data.
+      const saleRevenue = totalSalePrice ?? (product ? product.sellingPrice * quantity * (1 - (sale.discount || 0) / 100) : 0);
+      revenue += saleRevenue;
+
       if (product) {
-        const saleRevenue = product.sellingPrice * quantity * (1 - discount / 100);
-        revenue += saleRevenue;
-        
+        // --- Cost (HPP) Calculation ---
         let itemCost = product.costPrice;
         if (selectedToppings && selectedToppings.length > 0) {
           const toppingsCost = calculateItemCostPrice(selectedToppings, rawMaterials);
@@ -108,6 +111,7 @@ export default function DashboardPage() {
         }
         cost += itemCost * quantity;
         
+        // --- Top Product Calculation ---
         if (!salesByProduct[product.id]) {
             salesByProduct[product.id] = { name: product.name, quantity: 0, revenue: 0 };
         }
@@ -158,15 +162,14 @@ export default function DashboardPage() {
     const dailyRevenue = new Map<string, number>();
     filteredSales.forEach(sale => {
       const saleDate = format(parseISO(sale.date), "yyyy-MM-dd");
-      const { productId, productType, quantity, discount } = sale;
-      const product = productType === 'drink'
+      const { productId, productType, quantity, totalSalePrice } = sale;
+       const product = productType === 'drink'
         ? drinks.find(d => d.id === productId)
         : foods.find(f => f.id === productId);
 
-      if (product) {
-        const revenue = product.sellingPrice * quantity * (1 - discount / 100);
-        dailyRevenue.set(saleDate, (dailyRevenue.get(saleDate) || 0) + revenue);
-      }
+      // Use stored price for accuracy, with fallback for old data.
+      const revenueForSale = totalSalePrice ?? (product ? product.sellingPrice * quantity * (1 - (sale.discount || 0) / 100) : 0);
+      dailyRevenue.set(saleDate, (dailyRevenue.get(saleDate) || 0) + revenueForSale);
     });
 
     const chartData: { date: string; revenue: number }[] = [];

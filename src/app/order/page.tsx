@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,14 +31,15 @@ function ProductCustomizationDialog({
   const { toast } = useToast();
   const [selectedToppings, setSelectedToppings] = useState<Ingredient[]>([]);
 
-  if (!product) return null;
+  // Memoize topping list to prevent re-filtering on every render
+  const availableToppings = useMemo(() => rawMaterials.filter(m => m.category === 'topping'), [rawMaterials]);
 
-  const availableToppings = rawMaterials.filter(m => m.category === 'topping');
+  if (!product) return null;
 
   const handleCheckboxChange = (checked: boolean, topping: RawMaterial) => {
     setSelectedToppings(prev => {
       if (checked) {
-        // Assume quantity 1 for toppings
+        // Assume quantity 1 for toppings, as per standard cafe logic
         return [...prev, { rawMaterialId: topping.id, quantity: 1 }];
       } else {
         return prev.filter(t => t.rawMaterialId !== topping.id);
@@ -46,17 +48,36 @@ function ProductCustomizationDialog({
   };
 
   const handleAddToCart = () => {
-    addToCart(product, productType, selectedToppings);
+    // Calculate the total price of selected toppings
+    const toppingsPrice = selectedToppings.reduce((sum, toppingIng) => {
+        const toppingData = rawMaterials.find(m => m.id === toppingIng.rawMaterialId);
+        // Add the topping's selling price to the sum, default to 0 if not set
+        return sum + (toppingData?.sellingPrice || 0);
+    }, 0);
+
+    // Final unit price is the product's base price plus the price of all toppings
+    const finalUnitPrice = product.sellingPrice + toppingsPrice;
+    
+    // Add to cart with the final calculated price
+    addToCart(product, productType, selectedToppings, finalUnitPrice);
+    
     toast({
       title: "Ditambahkan ke Orderan",
       description: `1x ${product.name} telah ditambahkan.`,
     });
+    
+    // Close dialog and reset local state for next use
     onClose();
     setSelectedToppings([]);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+        if (!open) {
+            onClose();
+            setSelectedToppings([]);
+        }
+    }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{product.name}</DialogTitle>
@@ -67,12 +88,17 @@ function ProductCustomizationDialog({
           {availableToppings.length > 0 ? (
             <div className="space-y-2">
               {availableToppings.map(topping => (
-                <div key={topping.id} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`topping-${topping.id}`}
-                    onCheckedChange={(checked) => handleCheckboxChange(checked as boolean, topping)}
-                  />
-                  <Label htmlFor={`topping-${topping.id}`}>{topping.name}</Label>
+                <div key={topping.id} className="flex items-center justify-between space-x-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`topping-${topping.id}`}
+                      onCheckedChange={(checked) => handleCheckboxChange(checked as boolean, topping)}
+                    />
+                    <Label htmlFor={`topping-${topping.id}`}>{topping.name}</Label>
+                  </div>
+                  {topping.sellingPrice && (
+                    <span className="text-sm text-muted-foreground">+{formatCurrency(topping.sellingPrice)}</span>
+                  )}
                 </div>
               ))}
             </div>

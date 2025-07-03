@@ -8,6 +8,7 @@ export interface RawMaterial {
   totalCost: number;
   costPerUnit: number; // Stored for calculation: totalCost / totalQuantity
   category: 'main' | 'packaging' | 'topping';
+  sellingPrice?: number; // Optional selling price, mainly for toppings
 }
 
 export interface Ingredient {
@@ -36,8 +37,9 @@ export interface Sale {
   productId: string;
   productType: 'drink' | 'food';
   quantity: number;
-  discount: number;
+  discount: number; // Stored as percentage, e.g., 10 for 10%
   date: string;
+  totalSalePrice: number; // Final price for the line item, after discount. (unitPrice * quantity) * (1 - discount/100)
   selectedToppings?: Ingredient[];
 }
 
@@ -63,6 +65,6 @@ export interface CartItem {
   productType: 'drink' | 'food';
   name: string;
   quantity: number;
-  sellingPrice: number;
+  sellingPrice: number; // Price for a SINGLE unit, including base product + toppings.
   selectedToppings: Ingredient[];
 }
