@@ -42,29 +42,31 @@ export default function SaranHargaPage() {
     },
   });
 
+  const { setValue, reset } = form;
+
   useEffect(() => {
     if (selectedDrinkId) {
       const drink = drinks.find(d => d.id === selectedDrinkId);
       if (drink) {
-        form.setValue("drinkName", drink.name);
-        form.setValue("ingredientCosts", `Harga pokok per porsi: ${formatCurrency(drink.costPrice)}`);
+        setValue("drinkName", drink.name);
+        setValue("ingredientCosts", `Harga pokok per porsi: ${formatCurrency(drink.costPrice)}`);
 
         const drinkSales = sales.filter(s => s.drinkId === drink.id);
         const totalQuantity = drinkSales.reduce((acc, s) => acc + s.quantity, 0);
         const salesSummary = totalQuantity > 0 
           ? `Terjual ${totalQuantity} cup. Harga jual saat ini ${formatCurrency(drink.sellingPrice)}.`
           : `Belum ada data penjualan untuk minuman ini. Harga jual saat ini ${formatCurrency(drink.sellingPrice)}.`;
-        form.setValue("salesData", salesSummary);
+        setValue("salesData", salesSummary);
       }
     } else {
-        form.reset({
+        reset({
             drinkName: "",
             salesData: "",
             ingredientCosts: "",
             competitorPrices: "Contoh: Kompetitor A menjual Rp 14.000, Kompetitor B menjual Rp 16.000.",
         });
     }
-  }, [selectedDrinkId, drinks, sales, form]);
+  }, [selectedDrinkId, drinks, sales, setValue, reset]);
 
   function onSubmit(values: z.infer<typeof pricingSchema>) {
     startTransition(async () => {
