@@ -14,8 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAppContext } from "@/context/AppContext";
 import type { Sale } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/lib/utils";
-import { format, parseISO } from "date-fns";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 const saleSchema = z.object({
   drinkId: z.string().min(1, "Silakan pilih minuman"),
@@ -29,7 +28,7 @@ export default function PenjualanPage() {
 
   const form = useForm<z.infer<typeof saleSchema>>({
     resolver: zodResolver(saleSchema),
-    defaultValues: { quantity: 1, discount: 0 },
+    defaultValues: { drinkId: undefined, quantity: 1, discount: 0 },
   });
 
   function onSubmit(values: z.infer<typeof saleSchema>) {
@@ -58,7 +57,7 @@ export default function PenjualanPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Minuman</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Pilih minuman" />
@@ -122,7 +121,7 @@ export default function PenjualanPage() {
                     const total = drink ? drink.sellingPrice * sale.quantity * (1 - sale.discount / 100) : 0;
                     return (
                       <TableRow key={sale.id}>
-                        <TableCell>{format(parseISO(sale.date), "dd MMM yyyy, HH:mm")}</TableCell>
+                        <TableCell>{formatDate(sale.date, "dd MMM yyyy, HH:mm")}</TableCell>
                         <TableCell>{drink?.name || 'N/A'}</TableCell>
                         <TableCell>{sale.quantity}</TableCell>
                         <TableCell>{sale.discount}%</TableCell>
