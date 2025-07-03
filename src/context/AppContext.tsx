@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { nanoid } from 'nanoid';
-import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem } from '@/lib/types';
+import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem, Ingredient } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { 
   isRawMaterialInUse, 
@@ -66,15 +66,21 @@ const getLocalData = (): DbData => {
   const data = window.localStorage.getItem(LOCAL_STORAGE_KEY);
   try {
     const parsedData = data ? JSON.parse(data) : { drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
+    // --- Data migrations and defaults ---
     if (parsedData.operationalCosts) {
       parsedData.operationalCosts = parsedData.operationalCosts.map((cost: any) => ({ ...cost, recurrence: cost.recurrence || 'sekali' }));
     } else {
       parsedData.operationalCosts = [];
     }
+     if (parsedData.rawMaterials) {
+      parsedData.rawMaterials = parsedData.rawMaterials.map((m: any) => ({ ...m, category: m.category || 'main' }));
+    } else {
+      parsedData.rawMaterials = [];
+    }
     parsedData.drinks = parsedData.drinks || [];
     parsedData.foods = parsedData.foods || [];
     parsedData.sales = parsedData.sales || [];
-    parsedData.rawMaterials = parsedData.rawMaterials || [];
+    
     return parsedData;
   } catch {
     return { drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
@@ -231,7 +237,7 @@ interface AppContextType {
   addRawMaterial: (material: Omit<RawMaterial, 'id'>) => Promise<RawMaterial>;
   updateRawMaterial: (id: string, material: Omit<RawMaterial, 'id'>) => Promise<RawMaterial>;
   deleteRawMaterial: (id: string) => Promise<{ ok: boolean, message: string }>;
-  addToCart: (product: Drink | Food, type: 'drink' | 'food') => void;
+  addToCart: (product: Drink | Food, type: 'drink' | 'food', selectedToppings: Ingredient[]) => void;
   updateCartItemQuantity: (cartId: string, quantity: number) => void;
   removeFromCart: (cartId: string) => void;
   clearCart: () => void;
@@ -254,6 +260,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const data = await currentService.getData();
+      
+      // Data migration and setting defaults
       if (data.sales && Array.isArray(data.sales)) {
         data.sales = data.sales.map((sale: any) => {
           if (sale.drinkId && typeof sale.productId === 'undefined') {
@@ -263,6 +271,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return sale;
         });
       }
+      if (data.rawMaterials && Array.isArray(data.rawMaterials)) {
+        data.rawMaterials = data.rawMaterials.map((m: any) => ({ ...m, category: m.category || 'main' }));
+      }
+
       data.drinks = data.drinks || [];
       data.foods = data.foods || [];
       data.sales = data.sales || [];
@@ -270,6 +282,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       data.rawMaterials = data.rawMaterials || [];
       data.sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       data.operationalCosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
       setDbData(data);
     } catch (error) {
       console.error("Failed to fetch data", error);
@@ -283,26 +296,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fetchData();
   }, [fetchData]);
   
-  const addToCart = useCallback((product: Drink | Food, type: 'drink' | 'food') => {
+  const addToCart = useCallback((product: Drink | Food, type: 'drink' | 'food', selectedToppings: Ingredient[]) => {
     setCart(prevCart => {
-        const existingItem = prevCart.find(item => item.productId === product.id);
-        if (existingItem) {
-            return prevCart.map(item => 
-                item.productId === product.id 
-                ? { ...item, quantity: item.quantity + 1 }
-                : item
-            );
-        } else {
-            const newItem: CartItem = {
-                cartId: nanoid(),
-                productId: product.id,
-                productType: type,
-                name: product.name,
-                quantity: 1,
-                sellingPrice: product.sellingPrice
-            };
-            return [...prevCart, newItem];
-        }
+        // For customized items, always add as a new, unique item in the cart.
+        const newItem: CartItem = {
+            cartId: nanoid(),
+            productId: product.id,
+            productType: type,
+            name: product.name,
+            quantity: 1, // Start with quantity 1
+            sellingPrice: product.sellingPrice,
+            selectedToppings: selectedToppings
+        };
+        return [...prevCart, newItem];
     });
   }, [setCart]);
 

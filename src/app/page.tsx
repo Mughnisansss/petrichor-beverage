@@ -36,9 +36,10 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { calculateItemCostPrice } from "@/lib/data-logic";
 
 export default function DashboardPage() {
-  const { sales, drinks, foods, operationalCosts } = useAppContext();
+  const { sales, drinks, foods, operationalCosts, rawMaterials } = useAppContext();
   const [filter, setFilter] = useState<string>("last_30_days");
   const [date, setDate] = useState<DateRange | undefined>(undefined);
 
@@ -91,7 +92,7 @@ export default function DashboardPage() {
     const salesByProduct: { [key: string]: { name: string; quantity: number; revenue: number } } = {};
 
     filteredSales.forEach(sale => {
-      const { productId, productType, quantity, discount } = sale;
+      const { productId, productType, quantity, discount, selectedToppings } = sale;
       const product = productType === 'drink'
         ? drinks.find(d => d.id === productId)
         : foods.find(f => f.id === productId);
@@ -99,7 +100,13 @@ export default function DashboardPage() {
       if (product) {
         const saleRevenue = product.sellingPrice * quantity * (1 - discount / 100);
         revenue += saleRevenue;
-        cost += product.costPrice * quantity;
+        
+        let itemCost = product.costPrice;
+        if (selectedToppings && selectedToppings.length > 0) {
+          const toppingsCost = calculateItemCostPrice(selectedToppings, rawMaterials);
+          itemCost += toppingsCost;
+        }
+        cost += itemCost * quantity;
         
         if (!salesByProduct[product.id]) {
             salesByProduct[product.id] = { name: product.name, quantity: 0, revenue: 0 };
@@ -143,7 +150,7 @@ export default function DashboardPage() {
         netProfit: revenue - cost - finalOperationalCost,
         topProducts: sortedProducts
     };
-  }, [filteredSales, drinks, foods, operationalCosts, date]);
+  }, [filteredSales, drinks, foods, operationalCosts, date, rawMaterials]);
 
   const salesChartData = useMemo(() => {
     if (!date?.from || !date?.to) return [];

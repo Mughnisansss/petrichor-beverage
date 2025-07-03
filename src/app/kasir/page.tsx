@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,14 +13,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Plus, PlusCircle, CupSoda, Utensils, ShoppingCart, Trash2 } from "lucide-react";
+import { Plus, PlusCircle, CupSoda, Utensils, ShoppingCart, Trash2, CheckCircle } from "lucide-react";
 import type { Drink, Food } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 
 // --- Helper Component: Orderan Tab ---
 function OrderanTab() {
-  const { cart, updateCartItemQuantity, removeFromCart, batchAddSales, clearCart, isLoading } = useAppContext();
+  const { cart, updateCartItemQuantity, removeFromCart, batchAddSales, clearCart, isLoading, rawMaterials } = useAppContext();
   const { toast } = useToast();
+  const [completedOrders, setCompletedOrders] = useState<Set<string>>(new Set());
 
   const total = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.sellingPrice * item.quantity, 0);
@@ -34,9 +35,11 @@ function OrderanTab() {
         productType: item.productType,
         quantity: item.quantity,
         discount: 0,
+        selectedToppings: item.selectedToppings,
       }));
       await batchAddSales(salesPayload);
       clearCart();
+      setCompletedOrders(new Set());
       toast({
         title: "Sukses",
         description: `${cart.length} orderan berhasil diproses dan dicatat sebagai penjualan.`,
@@ -44,6 +47,10 @@ function OrderanTab() {
     } catch (error) {
       toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
     }
+  };
+  
+  const handleOrderReady = (cartId: string) => {
+    setCompletedOrders(prev => new Set(prev).add(cartId));
   };
 
   if (cart.length === 0) {
@@ -65,13 +72,24 @@ function OrderanTab() {
               <TableHead>Produk</TableHead>
               <TableHead className="w-[120px] text-center">Jumlah</TableHead>
               <TableHead className="text-right">Subtotal</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="w-[200px] text-center">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {cart.map(item => (
               <TableRow key={item.cartId}>
-                <TableCell className="font-medium">{item.name}</TableCell>
+                <TableCell className="font-medium">
+                  {item.name}
+                  {item.selectedToppings && item.selectedToppings.length > 0 && (
+                    <ul className="text-xs text-muted-foreground list-disc pl-4 mt-1">
+                      {item.selectedToppings.map(topping => (
+                        <li key={topping.rawMaterialId}>
+                          {rawMaterials.find(m => m.id === topping.rawMaterialId)?.name || '...'}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-center gap-2">
                     <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateCartItemQuantity(item.cartId, item.quantity - 1)}>-</Button>
@@ -80,8 +98,17 @@ function OrderanTab() {
                   </div>
                 </TableCell>
                 <TableCell className="text-right">{formatCurrency(item.sellingPrice * item.quantity)}</TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.cartId)}>
+                <TableCell className="text-center space-x-2">
+                  {completedOrders.has(item.cartId) ? (
+                     <Button variant="secondary" size="sm" className="w-full" disabled>
+                        <CheckCircle className="mr-2 h-4 w-4" /> Selesai
+                     </Button>
+                  ) : (
+                     <Button variant="outline" size="sm" className="w-full" onClick={() => handleOrderReady(item.cartId)}>
+                        Selesai Dibuat
+                     </Button>
+                  )}
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeFromCart(item.cartId)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </TableCell>
@@ -115,6 +142,7 @@ export default function KasirPage() {
         productType: type,
         quantity: 1,
         discount: 0,
+        selectedToppings: []
       });
       toast({
         title: "Penjualan Dicatat",

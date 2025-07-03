@@ -7,6 +7,7 @@ export interface RawMaterial {
   totalQuantity: number;
   totalCost: number;
   costPerUnit: number; // Stored for calculation: totalCost / totalQuantity
+  category: 'main' | 'packaging' | 'topping';
 }
 
 export interface Ingredient {
@@ -37,6 +38,7 @@ export interface Sale {
   quantity: number;
   discount: number;
   date: string;
+  selectedToppings?: Ingredient[];
 }
 
 export interface OperationalCost {
@@ -62,4 +64,5 @@ export interface CartItem {
   name: string;
   quantity: number;
   sellingPrice: number;
+  selectedToppings: Ingredient[];
 }

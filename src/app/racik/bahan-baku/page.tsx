@@ -23,9 +23,18 @@ const materialSchema = z.object({
   unit: z.string().min(1, "Satuan untuk resep tidak boleh kosong"),
   totalQuantity: z.coerce.number().min(0.001, "Jumlah pembelian harus lebih dari 0"),
   totalCost: z.coerce.number().min(1, "Total biaya harus lebih dari 0"),
+  category: z.enum(['main', 'packaging', 'topping'], {
+    required_error: "Kategori harus dipilih",
+  }),
 });
 
 type MaterialFormValues = z.infer<typeof materialSchema>;
+
+const categoryLabels: Record<RawMaterial['category'], string> = {
+  main: 'Utama',
+  packaging: 'Kemasan',
+  topping: 'Topping'
+};
 
 export default function BahanBakuPage() {
   const { rawMaterials, addRawMaterial, updateRawMaterial, deleteRawMaterial } = useAppContext();
@@ -35,7 +44,7 @@ export default function BahanBakuPage() {
 
   const form = useForm<MaterialFormValues>({
     resolver: zodResolver(materialSchema),
-    defaultValues: { name: "", unit: "", totalQuantity: 1, totalCost: 0 },
+    defaultValues: { name: "", unit: "", totalQuantity: 1, totalCost: 0, category: 'main' },
   });
 
   async function onSubmit(values: MaterialFormValues) {
@@ -63,13 +72,14 @@ export default function BahanBakuPage() {
       unit: material.unit,
       totalQuantity: material.totalQuantity,
       totalCost: material.totalCost,
+      category: material.category || 'main',
     });
     setDialogOpen(true);
   };
   
   const handleAddNew = () => {
     setEditingMaterial(null);
-    form.reset({ name: "", unit: "", totalQuantity: 1, totalCost: 0 });
+    form.reset({ name: "", unit: "", totalQuantity: 1, totalCost: 0, category: 'main' });
     setDialogOpen(true);
   };
 
@@ -147,6 +157,29 @@ export default function BahanBakuPage() {
                     </FormItem>
                   )}
                 />
+                 <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Kategori Bahan</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Pilih kategori..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="main">Bahan Utama</SelectItem>
+                            <SelectItem value="topping">Topping / Tambahan</SelectItem>
+                            <SelectItem value="packaging">Kemasan / Packaging</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>Klasifikasi bahan untuk resep dan kustomisasi.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                  <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -188,6 +221,7 @@ export default function BahanBakuPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nama Bahan</TableHead>
+                <TableHead>Kategori</TableHead>
                 <TableHead>Detail Biaya</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
@@ -197,6 +231,7 @@ export default function BahanBakuPage() {
                 rawMaterials.map(material => (
                   <TableRow key={material.id}>
                     <TableCell className="font-medium">{material.name}</TableCell>
+                    <TableCell>{categoryLabels[material.category] || 'Utama'}</TableCell>
                     <TableCell>
                       {formatCurrency(material.totalCost)} / {material.totalQuantity} {material.unit}
                       <p className="text-xs text-muted-foreground">({formatCurrency(material.costPerUnit)} per {material.unit})</p>
@@ -213,7 +248,7 @@ export default function BahanBakuPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
+                  <TableCell colSpan={4} className="h-24 text-center">
                     Belum ada data bahan baku.
                   </TableCell>
                 </TableRow>
