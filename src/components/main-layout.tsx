@@ -25,6 +25,8 @@ const topNavItems = [
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isLoading } = useAppContext();
+  
+  const settingsHref = pathname === "/pengaturan" ? "/" : "/pengaturan";
 
   const MobileNav = () => (
      <Sheet>
@@ -59,7 +61,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               </Link>
             ))}
             <Link
-                href="/pengaturan"
+                href={settingsHref}
                 className={cn(
                   "hover:text-foreground",
                   pathname.startsWith('/pengaturan') ? "text-foreground" : "text-muted-foreground"
@@ -101,7 +103,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex w-full items-center justify-end gap-2">
           <ThemeToggle />
-          <Link href="/pengaturan" passHref>
+          <Link href={settingsHref} passHref>
               <Button variant="ghost" size="icon">
                 <Settings className="h-5 w-5" />
                 <span className="sr-only">Pengaturan</span>
