@@ -12,3 +12,10 @@ export interface Sale {
   discount: number;
   date: string;
 }
+
+export interface OperationalCost {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+}

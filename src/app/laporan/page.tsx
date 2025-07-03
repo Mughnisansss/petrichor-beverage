@@ -15,19 +15,24 @@ import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 
 export default function LaporanPage() {
-  const { sales, drinks } = useAppContext();
+  const { sales, drinks, operationalCosts } = useAppContext();
   const [date, setDate] = useState<DateRange | undefined>({
     from: addDays(new Date(), -30),
     to: new Date(),
   });
 
-  const filteredSales = useMemo(() => sales.filter(sale => {
-    if (!date?.from || !date?.to) return true;
-    const saleDate = parseISO(sale.date);
-    return isWithinInterval(saleDate, { start: date.from, end: date.to });
-  }), [sales, date]);
+  const filterByDate = (items: Array<{ date: string }>) => {
+     if (!date?.from || !date?.to) return items;
+     return items.filter(item => {
+        const itemDate = parseISO(item.date);
+        return isWithinInterval(itemDate, { start: date!.from!, end: date!.to! });
+     });
+  };
 
-  const { totalRevenue, totalCost, netProfit } = useMemo(() => {
+  const filteredSales = useMemo(() => filterByDate(sales), [sales, date]);
+  const filteredOperationalCosts = useMemo(() => filterByDate(operationalCosts), [operationalCosts, date]);
+
+  const { totalRevenue, totalCost, totalOperationalCost, netProfit } = useMemo(() => {
     let revenue = 0;
     let cost = 0;
 
@@ -38,9 +43,16 @@ export default function LaporanPage() {
         cost += drink.costPrice * sale.quantity;
       }
     });
+
+    const operationalCost = filteredOperationalCosts.reduce((acc, curr) => acc + curr.amount, 0);
     
-    return { totalRevenue: revenue, totalCost: cost, netProfit: revenue - cost };
-  }, [filteredSales, drinks]);
+    return { 
+        totalRevenue: revenue, 
+        totalCost: cost, 
+        totalOperationalCost: operationalCost,
+        netProfit: revenue - cost - operationalCost 
+    };
+  }, [filteredSales, drinks, filteredOperationalCosts]);
 
   return (
     <MainLayout>
@@ -91,14 +103,18 @@ export default function LaporanPage() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader><CardTitle>Total Pendapatan</CardTitle></CardHeader>
             <CardContent><p className="text-2xl font-bold">{formatCurrency(totalRevenue)}</p></CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Total Biaya</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Total Biaya Pokok</CardTitle></CardHeader>
             <CardContent><p className="text-2xl font-bold">{formatCurrency(totalCost)}</p></CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Biaya Operasional</CardTitle></CardHeader>
+            <CardContent><p className="text-2xl font-bold">{formatCurrency(totalOperationalCost)}</p></CardContent>
           </Card>
           <Card>
             <CardHeader><CardTitle>Laba Bersih</CardTitle></CardHeader>
@@ -106,27 +122,37 @@ export default function LaporanPage() {
           </Card>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-1">
           <Card>
-            <CardHeader><CardTitle>Laporan Pendapatan</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Detail Transaksi Penjualan</CardTitle></CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Tanggal</TableHead>
                     <TableHead>Minuman</TableHead>
+                    <TableHead>Jml</TableHead>
+                    <TableHead>Diskon</TableHead>
+                    <TableHead>Harga Pokok</TableHead>
                     <TableHead>Pendapatan</TableHead>
+                    <TableHead>Laba</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredSales.map(sale => {
                      const drink = drinks.find(d => d.id === sale.drinkId);
                      const revenue = drink ? drink.sellingPrice * sale.quantity * (1 - sale.discount / 100) : 0;
+                     const cost = drink ? drink.costPrice * sale.quantity : 0;
+                     const profit = revenue - cost;
                      return (
                       <TableRow key={sale.id}>
                         <TableCell>{formatDate(sale.date, "dd MMM yyyy")}</TableCell>
                         <TableCell>{drink?.name || 'N/A'}</TableCell>
+                        <TableCell>{sale.quantity}</TableCell>
+                        <TableCell>{sale.discount}%</TableCell>
+                        <TableCell>{formatCurrency(cost)}</TableCell>
                         <TableCell>{formatCurrency(revenue)}</TableCell>
+                        <TableCell>{formatCurrency(profit)}</TableCell>
                       </TableRow>
                      );
                   })}
@@ -134,29 +160,27 @@ export default function LaporanPage() {
               </Table>
             </CardContent>
           </Card>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-1">
           <Card>
-            <CardHeader><CardTitle>Laporan Biaya</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Detail Biaya Operasional</CardTitle></CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Tanggal</TableHead>
-                    <TableHead>Minuman</TableHead>
-                    <TableHead>Biaya</TableHead>
+                    <TableHead>Deskripsi</TableHead>
+                    <TableHead>Jumlah</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredSales.map(sale => {
-                     const drink = drinks.find(d => d.id === sale.drinkId);
-                     const cost = drink ? drink.costPrice * sale.quantity : 0;
-                     return (
-                      <TableRow key={sale.id}>
-                        <TableCell>{formatDate(sale.date, "dd MMM yyyy")}</TableCell>
-                        <TableCell>{drink?.name || 'N/A'}</TableCell>
-                        <TableCell>{formatCurrency(cost)}</TableCell>
+                  {filteredOperationalCosts.map(cost => (
+                      <TableRow key={cost.id}>
+                        <TableCell>{formatDate(cost.date, "dd MMM yyyy")}</TableCell>
+                        <TableCell>{cost.description}</TableCell>
+                        <TableCell>{formatCurrency(cost.amount)}</TableCell>
                       </TableRow>
-                     );
-                  })}
+                     ))}
                 </TableBody>
               </Table>
             </CardContent>
