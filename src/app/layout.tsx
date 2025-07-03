@@ -5,7 +5,7 @@ import { AppProvider } from '@/context/AppContext';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'Petrichor',
+  title: 'SipSavvy',
   description: 'Aplikasi pelacak penjualan dan laba untuk bisnis minuman.',
 };
 

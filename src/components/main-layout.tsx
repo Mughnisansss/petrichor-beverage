@@ -24,7 +24,7 @@ const topNavItems = [
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isLoading } = useAppContext();
+  const { isLoading, appName } = useAppContext();
   
   const settingsHref = pathname === "/pengaturan" ? "/" : "/pengaturan";
 
@@ -83,7 +83,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             className="flex items-center gap-2 text-lg font-semibold md:text-base"
           >
             <Logo />
-            <span className="sr-only">Petrichor</span>
+            <span className="sr-only">{appName}</span>
           </Link>
           {topNavItems.map(item => (
             <Link

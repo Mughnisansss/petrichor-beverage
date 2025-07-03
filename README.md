@@ -1,4 +1,4 @@
-# Petrichor - Aplikasi Pelacak Penjualan
+# SipSavvy - Aplikasi Pelacak Penjualan
 
 Ini adalah aplikasi Next.js yang dibuat di Firebase Studio untuk melacak penjualan dan profitabilitas untuk bisnis minuman.
 

@@ -56,7 +56,7 @@ const apiService = {
 };
 
 // --- Local Storage Service ---
-const LOCAL_STORAGE_KEY = 'petrichor_data';
+const LOCAL_STORAGE_KEY = 'sipsavvy_data';
 
 const getLocalData = (): DbData => {
   if (typeof window === 'undefined') {
@@ -218,6 +218,8 @@ interface AppContextType {
   isLoading: boolean;
   storageMode: StorageMode;
   setStorageMode: (mode: StorageMode) => void;
+  appName: string;
+  setAppName: (name: string) => void;
   fetchData: () => Promise<void>;
   addDrink: (drink: Omit<Drink, 'id'>) => Promise<Drink>;
   updateDrink: (id: string, drink: Omit<Drink, 'id'>) => Promise<Drink>;
@@ -237,7 +239,8 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [storageMode, setStorageMode] = useLocalStorage<StorageMode>('petrichor_storage_mode', 'local');
+  const [storageMode, setStorageMode] = useLocalStorage<StorageMode>('sipsavvy_storage_mode', 'local');
+  const [appName, setAppName] = useLocalStorage<string>('sipsavvy_appName', 'SipSavvy');
   const [dbData, setDbData] = useState<DbData>({ drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -291,6 +294,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       fetchData,
       storageMode,
       setStorageMode,
+      appName,
+      setAppName,
       addDrink: wrapWithRefetch(currentService.addDrink),
       updateDrink: wrapWithRefetch(currentService.updateDrink),
       deleteDrink: wrapWithRefetch(currentService.deleteDrink),
@@ -305,7 +310,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateRawMaterial: wrapWithRefetch(currentService.updateRawMaterial),
       deleteRawMaterial: wrapWithRefetch(currentService.deleteRawMaterial),
     };
-  }, [dbData, isLoading, fetchData, storageMode, setStorageMode, currentService]);
+  }, [dbData, isLoading, fetchData, storageMode, setStorageMode, appName, setAppName, currentService]);
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 }

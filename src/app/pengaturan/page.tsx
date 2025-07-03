@@ -7,9 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/context/AppContext";
-import type { Sale, Drink, RawMaterial, OperationalCost } from "@/lib/types";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Input } from "@/components/ui/input";
 
 export default function PengaturanPage() {
   const { toast } = useToast();
@@ -20,28 +20,36 @@ export default function PengaturanPage() {
     operationalCosts, 
     isLoading,
     storageMode,
-    setStorageMode
+    setStorageMode,
+    appName,
+    setAppName,
   } = useAppContext();
 
-  // State lokal untuk menampung pilihan pengguna sebelum disimpan.
-  // Diinisialisasi dengan mode penyimpanan saat ini dari konteks.
   const [selectedMode, setSelectedMode] = useState(storageMode);
+  const [localAppName, setLocalAppName] = useState(appName);
 
-  // Jika mode penyimpanan di konteks berubah (misalnya setelah disimpan),
-  // sinkronkan state lokal ini agar UI tetap konsisten.
   useEffect(() => {
     setSelectedMode(storageMode);
-  }, [storageMode]);
+    setLocalAppName(appName);
+  }, [storageMode, appName]);
 
   const handleSaveSettings = () => {
-    // Hanya proses jika ada perubahan.
+    const changesMade: string[] = [];
+
+    if (localAppName.trim() && localAppName.trim() !== appName) {
+      setAppName(localAppName.trim());
+      changesMade.push("Nama aplikasi diperbarui.");
+    }
+    
     if (selectedMode !== storageMode) {
-      // Panggil fungsi dari konteks untuk mengubah mode penyimpanan secara global.
-      // Konteks akan secara otomatis menangani pemuatan ulang data.
       setStorageMode(selectedMode);
+      changesMade.push("Mode penyimpanan diubah.");
+    }
+
+    if (changesMade.length > 0) {
       toast({
         title: "Pengaturan Disimpan",
-        description: `Mode penyimpanan data telah diubah ke ${selectedMode === 'local' ? 'Penyimpanan Browser' : 'Penyimpanan Server'}.`,
+        description: changesMade.join(" "),
       });
     }
   };
@@ -73,7 +81,8 @@ export default function PengaturanPage() {
       rawMaterials,
       operationalCosts,
     };
-    downloadFile(JSON.stringify(allData, null, 2), "petrichor_backup.json", "application/json");
+    const filename = `${appName.toLowerCase().replace(/\s/g, '_')}_backup.json`;
+    downloadFile(JSON.stringify(allData, null, 2), filename, "application/json");
   };
 
   const convertToCsv = (data: Record<string, any>[]) => {
@@ -141,7 +150,7 @@ export default function PengaturanPage() {
     });
   }
 
-  const hasChanges = selectedMode !== storageMode;
+  const hasChanges = (selectedMode !== storageMode) || (localAppName.trim() && localAppName.trim() !== appName);
 
   return (
     <MainLayout>
@@ -154,6 +163,22 @@ export default function PengaturanPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Informasi Toko</h3>
+              <div className="space-y-2">
+                <Label htmlFor="appName">Nama Aplikasi</Label>
+                <Input
+                  id="appName"
+                  value={localAppName}
+                  onChange={(e) => setLocalAppName(e.target.value)}
+                  placeholder="Masukkan nama aplikasi/toko Anda"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Nama ini akan muncul sebagai logo di bagian atas.
+                </p>
+              </div>
+            </div>
+            
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Mode Penyimpanan Data</h3>
               <p className="text-sm text-muted-foreground">
