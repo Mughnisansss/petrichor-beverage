@@ -81,14 +81,14 @@ export default function DashboardPage() {
     });
   }, [sales, date]);
 
-  const { totalRevenue, totalCost, totalOperationalCost, netProfit, bestSellingProduct } = useMemo(() => {
+  const { totalRevenue, totalCost, totalOperationalCost, netProfit, topProducts } = useMemo(() => {
     if (!date?.from || !date?.to) {
-        return { totalRevenue: 0, totalCost: 0, totalOperationalCost: 0, netProfit: 0, bestSellingProduct: 'Tidak ada' };
+        return { totalRevenue: 0, totalCost: 0, totalOperationalCost: 0, netProfit: 0, topProducts: [] };
     }
 
     let revenue = 0;
     let cost = 0;
-    const salesByProduct: { [key: string]: { quantity: number; name: string } } = {};
+    const salesByProduct: { [key: string]: { name: string; quantity: number; revenue: number } } = {};
 
     filteredSales.forEach(sale => {
       const { productId, productType, quantity, discount } = sale;
@@ -102,14 +102,14 @@ export default function DashboardPage() {
         cost += product.costPrice * quantity;
         
         if (!salesByProduct[product.id]) {
-            salesByProduct[product.id] = { quantity: 0, name: product.name };
+            salesByProduct[product.id] = { name: product.name, quantity: 0, revenue: 0 };
         }
         salesByProduct[product.id].quantity += quantity;
+        salesByProduct[product.id].revenue += saleRevenue;
       }
     });
     
-    const sortedProducts = Object.values(salesByProduct).sort((a,b) => b.quantity - a.quantity);
-    const topProduct = sortedProducts.length > 0 ? `${sortedProducts[0].name} (${sortedProducts[0].quantity} terjual)` : 'Tidak ada';
+    const sortedProducts = Object.values(salesByProduct).sort((a,b) => b.quantity - a.quantity).slice(0, 5);
 
     // --- Accurate Operational Cost Calculation ---
     const oneTimeCosts = operationalCosts
@@ -141,7 +141,7 @@ export default function DashboardPage() {
         totalCost: cost, 
         totalOperationalCost: finalOperationalCost,
         netProfit: revenue - cost - finalOperationalCost,
-        bestSellingProduct: topProduct
+        topProducts: sortedProducts
     };
   }, [filteredSales, drinks, foods, operationalCosts, date]);
 
@@ -285,9 +285,24 @@ export default function DashboardPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Produk Terlaris</CardTitle>
+                        <CardDescription>Produk paling banyak terjual pada periode ini.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-lg font-semibold">{bestSellingProduct}</p>
+                        {topProducts.length > 0 ? (
+                        <div className="space-y-4">
+                            {topProducts.map((product) => (
+                                <div key={product.name} className="flex items-center">
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium leading-none">{product.name}</p>
+                                        <p className="text-sm text-muted-foreground">{product.quantity} terjual</p>
+                                    </div>
+                                    <div className="font-medium">{formatCurrency(product.revenue)}</div>
+                                </div>
+                            ))}
+                        </div>
+                        ) : (
+                        <p className="text-sm text-muted-foreground">Tidak ada produk terjual pada periode ini.</p>
+                        )}
                     </CardContent>
                 </Card>
             </div>
