@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -7,8 +8,8 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useAppContext } from "@/context/AppContext";
 import type { RawMaterial } from "@/lib/types";
@@ -18,8 +19,9 @@ import { formatCurrency } from "@/lib/utils";
 
 const materialSchema = z.object({
   name: z.string().min(1, "Nama bahan tidak boleh kosong"),
-  unit: z.string().min(1, "Satuan tidak boleh kosong"),
-  costPerUnit: z.coerce.number().min(0, "Biaya per satuan tidak boleh negatif"),
+  unit: z.string().min(1, "Satuan untuk resep tidak boleh kosong"),
+  totalQuantity: z.coerce.number().min(0.001, "Jumlah pembelian harus lebih dari 0"),
+  totalCost: z.coerce.number().min(1, "Total biaya harus lebih dari 0"),
 });
 
 type MaterialFormValues = z.infer<typeof materialSchema>;
@@ -32,16 +34,19 @@ export default function BahanBakuPage() {
 
   const form = useForm<MaterialFormValues>({
     resolver: zodResolver(materialSchema),
-    defaultValues: { name: "", unit: "", costPerUnit: 0 },
+    defaultValues: { name: "", unit: "", totalQuantity: 1, totalCost: 0 },
   });
 
   async function onSubmit(values: MaterialFormValues) {
     try {
+      const costPerUnit = values.totalCost / values.totalQuantity;
+      const materialData = { ...values, costPerUnit };
+
       if (editingMaterial) {
-        await updateRawMaterial(editingMaterial.id, values);
+        await updateRawMaterial(editingMaterial.id, materialData);
         toast({ title: "Sukses", description: "Bahan baku berhasil diperbarui." });
       } else {
-        await addRawMaterial(values);
+        await addRawMaterial(materialData);
         toast({ title: "Sukses", description: "Bahan baku berhasil ditambahkan." });
       }
       setDialogOpen(false);
@@ -52,18 +57,23 @@ export default function BahanBakuPage() {
 
   const handleEdit = (material: RawMaterial) => {
     setEditingMaterial(material);
-    form.reset(material);
+    form.reset({
+      name: material.name,
+      unit: material.unit,
+      totalQuantity: material.totalQuantity,
+      totalCost: material.totalCost,
+    });
     setDialogOpen(true);
   };
   
   const handleAddNew = () => {
     setEditingMaterial(null);
-    form.reset({ name: "", unit: "", costPerUnit: 0 });
+    form.reset({ name: "", unit: "", totalQuantity: 1, totalCost: 0 });
     setDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus bahan baku ini? Menghapus bahan ini tidak akan mengubah HPP pada penjualan yang sudah tercatat.")) return;
+    if (!window.confirm("Apakah Anda yakin ingin menghapus bahan baku ini? Menghapus bahan ini akan memengaruhi HPP pada resep yang ada, namun tidak mengubah data penjualan yang sudah tercatat.")) return;
     try {
       const result = await deleteRawMaterial(id);
       if (!result.ok) {
@@ -92,6 +102,9 @@ export default function BahanBakuPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editingMaterial ? "Edit Bahan Baku" : "Tambah Bahan Baku"}</DialogTitle>
+              <DialogDescription>
+                Masukkan data sesuai pembelian terakhir Anda. Harga per satuan akan dihitung otomatis.
+              </DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -106,28 +119,44 @@ export default function BahanBakuPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
+                 <FormField
                   control={form.control}
                   name="unit"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Satuan</FormLabel>
+                      <FormLabel>Satuan Resep</FormLabel>
                       <FormControl><Input {...field} placeholder="cth: gram, ml, buah" /></FormControl>
+                      <FormDescription>Satuan yang akan Anda gunakan saat membuat resep.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="costPerUnit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Biaya per Satuan (Rp)</FormLabel>
-                      <FormControl><Input type="number" {...field} placeholder="cth: 150" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                 <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="totalQuantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Jumlah Beli</FormLabel>
+                        <FormControl><Input type="number" step="any" {...field} placeholder="cth: 1000" /></FormControl>
+                        <FormDescription>Jumlah dalam satuan resep di atas.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="totalCost"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Total Biaya (Rp)</FormLabel>
+                        <FormControl><Input type="number" {...field} placeholder="cth: 200000" /></FormControl>
+                         <FormDescription>Total harga pembelian.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <Button type="submit">{editingMaterial ? "Simpan Perubahan" : "Tambah"}</Button>
               </form>
             </Form>
@@ -143,7 +172,7 @@ export default function BahanBakuPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nama Bahan</TableHead>
-                <TableHead>Biaya per Satuan</TableHead>
+                <TableHead>Detail Biaya</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
@@ -152,7 +181,10 @@ export default function BahanBakuPage() {
                 rawMaterials.map(material => (
                   <TableRow key={material.id}>
                     <TableCell className="font-medium">{material.name}</TableCell>
-                    <TableCell>{formatCurrency(material.costPerUnit)} / {material.unit}</TableCell>
+                    <TableCell>
+                      {formatCurrency(material.totalCost)} / {material.totalQuantity} {material.unit}
+                      <p className="text-xs text-muted-foreground">({formatCurrency(material.costPerUnit)} per {material.unit})</p>
+                    </TableCell>
                     <TableCell className="flex gap-2 justify-end">
                       <Button variant="outline" size="icon" onClick={() => handleEdit(material)}>
                         <Edit className="h-4 w-4" />

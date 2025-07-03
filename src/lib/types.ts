@@ -1,8 +1,11 @@
+
 export interface RawMaterial {
   id: string;
   name: string;
   unit: string; // e.g., gram, ml, pcs
-  costPerUnit: number;
+  totalQuantity: number;
+  totalCost: number;
+  costPerUnit: number; // Stored for calculation: totalCost / totalQuantity
 }
 
 export interface Ingredient {
@@ -12,7 +15,7 @@ export interface Ingredient {
 
 export interface Drink {
   id: string;
-  name: string;
+  name:string;
   ingredients: Ingredient[];
   costPrice: number; // Calculated from ingredients, stored for historical accuracy
   sellingPrice: number;
