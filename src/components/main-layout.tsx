@@ -28,11 +28,7 @@ const navItems = [
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-
-  const getPageTitle = () => {
-    const activeItem = navItems.find(item => item.href === pathname);
-    return activeItem ? activeItem.label : "Dashboard";
-  };
+  const pageTitle = navItems.find(item => item.href === pathname)?.label || "Dashboard";
   
   return (
     <SidebarProvider>
@@ -64,7 +60,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           <SidebarTrigger className="md:hidden">
              <PanelLeft />
           </SidebarTrigger>
-          <h1 className="text-lg font-semibold">{getPageTitle()}</h1>
+          <h1 className="text-lg font-semibold">{pageTitle}</h1>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
           {children}
