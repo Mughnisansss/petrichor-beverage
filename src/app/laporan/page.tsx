@@ -8,8 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useAppContext } from "@/context/AppContext";
-import { formatCurrency } from "@/lib/utils";
-import { addDays, format, isWithinInterval, parseISO } from "date-fns";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { addDays, isWithinInterval, parseISO } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
@@ -65,11 +65,11 @@ export default function LaporanPage() {
                     {date?.from ? (
                       date.to ? (
                         <>
-                          {format(date.from, "LLL dd, y")} -{" "}
-                          {format(date.to, "LLL dd, y")}
+                          {formatDate(date.from.toISOString(), "LLL dd, y")} -{" "}
+                          {formatDate(date.to.toISOString(), "LLL dd, y")}
                         </>
                       ) : (
-                        format(date.from, "LLL dd, y")
+                        formatDate(date.from.toISOString(), "LLL dd, y")
                       )
                     ) : (
                       <span>Pilih tanggal</span>
@@ -124,7 +124,7 @@ export default function LaporanPage() {
                      const revenue = drink ? drink.sellingPrice * sale.quantity * (1 - sale.discount / 100) : 0;
                      return (
                       <TableRow key={sale.id}>
-                        <TableCell>{format(parseISO(sale.date), "dd MMM yyyy")}</TableCell>
+                        <TableCell>{formatDate(sale.date, "dd MMM yyyy")}</TableCell>
                         <TableCell>{drink?.name || 'N/A'}</TableCell>
                         <TableCell>{formatCurrency(revenue)}</TableCell>
                       </TableRow>
@@ -151,7 +151,7 @@ export default function LaporanPage() {
                      const cost = drink ? drink.costPrice * sale.quantity : 0;
                      return (
                       <TableRow key={sale.id}>
-                        <TableCell>{format(parseISO(sale.date), "dd MMM yyyy")}</TableCell>
+                        <TableCell>{formatDate(sale.date, "dd MMM yyyy")}</TableCell>
                         <TableCell>{drink?.name || 'N/A'}</TableCell>
                         <TableCell>{formatCurrency(cost)}</TableCell>
                       </TableRow>
