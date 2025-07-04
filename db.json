@@ -1,5 +1,29 @@
 
 {
+  "appName": "Petrichor",
+  "logoImageUri": null,
+  "marqueeText": "Selamat Datang di {appName}! Nikmati Kopi Terbaik di Kota!",
+  "initialCapital": 500000,
+  "cashExpenses": [
+    {
+      "id": "ce001",
+      "description": "Beli es batu kristal",
+      "amount": 20000,
+      "date": "2024-05-28T09:00:00Z"
+    },
+    {
+      "id": "ce002",
+      "description": "Bayar parkir mingguan",
+      "amount": 25000,
+      "date": "2024-05-27T18:00:00Z"
+    },
+    {
+      "id": "ce003",
+      "description": "Beli galon air minum",
+      "amount": 19000,
+      "date": "2024-05-26T11:30:00Z"
+    }
+  ],
   "drinks": [
     {
       "id": "drink01",
