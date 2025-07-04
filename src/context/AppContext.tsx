@@ -437,18 +437,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [orderQueue, currentService, setOrderQueue, fetchData]);
 
   const importData = useCallback(async (data: any): Promise<{ ok: boolean, message: string }> => {
-    const { appName, logoImageUri, marqueeText, ...dbData } = data;
+    const { appName, logoImageUri, marqueeText, initialCapital, cashExpenses, ...dbData } = data;
 
     const result = await currentService.importData(dbData);
     
     if (result.ok) {
-       // Also update settings stored in localStorage regardless of mode
-       if (appName) setAppName(appName);
-       if (logoImageUri) setLogoImageUri(logoImageUri);
-       if (marqueeText) setMarqueeText(marqueeText);
+      // Also update settings and wallet data stored in localStorage regardless of mode
+      if (appName) setAppName(appName);
+      if (logoImageUri !== undefined) setLogoImageUri(logoImageUri);
+      if (marqueeText) setMarqueeText(marqueeText);
+      if (typeof initialCapital === 'number') setInitialCapital(initialCapital);
+      if (Array.isArray(cashExpenses)) setCashExpenses(cashExpenses);
     }
     return result;
-  }, [currentService, setAppName, setLogoImageUri, setMarqueeText]);
+  }, [currentService, setAppName, setLogoImageUri, setMarqueeText, setInitialCapital, setCashExpenses]);
 
   const wrappedService = useMemo(() => {
     const wrap = <T extends (...args: any[]) => Promise<any>>(fn: T) => {

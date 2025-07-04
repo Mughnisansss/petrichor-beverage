@@ -33,6 +33,8 @@ export default function PengaturanPage() {
     marqueeText,
     setMarqueeText,
     importData,
+    initialCapital,
+    cashExpenses,
   } = useAppContext();
 
   const [selectedMode, setSelectedMode] = useState(storageMode);
@@ -135,6 +137,8 @@ export default function PengaturanPage() {
       appName,
       logoImageUri,
       marqueeText,
+      initialCapital,
+      cashExpenses,
       drinks,
       foods,
       sales,
