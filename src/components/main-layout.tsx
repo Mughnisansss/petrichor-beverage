@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -129,7 +128,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <div className="flex md:hidden">
             <MobileNav />
         </div>
-        <div className="flex-1 overflow-hidden hidden md:block">
+        <div className="flex-1 overflow-hidden hidden md:flex items-center h-10 border border-input rounded-md">
            <div className="relative flex overflow-x-hidden">
               <div className="animate-marquee whitespace-nowrap">
                 <span className="mx-4 text-sm font-medium text-muted-foreground">Selamat Datang di {appName}!</span>
