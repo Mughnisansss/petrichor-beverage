@@ -64,14 +64,6 @@ export default function BahanBakuPage() {
 
   const costPerUnit = (watchedTotalCost && watchedTotalQuantity > 0) ? watchedTotalCost / watchedTotalQuantity : 0;
   
-  useEffect(() => {
-    if (isFormVisible) {
-      if (watchedCategory === 'topping' || watchedCategory === 'packaging') {
-        form.setValue('sellingPrice', costPerUnit, { shouldValidate: true });
-      }
-    }
-  }, [costPerUnit, watchedCategory, form.setValue, form, isFormVisible]);
-
   async function onSubmit(values: MaterialFormValues) {
     try {
       const costPerUnitValue = values.totalCost / values.totalQuantity;
@@ -265,12 +257,11 @@ export default function BahanBakuPage() {
                                 <Input 
                                     type="number" 
                                     {...field} 
-                                    value={field.value || 0}
-                                    readOnly={true}
-                                    className="bg-muted/50 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                    value={field.value || ''}
+                                    placeholder="cth: 3000"
                                 />
                             </FormControl>
-                            <FormDescription>Otomatis disamakan dengan HPP. Anda tidak mengambil profit dari item ini.</FormDescription>
+                            <FormDescription>Harga yang akan dibayar pelanggan untuk item tambahan ini. Atur lebih tinggi dari HPP untuk mendapatkan profit.</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -343,5 +334,3 @@ export default function BahanBakuPage() {
     </div>
   );
 }
-
-    
