@@ -135,7 +135,7 @@ function ProductCustomizationDialog({
       <DialogContent className="bg-order-bg border-order-primary font-body">
         <DialogHeader>
           <DialogTitle className="font-pacifico text-3xl text-order-primary">{product.name}</DialogTitle>
-          <DialogDescription className="text-order-text/80">Pilih ukuran, tambahan, dan jumlah untuk pesanan Anda.</DialogDescription>
+          <DialogDescription className="text-order-text">Pilih ukuran, tambahan, dan jumlah untuk pesanan Anda.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
           
@@ -173,13 +173,13 @@ function ProductCustomizationDialog({
                         <Label htmlFor={`topping-${topping.id}`} className="text-order-text">{topping.name}</Label>
                       </div>
                       {topping.sellingPrice != null && (
-                        <span className="text-sm text-order-text/80">+{formatCurrency(topping.sellingPrice)}</span>
+                        <span className="text-sm text-order-text">+{formatCurrency(topping.sellingPrice)}</span>
                       )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-order-text/80 mt-2">Tidak ada topping tersedia.</p>
+                <p className="text-sm text-order-text mt-2">Tidak ada topping tersedia.</p>
               )}
             </div>
              <div>
@@ -227,7 +227,7 @@ function OrderSummaryPanel({ onConfirm }: { onConfirm: () => void }) {
                   {item.name} {item.selectedPackagingName && `(${item.selectedPackagingName})`}
                 </p>
                  {item.selectedToppings && item.selectedToppings.length > 0 && (
-                  <ul className="text-xs text-order-text/80 list-disc pl-4 mt-1">
+                  <ul className="text-xs text-order-text list-disc pl-4 mt-1">
                     {item.selectedToppings.map(topping => {
                        const toppingInfo = rawMaterials.find(m => m.id === topping.rawMaterialId);
                        return <li key={topping.rawMaterialId}>{toppingInfo?.name || '...'}</li>
@@ -247,7 +247,7 @@ function OrderSummaryPanel({ onConfirm }: { onConfirm: () => void }) {
             </div>
           ))
         ) : (
-          <div className="text-center text-order-text/80 h-full flex flex-col justify-center items-center py-8">
+          <div className="text-center text-order-text h-full flex flex-col justify-center items-center py-8">
               <ShoppingCart className="h-12 w-12 mb-4" />
               <p>Keranjang Anda kosong.</p>
               <p className="text-sm">Pilih item dari menu.</p>
@@ -302,7 +302,7 @@ function OrderSummarySheet({ onConfirm }: { onConfirm: () => void }) {
                     {item.name} {item.selectedPackagingName && `(${item.selectedPackagingName})`}
                   </p>
                    {item.selectedToppings && item.selectedToppings.length > 0 && (
-                    <ul className="text-xs text-order-text/80 list-disc pl-4 mt-1">
+                    <ul className="text-xs text-order-text list-disc pl-4 mt-1">
                       {item.selectedToppings.map(topping => {
                          const toppingInfo = rawMaterials.find(m => m.id === topping.rawMaterialId);
                          return <li key={topping.rawMaterialId}>{toppingInfo?.name || '...'}</li>
@@ -322,7 +322,7 @@ function OrderSummarySheet({ onConfirm }: { onConfirm: () => void }) {
               </div>
             ))
           ) : (
-            <div className="text-center text-order-text/80 h-full flex flex-col justify-center items-center">
+            <div className="text-center text-order-text h-full flex flex-col justify-center items-center">
                 <ShoppingCart className="h-12 w-12 mb-4" />
                 <p>Keranjang Anda masih kosong.</p>
                 <p className="text-sm">Silakan pilih item dari menu.</p>
@@ -411,97 +411,95 @@ export default function OrderPage() {
       ) : (
           <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-order-primary/20 rounded-lg text-center h-48 bg-white/30">
             <p className="text-order-text font-semibold">Menu {type === 'drink' ? 'Minuman' : 'Makanan'} Akan Segera Hadir!</p>
-            <p className="text-sm text-order-text/80 mt-1">Nantikan produk-produk menarik dari kami.</p>
+            <p className="text-sm text-order-text mt-1">Nantikan produk-produk menarik dari kami.</p>
           </div>
       );
   }
 
   return (
     <MainLayout>
-        <div className="relative">
-            {/* Decorative blobs are now in a fixed, non-interactive background layer */}
-            <div className="fixed inset-0 -z-10 pointer-events-none">
-                <div className="relative w-full h-full">
-                    <DecorativeBlob1 />
-                    <DecorativeBlob2 />
-                </div>
+        <div className="fixed inset-0 -z-10 pointer-events-none">
+            <div className="relative w-full h-full">
+                <DecorativeBlob1 />
+                <DecorativeBlob2 />
             </div>
-
-            <div className="relative z-10">
-                {/* Dialog for product customization */}
-                <ProductCustomizationDialog 
-                isOpen={customizingProduct !== null}
-                onClose={() => setCustomizingProduct(null)}
-                product={customizingProduct}
-                productType={productType}
-                />
-
-                {/* Dialog for order confirmation */}
-                <AlertDialog open={isConfirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-                    <AlertDialogContent className="bg-order-bg border-order-primary font-body">
-                        <AlertDialogHeader>
-                            <AlertDialogTitle className="font-pacifico text-3xl text-order-primary text-center">Pesanan Diterima!</AlertDialogTitle>
-                            <AlertDialogDescription className="text-center text-lg text-order-text/80 pt-4">
-                            Nomor antrian Anda adalah:
-                            </AlertDialogDescription>
-                            <div className="flex justify-center items-center py-4">
-                                <div className="flex justify-center items-center h-32 w-32 rounded-full bg-order-secondary text-white border-4 border-white shadow-lg">
-                                    <span className="text-6xl font-bold">{newQueueNumber}</span>
-                                </div>
-                            </div>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogAction className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold">OK</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-
-
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                    <div className="flex flex-col items-center text-center mb-16">
-                        <h1 className="font-pacifico text-5xl md:text-7xl text-order-primary tracking-tight">Selamat Datang di <span className="text-order-secondary">{appName}</span></h1>
-                        <p className="text-xl text-order-text/80 mt-4 max-w-2xl">
-                            Pilih menu favorit Anda di bawah ini dan nikmati sensasi rasa yang tak terlupakan.
-                        </p>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
-                        <div className="lg:col-span-2 space-y-20">
-                            {/* Minuman Section */}
-                            <div>
-                                <div className="flex items-center gap-4 mb-8">
-                                    <div className="bg-order-accent/80 p-3 rounded-full shadow-sm">
-                                        <CupSoda className="h-8 w-8 text-order-primary"/>
-                                    </div>
-                                    <h2 className="font-pacifico text-5xl text-order-primary">Minuman</h2>
-                                    <div className="flex-grow h-1 bg-gradient-to-r from-order-accent/50 to-transparent rounded-full" />
-                                </div>
-                                {renderProductGrid(drinks, 'drink')}
-                            </div>
-
-                            {/* Makanan Section */}
-                            <div>
-                                <div className="flex items-center gap-4 mb-8">
-                                <div className="bg-order-accent/80 p-3 rounded-full shadow-sm">
-                                    <Utensils className="h-8 w-8 text-order-primary"/>
-                                </div>
-                                    <h2 className="font-pacifico text-5xl text-order-primary">Makanan</h2>
-                                    <div className="flex-grow h-1 bg-gradient-to-r from-order-accent/50 to-transparent rounded-full" />
-                                </div>
-                                {renderProductGrid(foods, 'food')}
-                            </div>
-                        </div>
-
-                        <div className="hidden lg:block lg:col-span-1">
-                            <div className="sticky top-24">
-                                <OrderSummaryPanel onConfirm={handleConfirmOrder} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <OrderSummarySheet onConfirm={handleConfirmOrder} />
         </div>
+        
+        <div className="relative z-10">
+            {/* Dialog for product customization */}
+            <ProductCustomizationDialog 
+            isOpen={customizingProduct !== null}
+            onClose={() => setCustomizingProduct(null)}
+            product={customizingProduct}
+            productType={productType}
+            />
+
+            {/* Dialog for order confirmation */}
+            <AlertDialog open={isConfirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+                <AlertDialogContent className="bg-order-bg border-order-primary font-body">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="font-pacifico text-3xl text-order-primary text-center">Pesanan Diterima!</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center text-lg text-order-text pt-4">
+                        Nomor antrian Anda adalah:
+                        </AlertDialogDescription>
+                        <div className="flex justify-center items-center py-4">
+                            <div className="flex justify-center items-center h-32 w-32 rounded-full bg-order-secondary text-white border-4 border-white shadow-lg">
+                                <span className="text-6xl font-bold">{newQueueNumber}</span>
+                            </div>
+                        </div>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold">OK</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <div className="flex flex-col items-center text-center mb-16">
+                    <h1 className="font-pacifico text-5xl md:text-7xl text-order-primary tracking-tight">Selamat Datang di <span className="text-order-secondary">{appName}</span></h1>
+                    <p className="text-xl text-order-text mt-4 max-w-2xl">
+                        Pilih menu favorit Anda di bawah ini dan nikmati sensasi rasa yang tak terlupakan.
+                    </p>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+                    <div className="lg:col-span-2 space-y-20">
+                        {/* Minuman Section */}
+                        <div>
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="bg-order-accent/80 p-3 rounded-full shadow-sm">
+                                    <CupSoda className="h-8 w-8 text-order-primary"/>
+                                </div>
+                                <h2 className="font-pacifico text-5xl text-order-primary">Minuman</h2>
+                                <div className="flex-grow h-1 bg-gradient-to-r from-order-accent/50 to-transparent rounded-full" />
+                            </div>
+                            {renderProductGrid(drinks, 'drink')}
+                        </div>
+
+                        {/* Makanan Section */}
+                        <div>
+                            <div className="flex items-center gap-4 mb-8">
+                            <div className="bg-order-accent/80 p-3 rounded-full shadow-sm">
+                                <Utensils className="h-8 w-8 text-order-primary"/>
+                            </div>
+                                <h2 className="font-pacifico text-5xl text-order-primary">Makanan</h2>
+                                <div className="flex-grow h-1 bg-gradient-to-r from-order-accent/50 to-transparent rounded-full" />
+                            </div>
+                            {renderProductGrid(foods, 'food')}
+                        </div>
+                    </div>
+
+                    <div className="hidden lg:block lg:col-span-1">
+                        <div className="sticky top-24">
+                            <OrderSummaryPanel onConfirm={handleConfirmOrder} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <OrderSummarySheet onConfirm={handleConfirmOrder} />
     </MainLayout>
   );
 }
+
