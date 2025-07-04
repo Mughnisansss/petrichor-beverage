@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -57,28 +58,24 @@ export default function BahanBakuPage() {
     defaultValues: defaultFormValues,
   });
   
-  const watchedCategory = form.watch("category");
   const watchedTotalQuantity = form.watch("totalQuantity");
   const watchedTotalCost = form.watch("totalCost");
 
   const costPerUnit = (watchedTotalCost && watchedTotalQuantity > 0) ? watchedTotalCost / watchedTotalQuantity : 0;
   
   useEffect(() => {
+    // Automatically set the selling price to the cost price for all categories.
+    // This value will be used as the base cost for ingredients and the actual selling price for toppings/packaging.
     if (isFormVisible) {
-      if (watchedCategory === 'packaging') {
-        form.setValue('sellingPrice', costPerUnit);
-      }
+      form.setValue('sellingPrice', costPerUnit);
     }
-  }, [costPerUnit, watchedCategory, form, isFormVisible]);
+  }, [costPerUnit, form, isFormVisible]);
 
   async function onSubmit(values: MaterialFormValues) {
     try {
       const costPerUnitValue = values.totalCost / values.totalQuantity;
-      let finalSellingPrice = values.sellingPrice;
-      
-      if (watchedCategory === 'packaging' || watchedCategory === 'main') {
-          finalSellingPrice = costPerUnitValue;
-      }
+      // The selling price for all materials is their cost price (HPP).
+      const finalSellingPrice = costPerUnitValue;
 
       const materialData = { ...values, costPerUnit: costPerUnitValue, sellingPrice: finalSellingPrice };
 
@@ -256,30 +253,9 @@ export default function BahanBakuPage() {
                     <div className="p-4 rounded-md bg-muted">
                         <Label>Harga Pokok per Satuan (HPP)</Label>
                         <p className="font-bold text-2xl text-primary">{formatCurrency(costPerUnit || 0)}</p>
-                        <FormDescription>Dihitung otomatis dari: Total Biaya / Jumlah Beli.</FormDescription>
+                        <FormDescription>Dihitung dari Total Biaya / Jumlah Beli. Nilai ini juga akan menjadi harga jual untuk Kemasan & Topping.</FormDescription>
                     </div>
                     
-                    {watchedCategory === 'topping' && (
-                       <FormField
-                        control={form.control}
-                        name="sellingPrice"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Harga Jual Topping (Rp)</FormLabel>
-                            <FormControl>
-                                <Input 
-                                    type="number" 
-                                    {...field} 
-                                    value={field.value || ''}
-                                    placeholder="cth: 3000"
-                                />
-                            </FormControl>
-                            <FormDescription>Harga yang akan dibayar pelanggan untuk topping ini. Atur lebih tinggi dari HPP untuk mendapatkan profit.</FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
                     <div className="flex items-center gap-2">
                         <Button type="submit">{editingMaterial ? "Simpan Perubahan" : "Tambah"}</Button>
                         {editingMaterial && (
