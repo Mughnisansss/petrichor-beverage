@@ -77,7 +77,14 @@ export default function BahanBakuPage() {
   async function onSubmit(values: MaterialFormValues) {
     try {
       const costPerUnitValue = values.totalCost / values.totalQuantity;
-      const materialData = { ...values, costPerUnit: costPerUnitValue };
+      let finalSellingPrice = values.sellingPrice;
+      
+      // Ensure selling price for non-toppings is always the HPP
+      if (values.category === 'main' || values.category === 'packaging') {
+          finalSellingPrice = costPerUnitValue;
+      }
+
+      const materialData = { ...values, costPerUnit: costPerUnitValue, sellingPrice: finalSellingPrice };
 
       if (editingMaterial) {
         await updateRawMaterial(editingMaterial.id, materialData);
@@ -317,13 +324,11 @@ export default function BahanBakuPage() {
                     <TableCell>
                       {material.category === 'topping' ? (
                         formatCurrency(material.sellingPrice || 0)
-                      ) : material.category === 'packaging' ? (
+                      ) : (
                         <div>
                           {formatCurrency(material.sellingPrice || 0)}
                           <p className="text-xs text-muted-foreground italic">(Sesuai HPP)</p>
                         </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground italic">Termasuk di HPP produk</span>
                       )}
                     </TableCell>
                     <TableCell className="flex gap-2 justify-end">
