@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { nanoid } from 'nanoid';
-import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem, Ingredient, QueuedOrder, PackagingInfo } from '@/lib/types';
+import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem, Ingredient, QueuedOrder, PackagingInfo, CashExpense } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { 
   isRawMaterialInUse, 
@@ -228,6 +228,11 @@ interface AppContextType {
   setLogoImageUri: (uri: string | null) => void;
   marqueeText: string;
   setMarqueeText: (text: string) => void;
+  initialCapital: number;
+  setInitialCapital: (value: number | ((val: number) => number)) => void;
+  cashExpenses: CashExpense[];
+  addCashExpense: (expense: { description: string, amount: number }) => void;
+  deleteCashExpense: (id: string) => void;
   fetchData: () => Promise<void>;
   addDrink: (drink: Omit<Drink, 'id'>) => Promise<Drink>;
   updateDrink: (id: string, drink: Omit<Drink, 'id'>) => Promise<Drink>;
@@ -264,6 +269,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [lastQueueNumber, setLastQueueNumber] = useLocalStorage<number>('petrichor_last_queue_number', 0);
   const [dbData, setDbData] = useState<DbData>({ drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
   const [isLoading, setIsLoading] = useState(true);
+  const [initialCapital, setInitialCapital] = useLocalStorage<number>('petrichor_initial_capital', 0);
+  const [cashExpenses, setCashExpenses] = useLocalStorage<CashExpense[]>('petrichor_cash_expenses', []);
 
   const currentService = useMemo(() => {
     return storageMode === 'local' ? localStorageService : apiService;
@@ -444,6 +451,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentService, fetchData]);
 
+  const addCashExpense = useCallback((expense: { description: string, amount: number }) => {
+    const newExpense: CashExpense = {
+      ...expense,
+      id: nanoid(),
+      date: new Date().toISOString(),
+    };
+    setCashExpenses(prev => [...prev, newExpense].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+  }, [setCashExpenses]);
+
+  const deleteCashExpense = useCallback((id: string) => {
+    setCashExpenses(prev => prev.filter(exp => exp.id !== id));
+  }, [setCashExpenses]);
+
   const contextValue = useMemo(() => ({
     drinks: dbData.drinks,
     foods: dbData.foods,
@@ -461,6 +481,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setLogoImageUri,
     marqueeText,
     setMarqueeText,
+    initialCapital,
+    setInitialCapital,
+    cashExpenses,
+    addCashExpense,
+    deleteCashExpense,
     fetchData,
     ...wrappedService,
     addToCart,
@@ -474,7 +499,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     dbData, cart, orderQueue, isLoading, storageMode, setStorageMode, appName, setAppName, 
     logoImageUri, setLogoImageUri, marqueeText, setMarqueeText, fetchData, 
     wrappedService, addToCart, updateCartItemQuantity, removeFromCart, clearCart,
-    submitCustomerOrder, updateQueuedOrderStatus, processQueuedOrder
+    submitCustomerOrder, updateQueuedOrderStatus, processQueuedOrder,
+    initialCapital, setInitialCapital, cashExpenses, addCashExpense, deleteCashExpense
   ]);
 
 

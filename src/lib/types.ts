@@ -1,4 +1,5 @@
 
+
 export interface RawMaterial {
   id: string;
   name: string;
@@ -91,4 +92,11 @@ export interface QueuedOrder {
   items: CartItem[];
   createdAt: string;
   status: 'pending' | 'ready';
+}
+
+export interface CashExpense {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
 }
