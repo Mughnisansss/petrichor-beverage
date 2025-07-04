@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Settings, ShoppingCart } from "lucide-react";
+import { Menu, Settings } from "lucide-react";
 
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
@@ -128,7 +128,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <div className="flex md:hidden">
             <MobileNav />
         </div>
-        <div className="flex-1 overflow-hidden hidden md:flex items-center h-10 border border-input rounded-md">
+        <div className="flex-1 overflow-hidden hidden md:flex items-center h-10 border border-input rounded-md bg-muted">
            <div className="relative flex overflow-x-hidden">
               <div className="animate-marquee whitespace-nowrap">
                 <span className="mx-4 text-sm font-medium text-muted-foreground">Selamat Datang di {appName}!</span>
