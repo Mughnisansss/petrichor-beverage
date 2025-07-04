@@ -58,13 +58,10 @@ function ProductCustomizationDialog({
   const availableToppings = useMemo(() => {
     if (!product || !product.availableToppings) return [];
     
-    const productIngredientIds = new Set(product.ingredients.map(ing => ing.rawMaterialId));
-
+    // This now correctly uses the pre-filtered availableToppings from the product data
     return product.availableToppings
       .map(toppingId => rawMaterials.find(m => m.id === toppingId))
-      .filter((topping): topping is RawMaterial => 
-          topping !== undefined && !productIngredientIds.has(topping.id)
-      );
+      .filter((topping): topping is RawMaterial => topping !== undefined);
   }, [rawMaterials, product]);
   
   const toppingsPrice = useMemo(() => {
@@ -172,7 +169,7 @@ function OrderSummaryPanel({ onConfirm }: { onConfirm: () => void }) {
   }, [cart]);
 
   return (
-    <Card className="sticky top-24 bg-white/80 backdrop-blur-sm border-order-primary/20 shadow-lg">
+    <Card className="bg-white/80 backdrop-blur-sm border-order-primary/20 shadow-lg">
       <CardHeader className="p-6">
         <CardTitle className="font-pacifico text-3xl text-order-primary">Keranjang Anda</CardTitle>
       </CardHeader>
@@ -446,7 +443,7 @@ export default function OrderPage() {
                             </div>
                         </div>
 
-                        <div className="hidden lg:block lg:col-span-1">
+                        <div className="hidden lg:block lg:col-span-1 sticky top-24">
                             <OrderSummaryPanel onConfirm={handleConfirmOrder} />
                         </div>
                     </div>
@@ -457,4 +454,3 @@ export default function OrderPage() {
     </MainLayout>
   );
 }
-
