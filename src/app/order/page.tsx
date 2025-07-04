@@ -49,6 +49,13 @@ function ProductCustomizationDialog({
   const [quantity, setQuantity] = useState(1);
 
   const availableToppings = useMemo(() => rawMaterials.filter(m => m.category === 'topping'), [rawMaterials]);
+  
+  const toppingsPrice = useMemo(() => {
+    return selectedToppings.reduce((sum, toppingIng) => {
+        const toppingData = rawMaterials.find(m => m.id === toppingIng.rawMaterialId);
+        return sum + (toppingData?.sellingPrice || 0);
+    }, 0);
+  }, [selectedToppings, rawMaterials]);
 
   useEffect(() => {
     if (isOpen) {
@@ -57,7 +64,9 @@ function ProductCustomizationDialog({
     }
   }, [isOpen]);
 
-  if (!product) return null;
+  if (!product) {
+    return null;
+  }
 
   const handleCheckboxChange = (checked: boolean, topping: RawMaterial) => {
     setSelectedToppings(prev => {
@@ -68,13 +77,6 @@ function ProductCustomizationDialog({
       }
     });
   };
-
-  const toppingsPrice = useMemo(() => {
-    return selectedToppings.reduce((sum, toppingIng) => {
-        const toppingData = rawMaterials.find(m => m.id === toppingIng.rawMaterialId);
-        return sum + (toppingData?.sellingPrice || 0);
-    }, 0);
-  }, [selectedToppings, rawMaterials]);
 
   const finalUnitPrice = product.sellingPrice + toppingsPrice;
   const totalPrice = finalUnitPrice * quantity;
