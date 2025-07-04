@@ -19,6 +19,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/kasir',
+        destination: '/kasir/orderan',
+        permanent: true,
+      },
+    ]
+  },
 };
 
 export default nextConfig;
