@@ -60,22 +60,24 @@ export default function BahanBakuPage() {
   
   const watchedTotalQuantity = form.watch("totalQuantity");
   const watchedTotalCost = form.watch("totalCost");
+  const watchedCategory = form.watch("category");
 
   const costPerUnit = (watchedTotalCost && watchedTotalQuantity > 0) ? watchedTotalCost / watchedTotalQuantity : 0;
   
   useEffect(() => {
-    // Automatically set the selling price to the cost price for all categories.
-    // This value will be used as the base cost for ingredients and the actual selling price for toppings/packaging.
-    if (isFormVisible) {
-      form.setValue('sellingPrice', costPerUnit);
+    if (isFormVisible && (watchedCategory === 'packaging' || watchedCategory === 'main')) {
+      form.setValue('sellingPrice', costPerUnit, { shouldValidate: true });
     }
-  }, [costPerUnit, form, isFormVisible]);
+  }, [costPerUnit, form, isFormVisible, watchedCategory]);
 
   async function onSubmit(values: MaterialFormValues) {
     try {
       const costPerUnitValue = values.totalCost / values.totalQuantity;
-      // The selling price for all materials is their cost price (HPP).
-      const finalSellingPrice = costPerUnitValue;
+      
+      let finalSellingPrice = values.sellingPrice;
+      if (values.category === 'main' || values.category === 'packaging') {
+          finalSellingPrice = costPerUnitValue;
+      }
 
       const materialData = { ...values, costPerUnit: costPerUnitValue, sellingPrice: finalSellingPrice };
 
@@ -250,13 +252,29 @@ export default function BahanBakuPage() {
                     
                     <Separator />
                     
-                    <div className="p-4 rounded-md bg-muted">
-                        <Label>Harga Pokok per Satuan (HPP)</Label>
-                        <p className="font-bold text-2xl text-primary">{formatCurrency(costPerUnit || 0)}</p>
-                        <FormDescription>Dihitung dari Total Biaya / Jumlah Beli. Nilai ini juga akan menjadi harga jual untuk Kemasan & Topping.</FormDescription>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 rounded-md bg-muted">
+                            <Label>Harga Pokok per Satuan (HPP)</Label>
+                            <p className="font-bold text-2xl text-primary">{formatCurrency(costPerUnit || 0)}</p>
+                            <FormDescription>Dihitung dari Total Biaya / Jumlah Beli.</FormDescription>
+                        </div>
+                         {watchedCategory === 'topping' && (
+                            <FormField
+                                control={form.control}
+                                name="sellingPrice"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Harga Jual Topping (Rp)</FormLabel>
+                                    <FormControl><Input type="number" {...field} placeholder="cth: 3000" /></FormControl>
+                                    <FormDescription>Harga yang akan ditagihkan ke pelanggan.</FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        )}
                     </div>
                     
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 pt-4">
                         <Button type="submit">{editingMaterial ? "Simpan Perubahan" : "Tambah"}</Button>
                         {editingMaterial && (
                           <Button variant="ghost" type="button" onClick={handleCancel}>Batal Edit</Button>
@@ -293,7 +311,10 @@ export default function BahanBakuPage() {
                       {formatCurrency(material.totalCost)} / {material.totalQuantity} {material.unit}
                     </TableCell>
                     <TableCell>
-                      {formatCurrency(material.sellingPrice || 0)}
+                      {material.category === 'topping' 
+                        ? formatCurrency(material.sellingPrice || 0) 
+                        : formatCurrency(material.costPerUnit)
+                      }
                     </TableCell>
                     <TableCell className="flex gap-2 justify-end">
                       <Button variant="outline" size="icon" onClick={() => handleEdit(material)}>
@@ -319,3 +340,4 @@ export default function BahanBakuPage() {
     </div>
   );
 }
+
