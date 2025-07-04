@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo } from "react";
@@ -22,6 +21,7 @@ const topNavItems = [
   { href: "/order", label: "Order" },
   { href: "/kasir", label: "Kasir" },
   { href: "/dompet", label: "Dompet" },
+  { href: "/", label: "Dasbor" },
   { href: "/racik/minuman", label: "Produk" },
 ];
 
@@ -73,7 +73,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               >
                 {item.label}
                  {item.href === '/kasir' && orderQueue.length > 0 && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
+                  <span className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
                     {orderQueue.length}
                   </span>
                 )}
@@ -83,7 +83,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 href={settingsHref}
                 className={cn(
                   "hover:text-foreground",
-                  pathname.startsWith('/pengaturan') ? "text-foreground" : "text-muted-foreground"
+                   "text-muted-foreground",
+                  pathname.startsWith('/pengaturan') && "text-foreground"
                 )}
               >
                 Pengaturan
@@ -101,7 +102,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       <header className={cn(
         "sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50"
       )}>
-        {!isOrderPage && (
+        {!isOrderPage ? (
           <>
             <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
               <Link
@@ -122,7 +123,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 >
                   {item.label}
                   {item.href === '/kasir' && orderQueue.length > 0 && (
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
+                     <span className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
                       {orderQueue.length}
                     </span>
                   )}
@@ -132,30 +133,20 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <div className="flex md:hidden">
                 <MobileNav />
             </div>
-          </>
-        )}
-        <div className={cn(
-          "flex-1 overflow-hidden flex items-center h-10 rounded-md",
-           isOrderPage ? "bg-primary/10 text-primary" : "bg-muted border border-input",
-        )}>
-           <div className="relative flex overflow-x-hidden">
-              <div className="animate-marquee whitespace-nowrap">
-                <span className="mx-4 text-sm font-medium">{displayText}</span>
-                <span className="mx-4 text-sm font-medium">{displayText}</span>
-                <span className="mx-4 text-sm font-medium">{displayText}</span>
-                <span className="mx-4 text-sm font-medium">{displayText}</span>
+            <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+              <div className={cn(
+                "flex-1 overflow-hidden flex items-center h-10 rounded-md",
+                "bg-muted border border-input",
+              )}>
+                 <div className="relative flex overflow-x-hidden">
+                    <div className="animate-marquee whitespace-nowrap">
+                      <span className="mx-4 text-sm font-medium">{displayText}</span>
+                    </div>
+                    <div className="absolute top-0 animate-marquee2 whitespace-nowrap">
+                       <span className="mx-4 text-sm font-medium">{displayText}</span>
+                    </div>
+                  </div>
               </div>
-              <div className="absolute top-0 animate-marquee2 whitespace-nowrap">
-                 <span className="mx-4 text-sm font-medium">{displayText}</span>
-                 <span className="mx-4 text-sm font-medium">{displayText}</span>
-                 <span className="mx-4 text-sm font-medium">{displayText}</span>
-                 <span className="mx-4 text-sm font-medium">{displayText}</span>
-              </div>
-            </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {!isOrderPage && (
-            <>
               <ThemeToggle />
               <Link href={settingsHref} passHref>
                 <Button variant="ghost" size="icon">
@@ -163,9 +154,22 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   <span className="sr-only">Pengaturan</span>
                 </Button>
               </Link>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        ) : (
+           <div className="flex-1 overflow-hidden flex items-center h-10 rounded-md bg-primary/10 text-primary">
+             <div className="relative flex overflow-x-hidden">
+                <div className="animate-marquee whitespace-nowrap">
+                  <span className="mx-4 text-sm font-medium">{displayText}</span>
+                  <span className="mx-4 text-sm font-medium">{displayText}</span>
+                </div>
+                <div className="absolute top-0 animate-marquee2 whitespace-nowrap">
+                   <span className="mx-4 text-sm font-medium">{displayText}</span>
+                   <span className="mx-4 text-sm font-medium">{displayText}</span>
+                </div>
+              </div>
+          </div>
+        )}
       </header>
       <main className={cn(
         "flex flex-1 flex-col bg-background",

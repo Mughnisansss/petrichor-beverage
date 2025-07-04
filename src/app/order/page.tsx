@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
@@ -21,12 +20,12 @@ import { Separator } from "@/components/ui/separator";
 
 // --- Decorative Blobs ---
 const DecorativeBlob1 = () => (
-    <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" className="absolute top-0 left-0 w-1/2 h-1/2 -translate-x-1/3 -translate-y-1/3 text-accent/30 opacity-50 z-0">
+    <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" className="absolute top-0 left-0 w-1/2 h-1/2 -translate-x-1/3 -translate-y-1/3 text-accent/30 opacity-50 z-0 pointer-events-none">
         <path fill="currentColor" d="M429,298.5Q398,347,362.5,385.5Q327,424,278.5,431Q230,438,185,419.5Q140,401,98,370.5Q56,340,55,295Q54,250,56.5,206Q59,162,99,134.5Q139,107,185,91Q231,75,276.5,76Q322,77,361,106.5Q400,136,432,173Q464,210,446.5,250Q429,290,429,298.5Z" />
     </svg>
 );
 const DecorativeBlob2 = () => (
-     <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" className="absolute bottom-0 right-0 w-2/3 h-2/3 translate-x-1/4 translate-y-1/4 text-secondary/20 opacity-50 z-0">
+     <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" className="absolute bottom-0 right-0 w-2/3 h-2/3 translate-x-1/4 translate-y-1/4 text-secondary/20 opacity-50 z-0 pointer-events-none">
         <path fill="currentColor" d="M439.5,394Q363,538,241,475.5Q119,413,88,296.5Q57,180,172,130.5Q287,81,373,155.5Q459,230,439.5,394Z" />
     </svg>
 );
@@ -422,7 +421,7 @@ export default function OrderPage() {
 
   return (
     <MainLayout>
-        <div className="fixed inset-0 -z-10 pointer-events-none bg-background">
+        <div className="fixed inset-0 -z-10 bg-background">
             <div className="relative w-full h-full">
                 <DecorativeBlob1 />
                 <DecorativeBlob2 />
@@ -462,7 +461,7 @@ export default function OrderPage() {
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <div className="flex flex-col items-center text-center mb-16">
                     <h1 className="font-pacifico text-5xl md:text-7xl text-primary tracking-tight">Selamat Datang di <span className="text-secondary">{appName}</span></h1>
-                    <p className="text-xl text-foreground mt-4 max-w-2xl">
+                    <p className="text-xl text-foreground mt-4 max-w-2xl font-body">
                         Pilih menu favorit Anda di bawah ini dan nikmati sensasi rasa yang tak terlupakan.
                     </p>
                 </div>
