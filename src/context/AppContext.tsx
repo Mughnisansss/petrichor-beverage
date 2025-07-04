@@ -243,7 +243,7 @@ interface AppContextType {
   addRawMaterial: (material: Omit<RawMaterial, 'id'>) => Promise<RawMaterial>;
   updateRawMaterial: (id: string, material: Omit<RawMaterial, 'id'>) => Promise<RawMaterial>;
   deleteRawMaterial: (id: string) => Promise<{ ok: boolean, message: string }>;
-  addToCart: (product: Drink | Food, type: 'drink' | 'food', selectedToppings: Ingredient[], finalUnitPrice: number) => void;
+  addToCart: (product: Drink | Food, type: 'drink' | 'food', quantity: number, selectedToppings: Ingredient[], finalUnitPrice: number) => void;
   updateCartItemQuantity: (cartId: string, quantity: number) => void;
   removeFromCart: (cartId: string) => void;
   clearCart: () => void;
@@ -309,18 +309,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fetchData();
   }, [fetchData]);
   
-  const addToCart = useCallback((product: Drink | Food, type: 'drink' | 'food', selectedToppings: Ingredient[], finalUnitPrice: number) => {
+  const addToCart = useCallback((product: Drink | Food, type: 'drink' | 'food', quantity: number, selectedToppings: Ingredient[], finalUnitPrice: number) => {
     setCart(prevCart => {
+      // Logic to check if an identical item (product + toppings) already exists.
+      const stringifiedToppings = JSON.stringify(selectedToppings.map(t => t.rawMaterialId).sort());
+      
+      const existingItemIndex = prevCart.findIndex(item => 
+        item.productId === product.id &&
+        JSON.stringify(item.selectedToppings.map(t => t.rawMaterialId).sort()) === stringifiedToppings
+      );
+
+      if (existingItemIndex > -1) {
+        // If it exists, update the quantity
+        const newCart = [...prevCart];
+        newCart[existingItemIndex].quantity += quantity;
+        return newCart;
+      } else {
+        // If not, add a new item
         const newItem: CartItem = {
             cartId: nanoid(),
             productId: product.id,
             productType: type,
             name: product.name,
-            quantity: 1,
-            sellingPrice: finalUnitPrice, // Use the calculated price (base + toppings)
+            quantity: quantity,
+            sellingPrice: finalUnitPrice, // Price for a SINGLE unit, including toppings
             selectedToppings: selectedToppings
         };
         return [...prevCart, newItem];
+      }
     });
   }, [setCart]);
 
@@ -389,6 +405,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     
     // This will call batchAddSales and then refetch all data, which is what we want
     await currentService.batchAddSales(salesPayload);
+    await fetchData();
 
     // After data is refetched, we can remove from the local queue state
     setOrderQueue(prevQueue => prevQueue.filter(o => o.id !== orderId));
@@ -466,5 +483,3 @@ export function useAppContext() {
   }
   return context;
 }
-
-    

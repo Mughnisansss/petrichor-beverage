@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { useAppContext } from "@/context/AppContext";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -46,8 +46,16 @@ function ProductCustomizationDialog({
   const { rawMaterials, addToCart } = useAppContext();
   const { toast } = useToast();
   const [selectedToppings, setSelectedToppings] = useState<Ingredient[]>([]);
+  const [quantity, setQuantity] = useState(1);
 
   const availableToppings = useMemo(() => rawMaterials.filter(m => m.category === 'topping'), [rawMaterials]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedToppings([]);
+      setQuantity(1);
+    }
+  }, [isOpen]);
 
   if (!product) return null;
 
@@ -61,63 +69,81 @@ function ProductCustomizationDialog({
     });
   };
 
-  const handleAddToCart = () => {
-    const toppingsPrice = selectedToppings.reduce((sum, toppingIng) => {
+  const toppingsPrice = useMemo(() => {
+    return selectedToppings.reduce((sum, toppingIng) => {
         const toppingData = rawMaterials.find(m => m.id === toppingIng.rawMaterialId);
         return sum + (toppingData?.sellingPrice || 0);
     }, 0);
+  }, [selectedToppings, rawMaterials]);
 
-    const finalUnitPrice = product.sellingPrice + toppingsPrice;
-    
-    addToCart(product, productType, selectedToppings, finalUnitPrice);
+  const finalUnitPrice = product.sellingPrice + toppingsPrice;
+  const totalPrice = finalUnitPrice * quantity;
+
+  const handleAddToCart = () => {
+    addToCart(product, productType, quantity, selectedToppings, finalUnitPrice);
     
     toast({
       title: "Ditambahkan ke Keranjang",
-      description: `1x ${product.name} telah ditambahkan.`,
+      description: `${quantity}x ${product.name} telah ditambahkan.`,
     });
     
     onClose();
-    setSelectedToppings([]);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
         if (!open) {
             onClose();
-            setSelectedToppings([]);
         }
     }}>
       <DialogContent className="bg-order-bg border-order-primary font-body">
         <DialogHeader>
           <DialogTitle className="font-pacifico text-3xl text-order-primary">{product.name}</DialogTitle>
-          <DialogDescription className="text-order-text/80">Pilih tambahan untuk pesanan Anda.</DialogDescription>
+          <DialogDescription className="text-order-text/80">Pilih tambahan dan jumlah untuk pesanan Anda.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <h4 className="font-bold text-order-text">Topping</h4>
-          {availableToppings.length > 0 ? (
-            <div className="space-y-2">
-              {availableToppings.map(topping => (
-                <div key={topping.id} className="flex items-center justify-between space-x-2">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={`topping-${topping.id}`}
-                      onCheckedChange={(checked) => handleCheckboxChange(checked as boolean, topping)}
-                      className="border-order-primary data-[state=checked]:bg-order-primary data-[state=checked]:text-white"
-                    />
-                    <Label htmlFor={`topping-${topping.id}`} className="text-order-text">{topping.name}</Label>
-                  </div>
-                  {topping.sellingPrice && (
-                    <span className="text-sm text-order-text/80">+{formatCurrency(topping.sellingPrice)}</span>
-                  )}
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-bold text-order-text mb-2">Topping</h4>
+              {availableToppings.length > 0 ? (
+                <div className="space-y-2 max-h-36 overflow-y-auto pr-2">
+                  {availableToppings.map(topping => (
+                    <div key={topping.id} className="flex items-center justify-between space-x-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`topping-${topping.id}`}
+                          onCheckedChange={(checked) => handleCheckboxChange(checked as boolean, topping)}
+                          className="border-order-primary data-[state=checked]:bg-order-primary data-[state=checked]:text-white"
+                        />
+                        <Label htmlFor={`topping-${topping.id}`} className="text-order-text">{topping.name}</Label>
+                      </div>
+                      {topping.sellingPrice && (
+                        <span className="text-sm text-order-text/80">+{formatCurrency(topping.sellingPrice)}</span>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <p className="text-sm text-order-text/80 mt-2">Tidak ada topping tersedia.</p>
+              )}
             </div>
-          ) : (
-            <p className="text-sm text-order-text/80">Tidak ada topping tersedia saat ini.</p>
-          )}
+             <div>
+                <h4 className="font-bold text-order-text mb-2">Jumlah</h4>
+                <div className="flex items-center justify-center gap-4 border rounded-lg p-2 bg-white/50">
+                    <Button variant="outline" size="icon" className="h-8 w-8 bg-transparent border-order-primary text-order-primary" onClick={() => setQuantity(q => Math.max(1, q - 1))}>-</Button>
+                    <span className="text-2xl font-bold w-12 text-center text-order-text">{quantity}</span>
+                    <Button variant="outline" size="icon" className="h-8 w-8 bg-transparent border-order-primary text-order-primary" onClick={() => setQuantity(q => q + 1)}>+</Button>
+                </div>
+            </div>
+          </div>
+          <Separator className="bg-order-primary/20 !my-6" />
+           <div className="flex justify-between items-center text-xl font-bold text-order-text">
+                <span>Total Harga</span>
+                <span>{formatCurrency(totalPrice)}</span>
+           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleAddToCart} className="bg-order-secondary hover:bg-order-secondary/90 text-white font-bold"><Plus className="mr-2 h-4 w-4" /> Tambahkan ke Keranjang</Button>
+          <Button onClick={handleAddToCart} className="bg-order-secondary hover:bg-order-secondary/90 text-white font-bold text-lg py-6"><Plus className="mr-2 h-4 w-4" /> Tambahkan ke Keranjang</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -350,5 +376,3 @@ export default function OrderPage() {
     </MainLayout>
   );
 }
-
-    
