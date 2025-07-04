@@ -22,7 +22,7 @@ const materialSchema = z.object({
   name: z.string().min(1, "Nama bahan tidak boleh kosong"),
   unit: z.string().min(1, "Satuan untuk resep tidak boleh kosong"),
   totalQuantity: z.coerce.number().min(0.001, "Jumlah pembelian harus lebih dari 0"),
-  totalCost: z.coerce.number().min(1, "Total biaya harus lebih dari 0"),
+  totalCost: z.coerce.number().min(0, "Total biaya tidak boleh negatif"),
   category: z.enum(['main', 'packaging', 'topping'], {
     required_error: "Kategori harus dipilih",
   }),
@@ -282,3 +282,4 @@ export default function BahanBakuPage() {
     </div>
   );
 }
+    
