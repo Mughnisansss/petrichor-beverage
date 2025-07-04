@@ -141,7 +141,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         )}
         <div className={cn(
           "flex-1 overflow-hidden flex items-center h-10 rounded-md",
-           isOrderPage ? "bg-order-accent/50 text-order-primary" : "bg-muted border border-input",
+           isOrderPage ? "bg-order-primary/10 text-order-primary" : "bg-muted border border-input",
         )}>
            <div className="relative flex overflow-x-hidden">
               <div className="animate-marquee whitespace-nowrap">

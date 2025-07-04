@@ -145,8 +145,8 @@ function ProductCustomizationDialog({
                 <RadioGroup value={selectedPackagingId} onValueChange={setSelectedPackagingId} className="grid grid-cols-2 gap-2">
                     {packagingOptions.map((pack) => (
                         <Label key={pack.id} htmlFor={pack.id} className={cn(
-                            "flex flex-col items-center justify-center rounded-md border-2 p-3 hover:bg-order-accent/50 cursor-pointer",
-                            selectedPackagingId === pack.id ? "bg-order-accent border-order-primary" : "border-order-primary/20 bg-white/50"
+                            "flex flex-col items-center justify-center rounded-md border-2 p-3 hover:bg-order-primary/10 cursor-pointer transition-colors",
+                            selectedPackagingId === pack.id ? "bg-order-primary text-white border-order-primary" : "border-order-primary/20 bg-white/50 text-order-text"
                         )}>
                             <RadioGroupItem value={pack.id} id={pack.id} className="sr-only" />
                             <span className="font-bold">{pack.name}</span>
@@ -393,7 +393,7 @@ export default function OrderPage() {
                       className="object-cover w-full h-48 transition-transform duration-300 group-hover:scale-110"
                       data-ai-hint={type === 'drink' ? "drink coffee" : "food pastry"}
                     />
-                     <div className="absolute top-3 right-3 bg-order-secondary text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-md">
+                     <div className="absolute top-3 right-3 bg-order-primary text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-md">
                         {formatCurrency(item.sellingPrice)}
                     </div>
                   </div>
@@ -492,8 +492,10 @@ export default function OrderPage() {
                             </div>
                         </div>
 
-                        <div className="hidden lg:block lg:col-span-1 sticky top-24">
-                            <OrderSummaryPanel onConfirm={handleConfirmOrder} />
+                        <div className="hidden lg:block lg:col-span-1">
+                            <div className="sticky top-24">
+                                <OrderSummaryPanel onConfirm={handleConfirmOrder} />
+                            </div>
                         </div>
                     </div>
                 </div>
