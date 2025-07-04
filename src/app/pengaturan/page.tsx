@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/components/main-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/context/AppContext";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { ImageIcon, Upload, Trash2 } from "lucide-react";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 export default function PengaturanPage() {
   const { toast } = useToast();
@@ -249,10 +250,8 @@ export default function PengaturanPage() {
                         </div>
                     )}
                     <div className="flex flex-col gap-2">
-                         <Label htmlFor="logoUpload" className="cursor-pointer">
-                            <div className={cn(Button.prototype.constructor.name, "cursor-pointer")}>
-                                <Upload className="mr-2 h-4 w-4" /> Unggah Gambar
-                            </div>
+                         <Label htmlFor="logoUpload" className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer")}>
+                            <Upload className="mr-2 h-4 w-4" /> Unggah Gambar
                          </Label>
                         <Input
                             id="logoUpload"
