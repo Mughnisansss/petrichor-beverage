@@ -20,7 +20,6 @@ import {
   startOfWeek,
   endOfWeek,
   startOfMonth,
-  endOfMonth,
   subDays,
   addDays,
   format,
@@ -34,6 +33,7 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, LineChart, Line, Legend, Pie, PieChart, Cell } from "recharts";
@@ -111,7 +111,7 @@ export default function DashboardPage() {
       case "this_month":
         currentFrom = startOfMonth(now);
         previousFrom = startOfMonth(subMonths(now, 1));
-        previousTo = endOfMonth(subMonths(now, 1));
+        previousTo = endOfToday(subMonths(now, 1));
         break;
       case "last_7_days":
       default:
@@ -476,85 +476,4 @@ export default function DashboardPage() {
       </div>
     </MainLayout>
   );
-}
-
-const ChartLegendContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div"> &
-    Pick<RechartsPrimitive.LegendProps, "payload"> & {
-      nameKey?: string;
-      labelClassName?: string;
-    }
->(({ className, payload, labelClassName, nameKey }, ref) => {
-  const { config } = useChart();
-
-  if (!payload?.length) {
-    return null;
-  }
-  
-  const totalValue = React.useMemo(() => {
-    return payload.reduce((acc, curr) => acc + (curr.payload?.value || 0), 0);
-  }, [payload]);
-
-  return (
-    <div
-      ref={ref}
-      className={cn("flex flex-col gap-2 p-4", className)}
-    >
-        {payload.map((item) => {
-             const key = `${nameKey || item.dataKey || "value"}`;
-             const itemConfig = getPayloadConfigFromPayload(config, item, key);
-             const percentage = totalValue > 0 ? ((item.payload?.value || 0) / totalValue) * 100 : 0;
-            
-            return (
-                <div key={item.value} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                        <div className="h-2.5 w-2.5 shrink-0 rounded-[2px]" style={{ backgroundColor: item.color }}/>
-                        <span className="text-muted-foreground">{itemConfig?.label || item.value}</span>
-                    </div>
-                    <span className="font-medium">{percentage.toFixed(1)}%</span>
-                </div>
-            )
-        })}
-    </div>
-  )
-})
-ChartLegendContent.displayName = "ChartLegendContent"
-    
-const getPayloadConfigFromPayload = (
-  config: ChartConfig,
-  payload: any,
-  key: string
-) => {
-  if (typeof payload !== "object" || payload === null) {
-    return undefined
-  }
-
-  const payloadPayload =
-    "payload" in payload &&
-    typeof payload.payload === "object" &&
-    payload.payload !== null
-      ? payload.payload
-      : undefined
-
-  let configLabelKey: string = key
-
-  if (
-    key in payload &&
-    typeof payload[key as keyof typeof payload] === "string"
-  ) {
-    configLabelKey = payload[key as keyof typeof payload] as string
-  } else if (
-    payloadPayload &&
-    key in payloadPayload &&
-    typeof payloadPayload[key as keyof typeof payloadPayload] === "string"
-  ) {
-    configLabelKey = payloadPayload[
-      key as keyof typeof payloadPayload
-    ] as string
-  }
-
-  return configLabelKey in config
-    ? config[configLabelKey]
-    : config[key as keyof typeof config]
 }
