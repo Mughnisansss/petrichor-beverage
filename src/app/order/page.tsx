@@ -137,7 +137,7 @@ export default function OrderPage() {
                 onClick={() => handleOrderClick(item, type)}>
                   <div className="relative">
                     <Image
-                      src={`https://placehold.co/600x400.png`}
+                      src={item.imageUri || `https://placehold.co/600x400.png`}
                       alt={item.name}
                       width={600}
                       height={400}

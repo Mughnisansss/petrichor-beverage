@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -185,17 +186,25 @@ export default function KasirPage() {
       )
     }
     return products.map(product => (
-        <Card key={product.id} className="flex flex-col">
-            <CardHeader className="p-4 flex-grow">
-            <CardTitle className="text-base leading-tight">{product.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-                <p className="text-sm font-semibold">{formatCurrency(product.sellingPrice)}</p>
-            </CardContent>
-            <CardFooter className="p-2">
-            <Button className="w-full" onClick={() => handleQuickSell(product, type)} size="sm">
-                <Plus className="mr-2 h-4 w-4"/> Jual
-            </Button>
+        <Card key={product.id} className="flex flex-col overflow-hidden">
+            <div className="relative">
+              <Image
+                  src={product.imageUri || 'https://placehold.co/300x200.png'}
+                  alt={product.name}
+                  width={300}
+                  height={200}
+                  className="object-cover w-full h-24"
+                  data-ai-hint={type === 'drink' ? "drink beverage" : "food meal"}
+              />
+            </div>
+            <div className="p-3 flex flex-col flex-grow">
+              <CardTitle className="text-sm font-semibold leading-tight flex-grow mb-1">{product.name}</CardTitle>
+              <p className="text-xs">{formatCurrency(product.sellingPrice)}</p>
+            </div>
+            <CardFooter className="p-2 pt-0 mt-auto">
+              <Button className="w-full" size="sm" onClick={() => handleQuickSell(product, type)}>
+                  <Plus className="mr-2 h-4 w-4" /> Jual
+              </Button>
             </CardFooter>
         </Card>
     ));

@@ -5,6 +5,7 @@ import React, { useState, useMemo, useRef } from "react";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,9 +13,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Drink, Food, RawMaterial } from "@/lib/types";
-import { PlusCircle, Edit, Trash2, X } from "lucide-react";
+import { PlusCircle, Edit, Trash2, X, ImageIcon, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
 // --- Schemas ---
@@ -25,6 +26,7 @@ const ingredientSchema = z.object({
 
 const productSchema = z.object({
   name: z.string().min(1, "Nama produk tidak boleh kosong"),
+  imageUri: z.string().optional(),
   sellingPrice: z.coerce.number().min(0, "Harga jual tidak boleh negatif"),
   ingredients: z.array(ingredientSchema).min(1, "Minimal 1 bahan baku"),
 });
@@ -81,12 +83,13 @@ const ProductForm = React.forwardRef<
 >(({ productType, rawMaterials, addProduct, updateProduct, onFinished }, ref) => {
     const { toast } = useToast();
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [preview, setPreview] = useState<string | null>(null);
 
     const productTypeName = productType === 'minuman' ? 'Minuman' : 'Makanan';
     
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),
-        defaultValues: { name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }] },
+        defaultValues: { name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined },
     });
 
     const { fields, append, remove } = useFieldArray({ control: form.control, name: "ingredients" });
@@ -113,7 +116,8 @@ const ProductForm = React.forwardRef<
             }
             onFinished();
             setEditingProduct(null);
-            form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }] });
+            setPreview(null);
+            form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined });
         } catch (error) {
             toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
         }
@@ -122,20 +126,86 @@ const ProductForm = React.forwardRef<
     React.useImperativeHandle(ref, () => ({
         handleEdit: (product: Product) => {
             setEditingProduct(product);
+            setPreview(product.imageUri || null);
             form.reset(product);
         }
     }));
 
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 1 * 1024 * 1024) { // 1MB limit
+            toast({
+                title: "Ukuran File Terlalu Besar",
+                description: "Silakan pilih gambar dengan ukuran di bawah 1MB.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const result = reader.result as string;
+            setPreview(result);
+            form.setValue('imageUri', result, { shouldDirty: true });
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleRemoveImage = () => {
+        setPreview(null);
+        form.setValue('imageUri', undefined, { shouldDirty: true });
+    };
+
     return (
          <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
                     <FormField control={form.control} name="name" render={({ field }) => (
                         <FormItem><FormLabel>Nama {productTypeName}</FormLabel><FormControl><Input {...field} placeholder={`cth: ${productType === 'minuman' ? 'Es Kopi Susu' : 'Nasi Goreng'}`} /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="sellingPrice" render={({ field }) => (
                         <FormItem><FormLabel>Harga Jual</FormLabel><FormControl><Input type="number" {...field} placeholder={`cth: ${productType === 'minuman' ? '18000' : '25000'}`} /></FormControl><FormMessage /></FormItem>
                     )}/>
+                  </div>
+                  <div className="space-y-2">
+                    <FormLabel htmlFor="imageUpload">Gambar Produk (Opsional)</FormLabel>
+                     <div className="flex items-center gap-4">
+                        {preview ? (
+                            <Image
+                                src={preview}
+                                alt="Pratinjau produk"
+                                width={96}
+                                height={96}
+                                className="h-24 w-24 rounded-md object-cover border"
+                            />
+                        ) : (
+                            <div className="h-24 w-24 rounded-md border bg-muted flex items-center justify-center">
+                                <ImageIcon className="h-10 w-10 text-muted-foreground" />
+                            </div>
+                        )}
+                        <div className="flex flex-col gap-2">
+                             <Label htmlFor="imageUpload" className={cn("inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 cursor-pointer")}>
+                                <Upload className="h-4 w-4" /> Unggah
+                             </Label>
+                            <Input
+                                id="imageUpload"
+                                type="file"
+                                accept="image/png, image/jpeg, image/webp"
+                                onChange={handleImageChange}
+                                className="hidden"
+                            />
+                           
+                            {preview && (
+                                <Button variant="ghost" size="sm" onClick={handleRemoveImage} className="justify-start text-destructive hover:text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Hapus
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                  </div>
                 </div>
                 
                 <div>
@@ -177,7 +247,7 @@ const ProductForm = React.forwardRef<
                 </div>
                 
                 <Button type="submit">{editingProduct ? "Simpan Perubahan" : `Tambah ${productTypeName}`}</Button>
-                {editingProduct && (<Button type="button" variant="ghost" onClick={() => { setEditingProduct(null); form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }] }); }}>Batal Edit</Button>)}
+                {editingProduct && (<Button type="button" variant="ghost" onClick={() => { setEditingProduct(null); setPreview(null); form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }] }); }}>Batal Edit</Button>)}
             </form>
         </Form>
     );
@@ -216,8 +286,9 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
     const handleEditClick = (product: Product) => {
         setFormVisible(true);
         setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             formRef.current?.handleEdit(product);
-        }, 10);
+        }, 50);
     }
     
     return (
@@ -225,7 +296,7 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-semibold">Manajemen {productTypeName}</h1>
                 <Button onClick={() => setFormVisible(!isFormVisible)}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> {isFormVisible ? "Tutup Form" : `Tambah/Edit ${productTypeName}`}
+                    <PlusCircle className="mr-2 h-4 w-4" /> {isFormVisible ? "Tutup Form" : `Tambah ${productTypeName}`}
                 </Button>
             </div>
 
@@ -264,7 +335,17 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
                             {products.length > 0 ? (
                             products.map(product => (
                                 <TableRow key={product.id}>
-                                    <TableCell className="font-medium">{product.name}</TableCell>
+                                    <TableCell className="font-medium flex items-center gap-3">
+                                      <Image 
+                                        src={product.imageUri || `https://placehold.co/100x100.png`}
+                                        alt={product.name}
+                                        width={40}
+                                        height={40}
+                                        className="rounded-md object-cover h-10 w-10"
+                                        data-ai-hint={productType === 'minuman' ? "drink beverage" : "food meal"}
+                                      />
+                                      {product.name}
+                                    </TableCell>
                                     <TableCell>{formatCurrency(product.costPrice)}</TableCell>
                                     <TableCell>{formatCurrency(product.sellingPrice)}</TableCell>
                                     <TableCell className="flex gap-2 justify-end">
@@ -291,4 +372,3 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
         </div>
     );
 }
-

@@ -19,6 +19,7 @@ export interface Ingredient {
 export interface Drink {
   id: string;
   name:string;
+  imageUri?: string;
   ingredients: Ingredient[];
   costPrice: number; // Calculated from ingredients, stored for historical accuracy
   sellingPrice: number;
@@ -27,6 +28,7 @@ export interface Drink {
 export interface Food {
   id: string;
   name: string;
+  imageUri?: string;
   ingredients: Ingredient[];
   costPrice: number; // Calculated from ingredients, stored for historical accuracy
   sellingPrice: number;
