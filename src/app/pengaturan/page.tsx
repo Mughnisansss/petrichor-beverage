@@ -10,13 +10,8 @@ import { useAppContext } from "@/context/AppContext";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ImageIcon, Upload, Trash2 } from "lucide-react";
+import Image from "next/image";
 
 export default function PengaturanPage() {
   const { toast } = useToast();
@@ -31,19 +26,19 @@ export default function PengaturanPage() {
     setStorageMode,
     appName,
     setAppName,
-    logoIcon,
-    setLogoIcon,
+    logoImageUri,
+    setLogoImageUri,
   } = useAppContext();
 
   const [selectedMode, setSelectedMode] = useState(storageMode);
   const [localAppName, setLocalAppName] = useState(appName);
-  const [localLogoIcon, setLocalLogoIcon] = useState(logoIcon);
+  const [preview, setPreview] = useState<string | null>(logoImageUri);
 
   useEffect(() => {
     setSelectedMode(storageMode);
     setLocalAppName(appName);
-    setLocalLogoIcon(logoIcon);
-  }, [storageMode, appName, logoIcon]);
+    setPreview(logoImageUri);
+  }, [storageMode, appName, logoImageUri]);
 
   const handleSaveSettings = () => {
     const changesMade: string[] = [];
@@ -51,11 +46,6 @@ export default function PengaturanPage() {
     if (localAppName.trim() && localAppName.trim() !== appName) {
       setAppName(localAppName.trim());
       changesMade.push("Nama aplikasi diperbarui.");
-    }
-    
-    if (localLogoIcon !== logoIcon) {
-      setLogoIcon(localLogoIcon);
-      changesMade.push("Ikon aplikasi diperbarui.");
     }
 
     if (selectedMode !== storageMode) {
@@ -70,6 +60,42 @@ export default function PengaturanPage() {
       });
     }
   };
+  
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 1 * 1024 * 1024) { // 1MB limit
+        toast({
+            title: "Ukuran File Terlalu Besar",
+            description: "Silakan pilih gambar dengan ukuran di bawah 1MB.",
+            variant: "destructive"
+        });
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+        const result = reader.result as string;
+        setPreview(result);
+        setLogoImageUri(result);
+        toast({
+            title: "Logo Disimpan",
+            description: "Logo kustom Anda telah diunggah dan disimpan.",
+        });
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  const handleRemoveLogo = () => {
+    setPreview(null);
+    setLogoImageUri(null);
+    toast({
+        title: "Logo Dihapus",
+        description: "Logo kustom telah dihapus.",
+    });
+  };
+
 
   const downloadFile = (content: string, filename: string, contentType: string) => {
     const blob = new Blob([content], { type: contentType });
@@ -94,7 +120,7 @@ export default function PengaturanPage() {
     }
     const allData = {
       appName,
-      logoIcon,
+      logoImageUri,
       drinks,
       foods,
       sales,
@@ -179,7 +205,7 @@ export default function PengaturanPage() {
     });
   }
 
-  const hasChanges = (selectedMode !== storageMode) || (localAppName.trim() && localAppName.trim() !== appName) || (localLogoIcon !== logoIcon);
+  const hasChanges = (selectedMode !== storageMode) || (localAppName.trim() && localAppName.trim() !== appName);
 
   return (
     <MainLayout>
@@ -207,22 +233,44 @@ export default function PengaturanPage() {
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="logoIcon">Ikon Aplikasi</Label>
-                <Select value={localLogoIcon} onValueChange={setLocalLogoIcon}>
-                  <SelectTrigger id="logoIcon" className="w-full md:w-[280px]">
-                    <SelectValue placeholder="Pilih ikon..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CupSoda">Gelas Soda</SelectItem>
-                    <SelectItem value="Coffee">Cangkir Kopi</SelectItem>
-                    <SelectItem value="Bean">Biji Kopi</SelectItem>
-                    <SelectItem value="GlassWater">Gelas Air</SelectItem>
-                    <SelectItem value="Beer">Gelas Bir</SelectItem>
-                    <SelectItem value="Wine">Gelas Anggur</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="logoUpload">Logo Aplikasi (1:1)</Label>
+                <div className="flex items-center gap-4">
+                    {preview ? (
+                        <Image
+                            src={preview}
+                            alt="Logo preview"
+                            width={64}
+                            height={64}
+                            className="h-16 w-16 rounded-md object-cover border"
+                        />
+                    ) : (
+                        <div className="h-16 w-16 rounded-md border bg-muted flex items-center justify-center">
+                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                    )}
+                    <div className="flex flex-col gap-2">
+                         <Label htmlFor="logoUpload" className="cursor-pointer">
+                            <div className={cn(Button.prototype.constructor.name, "cursor-pointer")}>
+                                <Upload className="mr-2 h-4 w-4" /> Unggah Gambar
+                            </div>
+                         </Label>
+                        <Input
+                            id="logoUpload"
+                            type="file"
+                            accept="image/png, image/jpeg, image/webp"
+                            onChange={handleLogoChange}
+                            className="hidden"
+                        />
+                       
+                        {preview && (
+                            <Button variant="ghost" size="sm" onClick={handleRemoveLogo} className="justify-start">
+                                <Trash2 className="mr-2 h-4 w-4" /> Hapus Logo
+                            </Button>
+                        )}
+                    </div>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  Ikon ini akan muncul di sebelah nama aplikasi Anda.
+                    Ganti ikon default dengan logo Anda. Rasio 1:1 direkomendasikan. Maks 1MB.
                 </p>
               </div>
             </div>
@@ -265,7 +313,7 @@ export default function PengaturanPage() {
               
               <div className="p-4 border rounded-lg space-y-2">
                 <h4 className="font-semibold text-base">Cadangan Penuh</h4>
-                 <p className="text-xs text-muted-foreground">Unduh satu file berisi semua data (termasuk nama & ikon aplikasi). Berguna untuk backup.</p>
+                 <p className="text-xs text-muted-foreground">Unduh satu file berisi semua data (termasuk nama & logo aplikasi). Berguna untuk backup.</p>
                 <Button onClick={handleExportJson} variant="secondary" disabled={isLoading}>
                   Ekspor Semua Data (JSON)
                 </Button>

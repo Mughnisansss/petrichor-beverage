@@ -1,23 +1,26 @@
-import React from "react";
-import { CupSoda, Coffee, Bean, GlassWater, Beer, Wine } from "lucide-react";
-import { useAppContext } from "@/context/AppContext";
+"use client";
 
-const iconComponents: { [key: string]: React.ElementType } = {
-  CupSoda,
-  Coffee,
-  Bean,
-  GlassWater,
-  Beer,
-  Wine,
-};
+import React from "react";
+import { CupSoda } from "lucide-react";
+import { useAppContext } from "@/context/AppContext";
+import Image from 'next/image';
 
 export function Logo() {
-  const { appName, logoIcon } = useAppContext();
-  const IconComponent = iconComponents[logoIcon] || CupSoda;
+  const { appName, logoImageUri } = useAppContext();
 
   return (
     <div className="flex items-center gap-2 text-xl font-bold">
-      <IconComponent className="h-6 w-6" />
+      {logoImageUri ? (
+        <Image
+          src={logoImageUri}
+          alt={`${appName} logo`}
+          width={24}
+          height={24}
+          className="h-6 w-6 rounded-sm object-cover"
+        />
+      ) : (
+        <CupSoda className="h-6 w-6" />
+      )}
       <span>{appName}</span>
     </div>
   );
