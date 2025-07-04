@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview
  * Contains centralized business logic for data manipulation to ensure consistency
@@ -40,13 +41,18 @@ export function hasFoodAssociatedSales(db: DbData, foodId: string): boolean {
 
 /**
  * Calculates the cost price of a single drink or food item based on its ingredients.
+ * This version is made more robust to prevent NaN errors.
  */
 export function calculateItemCostPrice(ingredients: (Drink | Food)['ingredients'], allRawMaterials: RawMaterial[]): number {
   if (!ingredients || allRawMaterials.length === 0) return 0;
   return ingredients.reduce((acc, item) => {
+    if (!item) return acc; // Skip if item is invalid
     const material = allRawMaterials.find(m => m.id === item.rawMaterialId);
-    const cost = material ? material.costPerUnit * item.quantity : 0;
-    return acc + cost;
+    // Ensure costPerUnit and quantity are valid numbers, otherwise treat as 0.
+    const costPerUnit = material?.costPerUnit ?? 0;
+    const quantity = item.quantity ?? 0;
+    const cost = costPerUnit * quantity;
+    return acc + (isNaN(cost) ? 0 : cost);
   }, 0);
 }
 

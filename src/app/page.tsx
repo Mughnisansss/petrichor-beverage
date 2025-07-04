@@ -77,8 +77,12 @@ export default function DashboardPage() {
   const filteredSales = useMemo(() => {
     if (!date?.from || !date?.to) return [];
     return sales.filter(item => {
-      const itemDate = parseISO(item.date);
-      return isWithinInterval(itemDate, { start: date.from!, end: date.to! });
+      try {
+        const itemDate = parseISO(item.date);
+        return isWithinInterval(itemDate, { start: date.from!, end: date.to! });
+      } catch (e) {
+        return false;
+      }
     });
   }, [sales, date]);
 
@@ -98,37 +102,37 @@ export default function DashboardPage() {
         : foods.find(f => f.id === productId);
       
       // --- Revenue Calculation ---
-      revenue += totalSalePrice;
+      revenue += totalSalePrice || 0;
 
       if (product) {
-        // --- Cost (HPP) Calculation ---
+        // --- Cost (HPP) Calculation (Robust) ---
         // 1. Cost of contents (base product cost)
-        let itemCost = product.costPrice;
+        let itemCost = product.costPrice || 0;
         
-        // 2. Cost of packaging for the selected size (CRITICAL FIX)
+        // 2. Cost of packaging for the selected size
         if (selectedPackagingId && product.packagingOptions) {
           const packaging = product.packagingOptions.find(p => p.id === selectedPackagingId);
           if (packaging && packaging.ingredients) {
             const packagingCost = calculateItemCostPrice(packaging.ingredients, rawMaterials);
-            itemCost += packagingCost;
+            itemCost += packagingCost || 0;
           }
         }
 
         // 3. Cost of toppings
         if (selectedToppings && selectedToppings.length > 0) {
           const toppingsCost = calculateItemCostPrice(selectedToppings, rawMaterials);
-          itemCost += toppingsCost;
+          itemCost += toppingsCost || 0;
         }
         
-        cost += itemCost * quantity;
+        cost += (itemCost || 0) * (quantity || 0);
         
         // --- Top Product Calculation ---
         const productNameWithSize = `${product.name} ${sale.selectedPackagingName ? `(${sale.selectedPackagingName})` : ''}`;
         if (!salesByProduct[productNameWithSize]) {
             salesByProduct[productNameWithSize] = { name: productNameWithSize, quantity: 0, revenue: 0 };
         }
-        salesByProduct[productNameWithSize].quantity += quantity;
-        salesByProduct[productNameWithSize].revenue += totalSalePrice;
+        salesByProduct[productNameWithSize].quantity += quantity || 0;
+        salesByProduct[productNameWithSize].revenue += totalSalePrice || 0;
       }
     });
     
@@ -136,19 +140,32 @@ export default function DashboardPage() {
 
     // --- Accurate Operational Cost Calculation ---
     const oneTimeCosts = operationalCosts
-      .filter(c => c.recurrence === 'sekali' && isWithinInterval(parseISO(c.date), { start: date.from!, end: date.to! }))
-      .reduce((sum, c) => sum + c.amount, 0);
+      .filter(c => {
+         try {
+           return c.recurrence === 'sekali' && isWithinInterval(parseISO(c.date), { start: date.from!, end: date.to! });
+         } catch {
+           return false;
+         }
+      })
+      .reduce((sum, c) => sum + (c.amount || 0), 0);
 
     const recurringDailyRate = operationalCosts
-      .filter(c => c.recurrence !== 'sekali' && parseISO(c.date) <= date.to!)
+      .filter(c => {
+         try {
+           return c.recurrence !== 'sekali' && parseISO(c.date) <= date.to!;
+         } catch {
+            return false;
+         }
+      })
       .reduce((sum, c) => {
+        const amount = c.amount || 0;
         switch (c.recurrence) {
           case 'harian':
-            return sum + c.amount;
+            return sum + amount;
           case 'mingguan':
-            return sum + (c.amount / 7);
+            return sum + (amount / 7);
           case 'bulanan':
-            return sum + (c.amount / 30);
+            return sum + (amount / 30);
           default:
             return sum;
         }
@@ -173,8 +190,12 @@ export default function DashboardPage() {
 
     const dailyRevenue = new Map<string, number>();
     filteredSales.forEach(sale => {
-      const saleDate = format(parseISO(sale.date), "yyyy-MM-dd");
-      dailyRevenue.set(saleDate, (dailyRevenue.get(saleDate) || 0) + sale.totalSalePrice);
+      try {
+        const saleDate = format(parseISO(sale.date), "yyyy-MM-dd");
+        dailyRevenue.set(saleDate, (dailyRevenue.get(saleDate) || 0) + (sale.totalSalePrice || 0));
+      } catch(e) {
+        // Ignore sales with invalid dates
+      }
     });
 
     const chartData: { date: string; revenue: number }[] = [];
