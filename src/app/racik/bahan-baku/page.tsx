@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,7 +15,7 @@ import { useAppContext } from "@/context/AppContext";
 import type { RawMaterial } from "@/lib/types";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
@@ -63,6 +63,12 @@ export default function BahanBakuPage() {
   const watchedTotalCost = form.watch("totalCost");
 
   const costPerUnit = (watchedTotalCost && watchedTotalQuantity > 0) ? watchedTotalCost / watchedTotalQuantity : 0;
+  
+  useEffect(() => {
+    if (watchedCategory === 'topping' || watchedCategory === 'packaging') {
+      form.setValue('sellingPrice', costPerUnit, { shouldValidate: true });
+    }
+  }, [costPerUnit, watchedCategory, form.setValue]);
 
   async function onSubmit(values: MaterialFormValues) {
     try {
@@ -247,14 +253,22 @@ export default function BahanBakuPage() {
                     </div>
                     
                     {(watchedCategory === 'topping' || watchedCategory === 'packaging') && (
-                      <FormField
+                       <FormField
                         control={form.control}
                         name="sellingPrice"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Harga Jual (Rp)</FormLabel>
-                            <FormControl><Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber || 0)} placeholder="cth: 3000" /></FormControl>
-                            <FormDescription>Harga yang dibayar pelanggan untuk tambahan item ini. Sebaiknya lebih tinggi dari HPP di atas.</FormDescription>
+                            <FormControl>
+                                <Input 
+                                    type="number" 
+                                    {...field} 
+                                    value={costPerUnit || 0}
+                                    readOnly
+                                    className="bg-muted/50 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                />
+                            </FormControl>
+                            <FormDescription>Dihitung otomatis sama dengan HPP. Anda tidak mengambil profit dari item ini.</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
