@@ -372,83 +372,89 @@ export default function OrderPage() {
 
   return (
     <MainLayout>
-        <div className="relative min-h-screen overflow-hidden">
-          <DecorativeBlob1 />
-          <DecorativeBlob2 />
-
-          <div className="relative z-10">
-            {/* Dialog for product customization */}
-            <ProductCustomizationDialog 
-              isOpen={customizingProduct !== null}
-              onClose={() => setCustomizingProduct(null)}
-              product={customizingProduct}
-              productType={productType}
-            />
-
-            {/* Dialog for order confirmation */}
-            <AlertDialog open={isConfirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-                <AlertDialogContent className="bg-order-bg border-order-primary font-body">
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className="font-pacifico text-3xl text-order-primary text-center">Pesanan Diterima!</AlertDialogTitle>
-                        <AlertDialogDescription className="text-center text-lg text-order-text/80 pt-4">
-                           Nomor antrian Anda adalah:
-                        </AlertDialogDescription>
-                         <div className="flex justify-center items-center py-4">
-                             <div className="flex justify-center items-center h-32 w-32 rounded-full bg-order-secondary text-white border-4 border-white shadow-lg">
-                                 <span className="text-6xl font-bold">{newQueueNumber}</span>
-                             </div>
-                         </div>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogAction className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold">OK</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
-
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
-              <div className="flex flex-col items-center text-center mb-16">
-                  <h1 className="font-pacifico text-5xl md:text-7xl text-order-primary tracking-tight">Selamat Datang di <span className="text-order-secondary">{appName}</span></h1>
-                  <p className="text-xl text-order-text/80 mt-4 max-w-2xl">
-                      Pilih menu favorit Anda di bawah ini dan nikmati sensasi rasa yang tak terlupakan.
-                  </p>
-              </div>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                <div className="lg:col-span-2 space-y-20">
-                    {/* Minuman Section */}
-                    <div>
-                        <div className="flex items-center gap-4 mb-8">
-                            <div className="bg-order-accent/80 p-3 rounded-full shadow-sm">
-                                <CupSoda className="h-8 w-8 text-order-primary"/>
-                            </div>
-                            <h2 className="font-pacifico text-5xl text-order-primary">Minuman</h2>
-                            <div className="flex-grow h-1 bg-gradient-to-r from-order-accent/50 to-transparent rounded-full" />
-                        </div>
-                        {renderProductGrid(drinks, 'drink')}
-                    </div>
-
-                    {/* Makanan Section */}
-                    <div>
-                        <div className="flex items-center gap-4 mb-8">
-                           <div className="bg-order-accent/80 p-3 rounded-full shadow-sm">
-                              <Utensils className="h-8 w-8 text-order-primary"/>
-                          </div>
-                            <h2 className="font-pacifico text-5xl text-order-primary">Makanan</h2>
-                            <div className="flex-grow h-1 bg-gradient-to-r from-order-accent/50 to-transparent rounded-full" />
-                        </div>
-                        {renderProductGrid(foods, 'food')}
-                    </div>
+        <div className="relative">
+            {/* Decorative blobs are now in a fixed, non-interactive background layer */}
+            <div className="fixed inset-0 -z-10 pointer-events-none">
+                <div className="relative w-full h-full">
+                    <DecorativeBlob1 />
+                    <DecorativeBlob2 />
                 </div>
-
-                <div className="hidden lg:block lg:col-span-1">
-                   <OrderSummaryPanel onConfirm={handleConfirmOrder} />
-                </div>
-              </div>
             </div>
-          </div>
-          <OrderSummarySheet onConfirm={handleConfirmOrder} />
+
+            <div className="relative z-10">
+                {/* Dialog for product customization */}
+                <ProductCustomizationDialog 
+                isOpen={customizingProduct !== null}
+                onClose={() => setCustomizingProduct(null)}
+                product={customizingProduct}
+                productType={productType}
+                />
+
+                {/* Dialog for order confirmation */}
+                <AlertDialog open={isConfirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+                    <AlertDialogContent className="bg-order-bg border-order-primary font-body">
+                        <AlertDialogHeader>
+                            <AlertDialogTitle className="font-pacifico text-3xl text-order-primary text-center">Pesanan Diterima!</AlertDialogTitle>
+                            <AlertDialogDescription className="text-center text-lg text-order-text/80 pt-4">
+                            Nomor antrian Anda adalah:
+                            </AlertDialogDescription>
+                            <div className="flex justify-center items-center py-4">
+                                <div className="flex justify-center items-center h-32 w-32 rounded-full bg-order-secondary text-white border-4 border-white shadow-lg">
+                                    <span className="text-6xl font-bold">{newQueueNumber}</span>
+                                </div>
+                            </div>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogAction className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold">OK</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                    <div className="flex flex-col items-center text-center mb-16">
+                        <h1 className="font-pacifico text-5xl md:text-7xl text-order-primary tracking-tight">Selamat Datang di <span className="text-order-secondary">{appName}</span></h1>
+                        <p className="text-xl text-order-text/80 mt-4 max-w-2xl">
+                            Pilih menu favorit Anda di bawah ini dan nikmati sensasi rasa yang tak terlupakan.
+                        </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+                        <div className="lg:col-span-2 space-y-20">
+                            {/* Minuman Section */}
+                            <div>
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="bg-order-accent/80 p-3 rounded-full shadow-sm">
+                                        <CupSoda className="h-8 w-8 text-order-primary"/>
+                                    </div>
+                                    <h2 className="font-pacifico text-5xl text-order-primary">Minuman</h2>
+                                    <div className="flex-grow h-1 bg-gradient-to-r from-order-accent/50 to-transparent rounded-full" />
+                                </div>
+                                {renderProductGrid(drinks, 'drink')}
+                            </div>
+
+                            {/* Makanan Section */}
+                            <div>
+                                <div className="flex items-center gap-4 mb-8">
+                                <div className="bg-order-accent/80 p-3 rounded-full shadow-sm">
+                                    <Utensils className="h-8 w-8 text-order-primary"/>
+                                </div>
+                                    <h2 className="font-pacifico text-5xl text-order-primary">Makanan</h2>
+                                    <div className="flex-grow h-1 bg-gradient-to-r from-order-accent/50 to-transparent rounded-full" />
+                                </div>
+                                {renderProductGrid(foods, 'food')}
+                            </div>
+                        </div>
+
+                        <div className="hidden lg:block lg:col-span-1">
+                            <OrderSummaryPanel onConfirm={handleConfirmOrder} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <OrderSummarySheet onConfirm={handleConfirmOrder} />
         </div>
     </MainLayout>
   );
 }
+
