@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -32,7 +33,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
 
   const [storedValue, setStoredValue] = useState<T>(initialValue);
 
-  // This effect runs once on the client to set the initial value.
+  // This effect runs once on the client to set the initial value from localStorage.
   useEffect(() => {
     setStoredValue(readValue());
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -49,8 +50,6 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
       const newValue = value instanceof Function ? value(storedValue) : value;
       window.localStorage.setItem(key, JSON.stringify(newValue));
       setStoredValue(newValue);
-      // We dispatch a custom event so other tabs can sync
-      window.dispatchEvent(new Event("local-storage"));
     } catch (error) {
       console.warn(`Error setting localStorage key “${key}”:`, error);
     }
@@ -65,16 +64,10 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
        }
     };
     
-    const handleCustomEvent = () => {
-        setStoredValue(readValue());
-    };
-
     window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("local-storage", handleCustomEvent);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("local-storage", handleCustomEvent);
     };
   }, [key, readValue]);
 

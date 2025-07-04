@@ -339,53 +339,61 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCart([]);
   }, [setCart]);
 
-
-  const contextValue = useMemo(() => {
-    const wrapWithRefetch = <T extends (...args: any[]) => Promise<any>>(fn: T) => {
+  const wrappedService = useMemo(() => {
+    const wrap = <T extends (...args: any[]) => Promise<any>>(fn: T) => {
       return async (...args: Parameters<T>): Promise<ReturnType<T>> => {
         const result = await fn(...args);
-        await fetchData();
+        await fetchData(); // fetchData is stable thanks to useCallback
         return result;
       };
     };
-    
+
     return {
-      drinks: dbData.drinks,
-      foods: dbData.foods,
-      sales: dbData.sales,
-      operationalCosts: dbData.operationalCosts,
-      rawMaterials: dbData.rawMaterials,
-      cart,
-      isLoading,
-      fetchData,
-      storageMode,
-      setStorageMode,
-      appName,
-      setAppName,
-      logoImageUri,
-      setLogoImageUri,
-      marqueeText,
-      setMarqueeText,
-      addDrink: wrapWithRefetch(currentService.addDrink),
-      updateDrink: wrapWithRefetch(currentService.updateDrink),
-      deleteDrink: wrapWithRefetch(currentService.deleteDrink),
-      addFood: wrapWithRefetch(currentService.addFood),
-      updateFood: wrapWithRefetch(currentService.updateFood),
-      deleteFood: wrapWithRefetch(currentService.deleteFood),
-      addSale: wrapWithRefetch(currentService.addSale),
-      batchAddSales: wrapWithRefetch(currentService.batchAddSales),
-      addOperationalCost: wrapWithRefetch(currentService.addOperationalCost),
-      updateOperationalCost: wrapWithRefetch(currentService.updateOperationalCost),
-      deleteOperationalCost: wrapWithRefetch(currentService.deleteOperationalCost),
-      addRawMaterial: wrapWithRefetch(currentService.addRawMaterial),
-      updateRawMaterial: wrapWithRefetch(currentService.updateRawMaterial),
-      deleteRawMaterial: wrapWithRefetch(currentService.deleteRawMaterial),
-      addToCart,
-      updateCartItemQuantity,
-      removeFromCart,
-      clearCart,
-    };
-  }, [dbData, cart, isLoading, fetchData, storageMode, setStorageMode, appName, setAppName, logoImageUri, setLogoImageUri, marqueeText, setMarqueeText, currentService, addToCart, updateCartItemQuantity, removeFromCart, clearCart]);
+      addDrink: wrap(currentService.addDrink),
+      updateDrink: wrap(currentService.updateDrink),
+      deleteDrink: wrap(currentService.deleteDrink),
+      addFood: wrap(currentService.addFood),
+      updateFood: wrap(currentService.updateFood),
+      deleteFood: wrap(currentService.deleteFood),
+      addSale: wrap(currentService.addSale),
+      batchAddSales: wrap(currentService.batchAddSales),
+      addOperationalCost: wrap(currentService.addOperationalCost),
+      updateOperationalCost: wrap(currentService.updateOperationalCost),
+      deleteOperationalCost: wrap(currentService.deleteOperationalCost),
+      addRawMaterial: wrap(currentService.addRawMaterial),
+      updateRawMaterial: wrap(currentService.updateRawMaterial),
+      deleteRawMaterial: wrap(currentService.deleteRawMaterial),
+    }
+  }, [currentService, fetchData]);
+
+  const contextValue = useMemo(() => ({
+    drinks: dbData.drinks,
+    foods: dbData.foods,
+    sales: dbData.sales,
+    operationalCosts: dbData.operationalCosts,
+    rawMaterials: dbData.rawMaterials,
+    cart,
+    isLoading,
+    storageMode,
+    setStorageMode,
+    appName,
+    setAppName,
+    logoImageUri,
+    setLogoImageUri,
+    marqueeText,
+    setMarqueeText,
+    fetchData,
+    ...wrappedService,
+    addToCart,
+    updateCartItemQuantity,
+    removeFromCart,
+    clearCart,
+  }), [
+    dbData, cart, isLoading, storageMode, setStorageMode, appName, setAppName, 
+    logoImageUri, setLogoImageUri, marqueeText, setMarqueeText, fetchData, 
+    wrappedService, addToCart, updateCartItemQuantity, removeFromCart, clearCart
+  ]);
+
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 }
