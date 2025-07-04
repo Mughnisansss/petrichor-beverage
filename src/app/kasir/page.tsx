@@ -153,7 +153,11 @@ function QuickSellDialog({
     }
   }, [isOpen]);
 
-  const availableToppings = useMemo(() => rawMaterials.filter(m => m.category === 'topping'), [rawMaterials]);
+  const availableToppings = useMemo(() => {
+    if (!productInfo) return [];
+    const productIngredientIds = new Set(productInfo.product.ingredients.map(ing => ing.rawMaterialId));
+    return rawMaterials.filter(m => m.category === 'topping' && !productIngredientIds.has(m.id));
+  }, [rawMaterials, productInfo]);
   
   if (!productInfo) return null;
   const { product, type } = productInfo;
@@ -217,7 +221,7 @@ function QuickSellDialog({
                     />
                     <Label htmlFor={`qs-topping-${topping.id}`}>{topping.name}</Label>
                   </div>
-                  {topping.sellingPrice && (
+                  {topping.sellingPrice != null && (
                     <span className="text-sm text-muted-foreground">+{formatCurrency(topping.sellingPrice)}</span>
                   )}
                 </div>
@@ -251,7 +255,8 @@ export default function KasirPage() {
   const [customizingProductInfo, setCustomizingProductInfo] = useState<{product: Drink | Food, type: 'drink' | 'food'} | null>(null);
 
   async function handleQuickSell(product: Drink | Food, type: 'drink' | 'food') {
-    const availableToppings = rawMaterials.filter(m => m.category === 'topping');
+    const productIngredientIds = new Set(product.ingredients.map(ing => ing.rawMaterialId));
+    const availableToppings = rawMaterials.filter(m => m.category === 'topping' && !productIngredientIds.has(m.id));
 
     // If there are toppings available, open customization dialog.
     if (availableToppings.length > 0) {
@@ -435,5 +440,3 @@ export default function KasirPage() {
     </MainLayout>
   );
 }
-
-    

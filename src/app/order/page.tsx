@@ -48,7 +48,11 @@ function ProductCustomizationDialog({
   const [selectedToppings, setSelectedToppings] = useState<Ingredient[]>([]);
   const [quantity, setQuantity] = useState(1);
 
-  const availableToppings = useMemo(() => rawMaterials.filter(m => m.category === 'topping'), [rawMaterials]);
+  const availableToppings = useMemo(() => {
+    if (!product) return [];
+    const productIngredientIds = new Set(product.ingredients.map(ing => ing.rawMaterialId));
+    return rawMaterials.filter(m => m.category === 'topping' && !productIngredientIds.has(m.id));
+  }, [rawMaterials, product]);
   
   const toppingsPrice = useMemo(() => {
     return selectedToppings.reduce((sum, toppingIng) => {
@@ -119,7 +123,7 @@ function ProductCustomizationDialog({
                         />
                         <Label htmlFor={`topping-${topping.id}`} className="text-order-text">{topping.name}</Label>
                       </div>
-                      {topping.sellingPrice && (
+                      {topping.sellingPrice != null && (
                         <span className="text-sm text-order-text/80">+{formatCurrency(topping.sellingPrice)}</span>
                       )}
                     </div>
