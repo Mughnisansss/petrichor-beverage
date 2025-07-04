@@ -226,17 +226,19 @@ function OrderSummaryPanel({ onConfirm }: { onConfirm: () => void }) {
                 <p className="font-bold text-order-text">
                   {item.name} {item.selectedPackagingName && `(${item.selectedPackagingName})`}
                 </p>
-                 {item.selectedToppings && item.selectedToppings.length > 0 && (
-                  <ul className="text-xs text-order-text list-disc pl-4 mt-1">
-                    {item.selectedToppings.map(topping => {
-                       const toppingInfo = rawMaterials.find(m => m.id === topping.rawMaterialId);
-                       return <li key={topping.rawMaterialId}>{toppingInfo?.name || '...'}</li>
-                    })}
+                 <ul className="text-xs text-order-text list-disc pl-4 mt-1">
+                    {item.selectedToppings && item.selectedToppings.length > 0 ? (
+                      item.selectedToppings.map(topping => {
+                         const toppingInfo = rawMaterials.find(m => m.id === topping.rawMaterialId);
+                         return <li key={topping.rawMaterialId}>{toppingInfo?.name || '...'}</li>
+                      })
+                    ) : (
+                      <li className="list-none italic">Tanpa topping tambahan.</li>
+                    )}
                   </ul>
-                )}
                 <div className="flex items-center gap-2 mt-2">
                   <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-order-primary text-order-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity - 1)}>-</Button>
-                  <span>{item.quantity}</span>
+                  <span className="w-8 text-center text-lg font-bold text-order-text">{item.quantity}</span>
                   <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-order-primary text-order-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity + 1)}>+</Button>
                 </div>
               </div>
@@ -283,7 +285,7 @@ function OrderSummarySheet({ onConfirm }: { onConfirm: () => void }) {
         <Button className="lg:hidden fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg bg-order-secondary hover:bg-order-secondary/90 text-white z-20">
           <ShoppingCart className="h-8 w-8" />
           {cart.length > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-order-primary text-xs font-bold">
+            <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-order-primary text-xs font-bold text-order-bg">
               {cart.reduce((sum, item) => sum + item.quantity, 0)}
             </span>
           )}
@@ -301,17 +303,19 @@ function OrderSummarySheet({ onConfirm }: { onConfirm: () => void }) {
                   <p className="font-bold text-order-text">
                     {item.name} {item.selectedPackagingName && `(${item.selectedPackagingName})`}
                   </p>
-                   {item.selectedToppings && item.selectedToppings.length > 0 && (
-                    <ul className="text-xs text-order-text list-disc pl-4 mt-1">
-                      {item.selectedToppings.map(topping => {
+                  <ul className="text-xs text-order-text list-disc pl-4 mt-1">
+                    {item.selectedToppings && item.selectedToppings.length > 0 ? (
+                      item.selectedToppings.map(topping => {
                          const toppingInfo = rawMaterials.find(m => m.id === topping.rawMaterialId);
                          return <li key={topping.rawMaterialId}>{toppingInfo?.name || '...'}</li>
-                      })}
-                    </ul>
-                  )}
+                      })
+                    ) : (
+                       <li className="list-none italic">Tanpa topping tambahan.</li>
+                    )}
+                  </ul>
                   <div className="flex items-center gap-2 mt-2">
                     <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-order-primary text-order-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity - 1)}>-</Button>
-                    <span>{item.quantity}</span>
+                    <span className="w-8 text-center text-lg font-bold text-order-text">{item.quantity}</span>
                     <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-order-primary text-order-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity + 1)}>+</Button>
                   </div>
                 </div>
@@ -393,7 +397,7 @@ export default function OrderPage() {
                       className="object-cover w-full h-48 transition-transform duration-300 group-hover:scale-110"
                       data-ai-hint={type === 'drink' ? "drink coffee" : "food pastry"}
                     />
-                     <div className="absolute top-3 right-3 bg-order-primary text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-md">
+                     <div className="absolute top-3 right-3 bg-order-primary text-order-bg px-4 py-1.5 rounded-full text-sm font-bold shadow-md">
                         {formatCurrency(item.sellingPrice)}
                     </div>
                   </div>
@@ -418,7 +422,7 @@ export default function OrderPage() {
 
   return (
     <MainLayout>
-        <div className="fixed inset-0 -z-10 pointer-events-none">
+        <div className="fixed inset-0 -z-10 pointer-events-none bg-order-bg">
             <div className="relative w-full h-full">
                 <DecorativeBlob1 />
                 <DecorativeBlob2 />
@@ -490,10 +494,8 @@ export default function OrderPage() {
                         </div>
                     </div>
 
-                    <div className="hidden lg:block lg:col-span-1">
-                        <div className="sticky top-24">
-                            <OrderSummaryPanel onConfirm={handleConfirmOrder} />
-                        </div>
+                    <div className="hidden lg:block lg:col-span-1 sticky top-24">
+                       <OrderSummaryPanel onConfirm={handleConfirmOrder} />
                     </div>
                 </div>
             </div>
@@ -502,4 +504,3 @@ export default function OrderPage() {
     </MainLayout>
   );
 }
-
