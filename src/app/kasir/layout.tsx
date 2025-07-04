@@ -15,10 +15,9 @@ const KasirNav = () => {
     const navItems = [
         { href: "/kasir/orderan", label: "Antrian Orderan" },
         { href: "/kasir/cepat", label: "Penjualan Cepat" },
-        { href: "/kasir/dompet", label: "Dompet" },
     ];
     return (
-        <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground mb-4 w-full grid grid-cols-3">
+        <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground mb-4 w-full grid grid-cols-2">
             {navItems.map(item => (
                 <Link
                     key={item.href}

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo } from "react";
@@ -21,6 +20,7 @@ import {
 const topNavItems = [
   { href: "/order", label: "Order" },
   { href: "/kasir", label: "Kasir" },
+  { href: "/dompet", label: "Dompet" },
   { href: "/racik/minuman", label: "Produk" },
 ];
 
