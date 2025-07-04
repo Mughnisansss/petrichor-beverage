@@ -8,7 +8,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,6 +17,7 @@ import { PlusCircle, Edit, Trash2, X, ImageIcon, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // --- Schemas ---
 const ingredientSchema = z.object({
@@ -29,6 +30,7 @@ const productSchema = z.object({
   imageUri: z.string().optional(),
   sellingPrice: z.coerce.number().min(0, "Harga jual tidak boleh negatif"),
   ingredients: z.array(ingredientSchema).min(1, "Minimal 1 bahan baku"),
+  availableToppings: z.array(z.string()).optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -89,11 +91,13 @@ const ProductForm = React.forwardRef<
     
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),
-        defaultValues: { name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined },
+        defaultValues: { name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined, availableToppings: [] },
     });
 
     const { fields, append, remove } = useFieldArray({ control: form.control, name: "ingredients" });
     const watchedIngredients = useWatch({ control: form.control, name: 'ingredients' });
+
+    const allToppings = useMemo(() => rawMaterials.filter(m => m.category === 'topping'), [rawMaterials]);
 
     const calculatedCostPrice = useMemo(() => {
         if (!watchedIngredients || rawMaterials.length === 0) return 0;
@@ -117,7 +121,7 @@ const ProductForm = React.forwardRef<
             onFinished();
             setEditingProduct(null);
             setPreview(null);
-            form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined });
+            form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined, availableToppings: [] });
         } catch (error) {
             toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
         }
@@ -127,7 +131,10 @@ const ProductForm = React.forwardRef<
         handleEdit: (product: Product) => {
             setEditingProduct(product);
             setPreview(product.imageUri || null);
-            form.reset(product);
+            form.reset({
+                ...product,
+                availableToppings: product.availableToppings || [],
+            });
         }
     }));
 
@@ -171,7 +178,7 @@ const ProductForm = React.forwardRef<
                     )}/>
                   </div>
                   <div className="space-y-2">
-                    <FormLabel htmlFor="imageUpload">Gambar Produk (Opsional)</FormLabel>
+                    <Label htmlFor="imageUpload">Gambar Produk (Opsional)</Label>
                      <div className="flex items-center gap-4">
                         {preview ? (
                             <Image
@@ -237,6 +244,53 @@ const ProductForm = React.forwardRef<
                     </div>
                 </div>
 
+                <div className="space-y-2">
+                  <FormLabel>Topping yang Tersedia (Opsional)</FormLabel>
+                  <FormDescription>Pilih topping mana saja yang bisa ditambahkan pelanggan ke produk ini.</FormDescription>
+                  <FormField
+                    control={form.control}
+                    name="availableToppings"
+                    render={({ field }) => (
+                      <FormItem className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 rounded-md border p-4">
+                        {allToppings.length === 0 && (
+                          <p className="text-sm text-muted-foreground col-span-full">Tidak ada bahan baku dengan kategori 'Topping'. Silakan tambahkan terlebih dahulu di halaman 'Bahan Baku'.</p>
+                        )}
+                        {allToppings.map((topping) => (
+                          <FormField
+                            key={topping.id}
+                            control={form.control}
+                            name="availableToppings"
+                            render={({ field }) => {
+                              return (
+                                <FormItem key={topping.id} className="flex flex-row items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(topping.id)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...(field.value || []), topping.id])
+                                          : field.onChange(
+                                              (field.value || []).filter(
+                                                (value) => value !== topping.id
+                                              )
+                                            )
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal text-sm">
+                                    {topping.name} (+{formatCurrency(topping.sellingPrice || 0)})
+                                  </FormLabel>
+                                </FormItem>
+                              )
+                            }}
+                          />
+                        ))}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <Separator />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -247,7 +301,7 @@ const ProductForm = React.forwardRef<
                 </div>
                 
                 <Button type="submit">{editingProduct ? "Simpan Perubahan" : `Tambah ${productTypeName}`}</Button>
-                {editingProduct && (<Button type="button" variant="ghost" onClick={() => { setEditingProduct(null); setPreview(null); form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }] }); }}>Batal Edit</Button>)}
+                {editingProduct && (<Button type="button" variant="ghost" onClick={() => { setEditingProduct(null); setPreview(null); form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], availableToppings: [] }); }}>Batal Edit</Button>)}
             </form>
         </Form>
     );

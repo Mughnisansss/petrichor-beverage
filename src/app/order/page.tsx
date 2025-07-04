@@ -48,10 +48,19 @@ function ProductCustomizationDialog({
   const [selectedToppings, setSelectedToppings] = useState<Ingredient[]>([]);
   const [quantity, setQuantity] = useState(1);
 
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedToppings([]);
+      setQuantity(1);
+    }
+  }, [isOpen]);
+
   const availableToppings = useMemo(() => {
-    if (!product) return [];
-    const productIngredientIds = new Set(product.ingredients.map(ing => ing.rawMaterialId));
-    return rawMaterials.filter(m => m.category === 'topping' && !productIngredientIds.has(m.id));
+    if (!product || !product.availableToppings) return [];
+    // Get the full RawMaterial objects for the allowed topping IDs
+    return product.availableToppings.map(toppingId => 
+      rawMaterials.find(m => m.id === toppingId)
+    ).filter((topping): topping is RawMaterial => topping !== undefined);
   }, [rawMaterials, product]);
   
   const toppingsPrice = useMemo(() => {
@@ -60,13 +69,6 @@ function ProductCustomizationDialog({
         return sum + (toppingData?.sellingPrice || 0);
     }, 0);
   }, [selectedToppings, rawMaterials]);
-
-  useEffect(() => {
-    if (isOpen) {
-      setSelectedToppings([]);
-      setQuantity(1);
-    }
-  }, [isOpen]);
 
   if (!product) {
     return null;

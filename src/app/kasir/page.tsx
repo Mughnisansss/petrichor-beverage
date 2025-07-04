@@ -154,9 +154,11 @@ function QuickSellDialog({
   }, [isOpen]);
 
   const availableToppings = useMemo(() => {
-    if (!productInfo) return [];
-    const productIngredientIds = new Set(productInfo.product.ingredients.map(ing => ing.rawMaterialId));
-    return rawMaterials.filter(m => m.category === 'topping' && !productIngredientIds.has(m.id));
+    if (!productInfo || !productInfo.product.availableToppings) return [];
+    const { product } = productInfo;
+    return product.availableToppings
+        .map(toppingId => rawMaterials.find(m => m.id === toppingId))
+        .filter((topping): topping is RawMaterial => topping !== undefined);
   }, [rawMaterials, productInfo]);
   
   if (!productInfo) return null;
@@ -255,11 +257,10 @@ export default function KasirPage() {
   const [customizingProductInfo, setCustomizingProductInfo] = useState<{product: Drink | Food, type: 'drink' | 'food'} | null>(null);
 
   async function handleQuickSell(product: Drink | Food, type: 'drink' | 'food') {
-    const productIngredientIds = new Set(product.ingredients.map(ing => ing.rawMaterialId));
-    const availableToppings = rawMaterials.filter(m => m.category === 'topping' && !productIngredientIds.has(m.id));
+    const hasToppings = product.availableToppings && product.availableToppings.length > 0;
 
     // If there are toppings available, open customization dialog.
-    if (availableToppings.length > 0) {
+    if (hasToppings) {
         setCustomizingProductInfo({ product, type });
         setCustomizeDialogOpen(true);
         return;

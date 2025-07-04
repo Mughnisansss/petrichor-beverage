@@ -1,6 +1,7 @@
 
 
 
+
 export interface RawMaterial {
   id: string;
   name: string;
@@ -24,6 +25,7 @@ export interface Drink {
   ingredients: Ingredient[];
   costPrice: number; // Calculated from ingredients, stored for historical accuracy
   sellingPrice: number;
+  availableToppings?: string[]; // Array of RawMaterial IDs
 }
 
 export interface Food {
@@ -33,6 +35,7 @@ export interface Food {
   ingredients: Ingredient[];
   costPrice: number; // Calculated from ingredients, stored for historical accuracy
   sellingPrice: number;
+  availableToppings?: string[]; // Array of RawMaterial IDs
 }
 
 export interface Sale {
