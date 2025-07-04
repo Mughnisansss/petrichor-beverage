@@ -314,7 +314,10 @@ export default function BahanBakuPage() {
                       <p className="text-xs text-muted-foreground">({formatCurrency(material.costPerUnit)} per {material.unit})</p>
                     </TableCell>
                     <TableCell>
-                      {(material.category === 'topping' || material.category === 'packaging') && typeof material.sellingPrice === 'number' ? formatCurrency(material.sellingPrice) : '—'}
+                      {(material.category === 'topping' || material.category === 'packaging') && typeof material.sellingPrice === 'number'
+                        ? formatCurrency(material.sellingPrice)
+                        : <span className="text-xs text-muted-foreground italic">Termasuk di HPP produk</span>
+                      }
                     </TableCell>
                     <TableCell className="flex gap-2 justify-end">
                       <Button variant="outline" size="icon" onClick={() => handleEdit(material)}>
