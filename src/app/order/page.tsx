@@ -11,11 +11,11 @@ import { CupSoda, Utensils, Plus, ShoppingCart, Trash2, Tag } from "lucide-react
 import { MainLayout } from "@/components/main-layout";
 import type { Drink, Food, RawMaterial, Ingredient, CartItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 
 // --- Decorative Blobs ---
@@ -74,6 +74,7 @@ function ProductCustomizationDialog({
     }, 0);
   }, [selectedToppings, rawMaterials]);
 
+  // This check must happen AFTER all hooks are called.
   if (!product) {
     return null;
   }
