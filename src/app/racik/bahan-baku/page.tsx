@@ -64,6 +64,16 @@ export default function BahanBakuPage() {
 
   const costPerUnit = (watchedTotalCost && watchedTotalQuantity > 0) ? watchedTotalCost / watchedTotalQuantity : 0;
   
+  useEffect(() => {
+    if (isFormVisible) {
+      if (watchedCategory === 'main' || watchedCategory === 'packaging') {
+        // Automatically set sellingPrice to HPP for main and packaging
+        form.setValue('sellingPrice', costPerUnit);
+      }
+      // If category is 'topping', do nothing, preserving manual input.
+    }
+  }, [costPerUnit, watchedCategory, form, isFormVisible]);
+
   async function onSubmit(values: MaterialFormValues) {
     try {
       const costPerUnitValue = values.totalCost / values.totalQuantity;
@@ -246,13 +256,13 @@ export default function BahanBakuPage() {
                         <FormDescription>Dihitung otomatis dari: Total Biaya / Jumlah Beli.</FormDescription>
                     </div>
                     
-                    {(watchedCategory === 'topping' || watchedCategory === 'packaging') && (
+                    {watchedCategory === 'topping' && (
                        <FormField
                         control={form.control}
                         name="sellingPrice"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Harga Jual (Rp)</FormLabel>
+                            <FormLabel>Harga Jual Topping (Rp)</FormLabel>
                             <FormControl>
                                 <Input 
                                     type="number" 
@@ -261,7 +271,7 @@ export default function BahanBakuPage() {
                                     placeholder="cth: 3000"
                                 />
                             </FormControl>
-                            <FormDescription>Harga yang akan dibayar pelanggan untuk item tambahan ini. Atur lebih tinggi dari HPP untuk mendapatkan profit.</FormDescription>
+                            <FormDescription>Harga yang akan dibayar pelanggan untuk topping ini. Atur lebih tinggi dari HPP untuk mendapatkan profit.</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -305,10 +315,16 @@ export default function BahanBakuPage() {
                       <p className="text-xs text-muted-foreground">({formatCurrency(material.costPerUnit)} per {material.unit})</p>
                     </TableCell>
                     <TableCell>
-                      {(material.category === 'topping' || material.category === 'packaging') && typeof material.sellingPrice === 'number'
-                        ? formatCurrency(material.sellingPrice)
-                        : <span className="text-xs text-muted-foreground italic">Termasuk di HPP produk</span>
-                      }
+                      {material.category === 'topping' ? (
+                        formatCurrency(material.sellingPrice || 0)
+                      ) : material.category === 'packaging' ? (
+                        <div>
+                          {formatCurrency(material.sellingPrice || 0)}
+                          <p className="text-xs text-muted-foreground italic">(Sesuai HPP)</p>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">Termasuk di HPP produk</span>
+                      )}
                     </TableCell>
                     <TableCell className="flex gap-2 justify-end">
                       <Button variant="outline" size="icon" onClick={() => handleEdit(material)}>
