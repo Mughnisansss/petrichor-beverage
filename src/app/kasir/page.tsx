@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,11 +12,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Plus, PlusCircle, CupSoda, Utensils, ShoppingCart, Trash2, CheckCircle } from "lucide-react";
-import type { Drink, Food, Sale } from "@/lib/types";
+import type { Drink, Food, Sale, Ingredient, RawMaterial } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 
 // --- Helper Component: Orderan Tab ---
@@ -151,13 +154,134 @@ function OrderanTab() {
   );
 }
 
+// --- Helper Component: Quick Sell Customization Dialog ---
+function QuickSellDialog({
+  isOpen,
+  onOpenChange,
+  productInfo,
+}: {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  productInfo: { product: Drink | Food; type: 'drink' | 'food' } | null;
+}) {
+  const { addSale, rawMaterials } = useAppContext();
+  const { toast } = useToast();
+  const [selectedToppings, setSelectedToppings] = useState<Ingredient[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedToppings([]);
+    }
+  }, [isOpen]);
+
+  const availableToppings = useMemo(() => rawMaterials.filter(m => m.category === 'topping'), [rawMaterials]);
+  
+  if (!productInfo) return null;
+  const { product, type } = productInfo;
+
+  const handleCheckboxChange = (checked: boolean, topping: RawMaterial) => {
+    setSelectedToppings(prev => {
+      if (checked) {
+        return [...prev, { rawMaterialId: topping.id, quantity: 1 }];
+      } else {
+        return prev.filter(t => t.rawMaterialId !== topping.id);
+      }
+    });
+  };
+  
+  const toppingsPrice = selectedToppings.reduce((sum, toppingIng) => {
+      const toppingData = rawMaterials.find(m => m.id === toppingIng.rawMaterialId);
+      return sum + (toppingData?.sellingPrice || 0);
+  }, 0);
+
+  const finalPrice = product.sellingPrice + toppingsPrice;
+
+  async function handleConfirmSale() {
+    const salePayload: Omit<Sale, 'id' | 'date'> = {
+      productId: product.id,
+      productType: type,
+      quantity: 1, // Quick sell is always quantity 1
+      discount: 0,
+      selectedToppings: selectedToppings,
+      totalSalePrice: finalPrice, // Since quantity is 1
+    };
+
+    try {
+      await addSale(salePayload);
+      toast({
+        title: "Penjualan Dicatat",
+        description: `1x ${product.name} berhasil dijual.`,
+      });
+      onOpenChange(false);
+    } catch (error) {
+      toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
+    }
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Kustomisasi: {product.name}</DialogTitle>
+          <DialogDescription>Pilih tambahan untuk penjualan cepat.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <h4 className="font-semibold">Topping</h4>
+          {availableToppings.length > 0 ? (
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {availableToppings.map(topping => (
+                <div key={topping.id} className="flex items-center justify-between space-x-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`qs-topping-${topping.id}`}
+                      onCheckedChange={checked => handleCheckboxChange(checked as boolean, topping)}
+                    />
+                    <Label htmlFor={`qs-topping-${topping.id}`}>{topping.name}</Label>
+                  </div>
+                  {topping.sellingPrice && (
+                    <span className="text-sm text-muted-foreground">+{formatCurrency(topping.sellingPrice)}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Tidak ada topping tersedia.</p>
+          )}
+        </div>
+        <Separator/>
+        <div className="flex justify-between items-center text-lg font-bold">
+            <span>Total Harga</span>
+            <span>{formatCurrency(finalPrice)}</span>
+        </div>
+        <DialogFooter>
+          <Button onClick={handleConfirmSale} className="w-full">
+            <Plus className="mr-2 h-4 w-4" /> Konfirmasi & Jual
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 // --- Main Page Component ---
 export default function KasirPage() {
   const { sales, drinks, foods, addSale, rawMaterials } = useAppContext();
   const { toast } = useToast();
+  const [isCustomizeDialogOpen, setCustomizeDialogOpen] = useState(false);
+  const [customizingProductInfo, setCustomizingProductInfo] = useState<{product: Drink | Food, type: 'drink' | 'food'} | null>(null);
 
   async function handleQuickSell(product: Drink | Food, type: 'drink' | 'food') {
+    const availableToppings = rawMaterials.filter(m => m.category === 'topping');
+
+    // If there are toppings available, open customization dialog.
+    if (availableToppings.length > 0) {
+        setCustomizingProductInfo({ product, type });
+        setCustomizeDialogOpen(true);
+        return;
+    }
+    
+    // Otherwise, perform a direct sale.
     try {
       const salePayload: Omit<Sale, 'id' | 'date'> = {
         productId: product.id,
@@ -165,7 +289,7 @@ export default function KasirPage() {
         quantity: 1,
         discount: 0,
         selectedToppings: [],
-        totalSalePrice: product.sellingPrice // For a quick sale, total price is just the product's base price
+        totalSalePrice: product.sellingPrice
       };
       await addSale(salePayload);
       toast({
@@ -212,6 +336,16 @@ export default function KasirPage() {
 
   return (
     <MainLayout>
+      <QuickSellDialog
+        isOpen={isCustomizeDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCustomizingProductInfo(null);
+          }
+          setCustomizeDialogOpen(open);
+        }}
+        productInfo={customizingProductInfo}
+      />
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Tabs defaultValue="cepat" className="w-full">
@@ -224,7 +358,7 @@ export default function KasirPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Kasir Penjualan Cepat</CardTitle>
-                    <CardDescription>Klik tombol pada item untuk mencatat penjualan (kuantitas 1, diskon 0%).</CardDescription>
+                    <CardDescription>Klik tombol pada item untuk mencatat penjualan. Jika ada topping, dialog kustomisasi akan muncul.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                      <div>
@@ -291,7 +425,7 @@ export default function KasirPage() {
                           <TableRow key={sale.id}>
                             <TableCell>{formatDate(sale.date, "HH:mm")}</TableCell>
                             <TableCell className="font-medium">
-                              {product?.name || 'N/A'}
+                              {sale.quantity}x {product?.name || 'N/A'}
                                {sale.selectedToppings && sale.selectedToppings.length > 0 && (
                                 <ul className="text-xs text-muted-foreground list-disc pl-4 mt-1">
                                   {sale.selectedToppings.map(topping => {
