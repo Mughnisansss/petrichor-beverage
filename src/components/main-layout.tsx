@@ -26,7 +26,7 @@ const topNavItems = [
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isLoading, appName, cart, marqueeText } = useAppContext();
+  const { isLoading, appName, orderQueue, marqueeText } = useAppContext();
   
   const settingsHref = "/pengaturan";
   const isOrderPage = pathname === '/order';
@@ -79,9 +79,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 )}
               >
                 {item.label}
-                 {item.href === '/kasir' && cart.length > 0 && (
+                 {item.href === '/kasir' && orderQueue.length > 0 && (
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
-                    {cart.length}
+                    {orderQueue.length}
                   </span>
                 )}
               </Link>
@@ -126,9 +126,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   )}
                 >
                   {item.label}
-                  {item.href === '/kasir' && cart.length > 0 && (
+                  {item.href === '/kasir' && orderQueue.length > 0 && (
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
-                      {cart.length}
+                      {orderQueue.length}
                     </span>
                   )}
                 </Link>
@@ -140,8 +140,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           </>
         )}
         <div className={cn(
-          "flex-1 overflow-hidden flex items-center h-10 border border-input rounded-md bg-muted",
-           isOrderPage && "bg-order-accent/50 text-order-primary border-order-primary/20"
+          "flex-1 overflow-hidden flex items-center h-10 rounded-md",
+           isOrderPage ? "bg-order-accent/50 text-order-primary" : "bg-muted border border-input",
         )}>
            <div className="relative flex overflow-x-hidden">
               <div className="animate-marquee whitespace-nowrap">

@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { nanoid } from 'nanoid';
-import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem, Ingredient } from '@/lib/types';
+import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem, Ingredient, QueuedOrder } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { 
   isRawMaterialInUse, 
@@ -218,6 +218,7 @@ interface AppContextType {
   operationalCosts: OperationalCost[];
   rawMaterials: RawMaterial[];
   cart: CartItem[];
+  orderQueue: QueuedOrder[];
   isLoading: boolean;
   storageMode: StorageMode;
   setStorageMode: (mode: StorageMode) => void;
@@ -246,6 +247,9 @@ interface AppContextType {
   updateCartItemQuantity: (cartId: string, quantity: number) => void;
   removeFromCart: (cartId: string) => void;
   clearCart: () => void;
+  submitCustomerOrder: () => Promise<number>;
+  updateQueuedOrderStatus: (orderId: string, status: 'pending' | 'ready') => Promise<void>;
+  processQueuedOrder: (orderId: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -255,7 +259,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [appName, setAppName] = useLocalStorage<string>('sipsavvy_appName', 'SipSavvy');
   const [logoImageUri, setLogoImageUri] = useLocalStorage<string | null>('sipsavvy_logoImageUri', null);
   const [marqueeText, setMarqueeText] = useLocalStorage<string>('sipsavvy_marqueeText', 'Selamat Datang di {appName}!');
-  const [cart, setCart] = useLocalStorage<CartItem[]>('sipsavvy_cart', []);
+  const [cart, setCart] = useLocalStorage<CartItem[]>('sipsavvy_customer_cart', []);
+  const [orderQueue, setOrderQueue] = useLocalStorage<QueuedOrder[]>('sipsavvy_order_queue', []);
+  const [lastQueueNumber, setLastQueueNumber] = useLocalStorage<number>('sipsavvy_last_queue_number', 0);
   const [dbData, setDbData] = useState<DbData>({ drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -339,6 +345,56 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCart([]);
   }, [setCart]);
 
+  const submitCustomerOrder = useCallback(async (): Promise<number> => {
+    if (cart.length === 0) {
+      throw new Error("Cart is empty");
+    }
+    const newQueueNumber = lastQueueNumber + 1;
+    const newOrder: QueuedOrder = {
+      id: nanoid(),
+      queueNumber: newQueueNumber,
+      items: cart,
+      createdAt: new Date().toISOString(),
+      status: 'pending'
+    };
+    setOrderQueue(prevQueue => [...prevQueue, newOrder]);
+    setLastQueueNumber(newQueueNumber);
+    clearCart();
+    return newQueueNumber;
+  }, [cart, lastQueueNumber, setOrderQueue, setLastQueueNumber, clearCart]);
+
+  const updateQueuedOrderStatus = useCallback(async (orderId: string, status: 'pending' | 'ready'): Promise<void> => {
+    setOrderQueue(prevQueue => prevQueue.map(order => 
+      order.id === orderId ? { ...order, status } : order
+    ));
+  }, [setOrderQueue]);
+
+  const processQueuedOrder = useCallback(async (orderId: string): Promise<void> => {
+    const orderToProcess = orderQueue.find(o => o.id === orderId);
+    if (!orderToProcess) {
+      throw new Error("Order not found in queue");
+    }
+
+    const salesPayload = orderToProcess.items.map(item => {
+      const totalSalePrice = item.sellingPrice * item.quantity;
+      return {
+        productId: item.productId,
+        productType: item.productType,
+        quantity: item.quantity,
+        discount: 0,
+        selectedToppings: item.selectedToppings,
+        totalSalePrice: totalSalePrice,
+      };
+    });
+    
+    // This will call batchAddSales and then refetch all data, which is what we want
+    await currentService.batchAddSales(salesPayload);
+
+    // After data is refetched, we can remove from the local queue state
+    setOrderQueue(prevQueue => prevQueue.filter(o => o.id !== orderId));
+  }, [orderQueue, currentService, setOrderQueue, fetchData]);
+
+
   const wrappedService = useMemo(() => {
     const wrap = <T extends (...args: any[]) => Promise<any>>(fn: T) => {
       return async (...args: Parameters<T>): Promise<ReturnType<T>> => {
@@ -373,6 +429,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     operationalCosts: dbData.operationalCosts,
     rawMaterials: dbData.rawMaterials,
     cart,
+    orderQueue,
     isLoading,
     storageMode,
     setStorageMode,
@@ -388,10 +445,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     updateCartItemQuantity,
     removeFromCart,
     clearCart,
+    submitCustomerOrder,
+    updateQueuedOrderStatus,
+    processQueuedOrder,
   }), [
-    dbData, cart, isLoading, storageMode, setStorageMode, appName, setAppName, 
+    dbData, cart, orderQueue, isLoading, storageMode, setStorageMode, appName, setAppName, 
     logoImageUri, setLogoImageUri, marqueeText, setMarqueeText, fetchData, 
-    wrappedService, addToCart, updateCartItemQuantity, removeFromCart, clearCart
+    wrappedService, addToCart, updateCartItemQuantity, removeFromCart, clearCart,
+    submitCustomerOrder, updateQueuedOrderStatus, processQueuedOrder
   ]);
 
 
@@ -405,3 +466,5 @@ export function useAppContext() {
   }
   return context;
 }
+
+    

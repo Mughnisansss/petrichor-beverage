@@ -1,5 +1,6 @@
 
 
+
 export interface RawMaterial {
   id: string;
   name: string;
@@ -70,3 +71,13 @@ export interface CartItem {
   sellingPrice: number; // Price for a SINGLE unit, including base product + toppings.
   selectedToppings: Ingredient[];
 }
+
+export interface QueuedOrder {
+  id: string;
+  queueNumber: number;
+  items: CartItem[];
+  createdAt: string;
+  status: 'pending' | 'ready';
+}
+
+    

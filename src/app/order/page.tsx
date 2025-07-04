@@ -7,13 +7,16 @@ import { useAppContext } from "@/context/AppContext";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
-import { CupSoda, Utensils, Plus } from "lucide-react";
+import { CupSoda, Utensils, Plus, ShoppingCart, Trash2, Tag } from "lucide-react";
 import { MainLayout } from "@/components/main-layout";
-import type { Drink, Food, RawMaterial, Ingredient } from "@/lib/types";
+import type { Drink, Food, RawMaterial, Ingredient, CartItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
 
 // --- Decorative Blobs ---
 const DecorativeBlob1 = () => (
@@ -69,7 +72,7 @@ function ProductCustomizationDialog({
     addToCart(product, productType, selectedToppings, finalUnitPrice);
     
     toast({
-      title: "Ditambahkan ke Orderan",
+      title: "Ditambahkan ke Keranjang",
       description: `1x ${product.name} telah ditambahkan.`,
     });
     
@@ -114,7 +117,7 @@ function ProductCustomizationDialog({
           )}
         </div>
         <DialogFooter>
-          <Button onClick={handleAddToCart} className="bg-order-secondary hover:bg-order-secondary/90 text-white font-bold"><Plus className="mr-2 h-4 w-4" /> Tambahkan ke Orderan</Button>
+          <Button onClick={handleAddToCart} className="bg-order-secondary hover:bg-order-secondary/90 text-white font-bold"><Plus className="mr-2 h-4 w-4" /> Tambahkan ke Keranjang</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -122,17 +125,115 @@ function ProductCustomizationDialog({
 }
 
 
+// --- Order Summary Sheet ---
+function OrderSummarySheet({
+  onConfirm
+}: {
+  onConfirm: () => void;
+}) {
+  const { cart, updateCartItemQuantity, removeFromCart, rawMaterials } = useAppContext();
+
+  const total = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.sellingPrice * item.quantity, 0);
+  }, [cart]);
+
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg bg-order-secondary hover:bg-order-secondary/90 text-white z-20">
+          <ShoppingCart className="h-8 w-8" />
+          {cart.length > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-order-primary text-xs font-bold">
+              {cart.reduce((sum, item) => sum + item.quantity, 0)}
+            </span>
+          )}
+        </Button>
+      </SheetTrigger>
+      <SheetContent className="bg-order-bg border-order-primary/20 flex flex-col">
+        <SheetHeader>
+          <SheetTitle className="font-pacifico text-3xl text-order-primary">Keranjang Anda</SheetTitle>
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto -mx-6 px-6 py-4 space-y-4">
+          {cart.length > 0 ? (
+            cart.map(item => (
+              <div key={item.cartId} className="flex gap-4">
+                <div className="flex-1">
+                  <p className="font-bold text-order-text">{item.name}</p>
+                   {item.selectedToppings && item.selectedToppings.length > 0 && (
+                    <ul className="text-xs text-order-text/80 list-disc pl-4 mt-1">
+                      {item.selectedToppings.map(topping => {
+                         const toppingInfo = rawMaterials.find(m => m.id === topping.rawMaterialId);
+                         return <li key={topping.rawMaterialId}>{toppingInfo?.name || '...'}</li>
+                      })}
+                    </ul>
+                  )}
+                  <div className="flex items-center gap-2 mt-2">
+                    <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-order-primary text-order-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity - 1)}>-</Button>
+                    <span>{item.quantity}</span>
+                    <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-order-primary text-order-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity + 1)}>+</Button>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end">
+                    <p className="font-semibold text-order-text">{formatCurrency(item.sellingPrice * item.quantity)}</p>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-order-secondary" onClick={() => removeFromCart(item.cartId)}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center text-order-text/80 h-full flex flex-col justify-center items-center">
+                <ShoppingCart className="h-12 w-12 mb-4" />
+                <p>Keranjang Anda masih kosong.</p>
+                <p className="text-sm">Silakan pilih item dari menu.</p>
+            </div>
+          )}
+        </div>
+        {cart.length > 0 && (
+          <SheetFooter className="border-t border-order-primary/20 pt-4 -mx-6 px-6">
+            <div className="w-full space-y-4">
+              <div className="flex justify-between font-bold text-lg text-order-text">
+                <span>Total</span>
+                <span>{formatCurrency(total)}</span>
+              </div>
+              <DialogClose asChild>
+                <Button onClick={onConfirm} className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold text-lg py-6">Konfirmasi Pesanan</Button>
+              </DialogClose>
+            </div>
+          </SheetFooter>
+        )}
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+
 // --- Main Page Component ---
 export default function OrderPage() {
-  const { drinks, foods, appName } = useAppContext();
+  const { drinks, foods, appName, submitCustomerOrder, cart } = useAppContext();
   const [customizingProduct, setCustomizingProduct] = useState<Drink | Food | null>(null);
   const [productType, setProductType] = useState<'drink' | 'food'>('drink');
+  const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [newQueueNumber, setNewQueueNumber] = useState<number | null>(null);
+  const { toast } = useToast();
 
   const handleOrderClick = (product: Drink | Food, type: 'drink' | 'food') => {
     setProductType(type);
     setCustomizingProduct(product);
   };
   
+  const handleConfirmOrder = async () => {
+    if (cart.length === 0) {
+      toast({ title: "Keranjang Kosong", description: "Silakan tambahkan item terlebih dahulu.", variant: "destructive" });
+      return;
+    }
+    try {
+      const queueNumber = await submitCustomerOrder();
+      setNewQueueNumber(queueNumber);
+      setConfirmDialogOpen(true);
+    } catch(error) {
+       toast({ title: "Gagal", description: (error as Error).message, variant: "destructive" });
+    }
+  }
+
   const renderProductGrid = (products: (Drink[] | Food[]), type: 'drink' | 'food') => {
      return products.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
@@ -180,12 +281,34 @@ export default function OrderPage() {
           <DecorativeBlob2 />
 
           <div className="relative z-10">
+            {/* Dialog for product customization */}
             <ProductCustomizationDialog 
               isOpen={customizingProduct !== null}
               onClose={() => setCustomizingProduct(null)}
               product={customizingProduct}
               productType={productType}
             />
+
+            {/* Dialog for order confirmation */}
+            <AlertDialog open={isConfirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+                <AlertDialogContent className="bg-order-bg border-order-primary font-body">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="font-pacifico text-3xl text-order-primary text-center">Pesanan Diterima!</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center text-lg text-order-text/80 pt-4">
+                           Nomor antrian Anda adalah:
+                        </AlertDialogDescription>
+                         <div className="flex justify-center items-center py-4">
+                             <div className="flex justify-center items-center h-32 w-32 rounded-full bg-order-secondary text-white border-4 border-white shadow-lg">
+                                 <span className="text-6xl font-bold">{newQueueNumber}</span>
+                             </div>
+                         </div>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold">OK</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
 
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
               <div className="flex flex-col items-center text-center mb-16">
@@ -222,7 +345,10 @@ export default function OrderPage() {
               </div>
             </div>
           </div>
+          <OrderSummarySheet onConfirm={handleConfirmOrder} />
         </div>
     </MainLayout>
   );
 }
+
+    

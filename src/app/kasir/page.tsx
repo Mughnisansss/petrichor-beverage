@@ -3,10 +3,7 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -18,138 +15,120 @@ import { Label } from "@/components/ui/label";
 import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Plus, PlusCircle, CupSoda, Utensils, ShoppingCart, Trash2, CheckCircle } from "lucide-react";
-import type { Drink, Food, Sale, Ingredient, RawMaterial } from "@/lib/types";
+import { Plus, CupSoda, Utensils, ShoppingCart, CheckCircle, Tag, Clock } from "lucide-react";
+import type { Drink, Food, Sale, Ingredient, RawMaterial, QueuedOrder } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+
 
 // --- Helper Component: Orderan Tab ---
 function OrderanTab() {
-  const { cart, updateCartItemQuantity, removeFromCart, batchAddSales, clearCart, isLoading, rawMaterials } = useAppContext();
+  const { orderQueue, updateQueuedOrderStatus, processQueuedOrder, rawMaterials, isLoading } = useAppContext();
   const { toast } = useToast();
-  const [completedOrders, setCompletedOrders] = useState<Set<string>>(new Set());
 
-  const total = useMemo(() => {
-    // sellingPrice in cart item already includes toppings
-    return cart.reduce((sum, item) => sum + item.sellingPrice * item.quantity, 0);
-  }, [cart]);
-
-  const allReady = useMemo(() => {
-    if (cart.length === 0) return false;
-    return cart.every(item => completedOrders.has(item.cartId));
-  }, [cart, completedOrders]);
-
-  const handleProcessOrder = async () => {
-    if (cart.length === 0) return;
+  const handleProcessOrder = async (orderId: string) => {
     try {
-      const salesPayload = cart.map(item => {
-        // The final price for the sale record, assuming 0 discount from this flow
-        const totalSalePrice = item.sellingPrice * item.quantity;
-        return {
-          productId: item.productId,
-          productType: item.productType,
-          quantity: item.quantity,
-          discount: 0,
-          selectedToppings: item.selectedToppings,
-          totalSalePrice: totalSalePrice,
-        };
-      });
-      await batchAddSales(salesPayload);
-      clearCart();
-      setCompletedOrders(new Set());
+      await processQueuedOrder(orderId);
       toast({
         title: "Sukses",
-        description: `${cart.length} orderan berhasil diproses dan dicatat sebagai penjualan.`,
+        description: `Orderan berhasil diproses dan dicatat sebagai penjualan.`,
       });
     } catch (error) {
       toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
     }
   };
-  
-  const handleOrderReady = (cartId: string) => {
-    setCompletedOrders(prev => new Set(prev).add(cartId));
-  };
 
-  if (cart.length === 0) {
+  const handleStatusUpdate = async (orderId: string, status: 'pending' | 'ready') => {
+    try {
+       await updateQueuedOrderStatus(orderId, status);
+       toast({
+         title: "Status Diperbarui",
+         description: `Status orderan telah diubah.`,
+       });
+    } catch(error){
+      toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
+    }
+  }
+
+  if (orderQueue.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
         <ShoppingCart className="w-16 h-16 mb-4 text-muted-foreground" />
-        <h3 className="text-xl font-semibold">Tidak Ada Orderan</h3>
-        <p className="text-muted-foreground">Pelanggan dapat membuat orderan dari halaman 'Order'.</p>
+        <h3 className="text-xl font-semibold">Tidak Ada Orderan Masuk</h3>
+        <p className="text-muted-foreground">Antrian pesanan dari halaman 'Order' akan muncul di sini.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="max-h-[45vh] overflow-y-auto pr-2">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Produk</TableHead>
-              <TableHead className="w-[120px] text-center">Jumlah</TableHead>
-              <TableHead className="text-right">Subtotal</TableHead>
-              <TableHead className="w-[200px] text-center">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {cart.map(item => (
-              <TableRow key={item.cartId}>
-                <TableCell className="font-medium">
-                  {item.name}
-                  {item.selectedToppings && item.selectedToppings.length > 0 && (
-                    <ul className="text-xs text-muted-foreground list-disc pl-4 mt-1">
-                      {item.selectedToppings.map(topping => {
-                         const toppingInfo = rawMaterials.find(m => m.id === topping.rawMaterialId);
-                         return (
-                           <li key={topping.rawMaterialId}>
-                            {toppingInfo?.name || '...'}
-                           </li>
-                         );
-                      })}
-                    </ul>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-center gap-2">
-                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateCartItemQuantity(item.cartId, item.quantity - 1)}>-</Button>
-                    <span className="w-8 text-center">{item.quantity}</span>
-                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateCartItemQuantity(item.cartId, item.quantity + 1)}>+</Button>
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">{formatCurrency(item.sellingPrice * item.quantity)}</TableCell>
-                <TableCell className="text-center space-x-2">
-                  {completedOrders.has(item.cartId) ? (
-                     <Button variant="secondary" size="sm" className="w-full" disabled>
-                        <CheckCircle className="mr-2 h-4 w-4" /> Selesai
-                     </Button>
-                  ) : (
-                     <Button variant="outline" size="sm" className="w-full" onClick={() => handleOrderReady(item.cartId)}>
-                        Selesai Dibuat
-                     </Button>
-                  )}
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeFromCart(item.cartId)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      <Separator />
-      <div className="flex justify-between items-center font-bold text-lg">
-        <span>Total</span>
-        <span>{formatCurrency(total)}</span>
-      </div>
-      <Button 
-        className="w-full transition-all" 
-        size="lg" 
-        onClick={handleProcessOrder} 
-        disabled={isLoading || cart.length === 0}
-        variant={allReady ? "default" : "secondary"}
-      >
-        {allReady ? <><CheckCircle className="mr-2 h-5 w-5"/> Konfirmasi & Catat Penjualan</> : "Proses & Catat Semua Penjualan"}
-      </Button>
+        <Accordion type="multiple" className="w-full space-y-4">
+            {orderQueue.map((order) => {
+                const total = order.items.reduce((sum, item) => sum + item.sellingPrice * item.quantity, 0);
+
+                return (
+                    <AccordionItem value={order.id} key={order.id} className={cn(
+                      "rounded-lg border",
+                      order.status === 'ready' && "bg-green-100 dark:bg-green-900/40 border-green-400"
+                    )}>
+                        <AccordionTrigger className="p-4 hover:no-underline">
+                            <div className="flex justify-between w-full items-center">
+                                <div className="flex items-center gap-4">
+                                     <span className={cn(
+                                      "flex h-8 w-8 items-center justify-center rounded-full text-white font-bold",
+                                       order.status === 'ready' ? 'bg-green-600' : 'bg-primary'
+                                     )}>
+                                      {order.queueNumber}
+                                    </span>
+                                    <div>
+                                      <div className="font-bold text-lg">Antrian #{order.queueNumber}</div>
+                                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                         <Clock className="h-3 w-3" /> {formatDate(order.createdAt, "HH:mm")}
+                                      </div>
+                                    </div>
+                                </div>
+                                <div className="text-right pr-4">
+                                    <p className="font-bold">{formatCurrency(total)}</p>
+                                    <p className="text-sm text-muted-foreground">{order.items.length} item</p>
+                                </div>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="p-4 pt-0">
+                           <Separator className="mb-4" />
+                            <div className="space-y-2">
+                                {order.items.map(item => (
+                                    <div key={item.cartId} className="flex justify-between">
+                                        <div>
+                                          <p className="font-medium">{item.quantity}x {item.name}</p>
+                                          {item.selectedToppings && item.selectedToppings.length > 0 && (
+                                            <ul className="text-xs text-muted-foreground list-disc pl-5 mt-1">
+                                              {item.selectedToppings.map(topping => {
+                                                 const toppingInfo = rawMaterials.find(m => m.id === topping.rawMaterialId);
+                                                 return <li key={topping.rawMaterialId}>{toppingInfo?.name || '...'}</li>;
+                                              })}
+                                            </ul>
+                                          )}
+                                        </div>
+                                        <p>{formatCurrency(item.sellingPrice * item.quantity)}</p>
+                                    </div>
+                                ))}
+                            </div>
+                           <Separator className="my-4" />
+                           <div className="flex justify-end gap-2">
+                               {order.status === 'pending' && (
+                                  <Button variant="secondary" onClick={() => handleStatusUpdate(order.id, 'ready')}>
+                                      <CheckCircle className="mr-2 h-4 w-4" /> Tandai Siap
+                                  </Button>
+                               )}
+                               <Button onClick={() => handleProcessOrder(order.id)} disabled={isLoading}>
+                                    Proses & Bayar
+                               </Button>
+                           </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                );
+            })}
+        </Accordion>
     </div>
   );
 }
@@ -348,12 +327,24 @@ export default function KasirPage() {
       />
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <Tabs defaultValue="cepat" className="w-full">
+          <Tabs defaultValue="orderan" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="orderan">Antrian Orderan</TabsTrigger>
                   <TabsTrigger value="cepat">Penjualan Cepat</TabsTrigger>
-                  <TabsTrigger value="orderan">Orderan</TabsTrigger>
               </TabsList>
               
+              <TabsContent value="orderan">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Daftar Orderan Masuk</CardTitle>
+                        <CardDescription>Proses orderan yang masuk dari halaman 'Order' pelanggan.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <OrderanTab />
+                    </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="cepat">
                 <Card>
                   <CardHeader>
@@ -381,18 +372,6 @@ export default function KasirPage() {
                         </div>
                      </div>
                   </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="orderan">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Daftar Orderan</CardTitle>
-                        <CardDescription>Proses orderan yang masuk dari halaman 'Order' pelanggan.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <OrderanTab />
-                    </CardContent>
                 </Card>
               </TabsContent>
           </Tabs>
@@ -456,3 +435,5 @@ export default function KasirPage() {
     </MainLayout>
   );
 }
+
+    
