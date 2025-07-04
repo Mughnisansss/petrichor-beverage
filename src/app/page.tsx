@@ -36,7 +36,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { calculateItemCostPrice } from "@/lib/data-logic";
+import { calculateSaleHpp } from "@/lib/data-logic";
 
 export default function DashboardPage() {
   const { sales, drinks, foods, operationalCosts, rawMaterials } = useAppContext();
@@ -96,43 +96,24 @@ export default function DashboardPage() {
     const salesByProduct: { [key: string]: { name: string; quantity: number; revenue: number } } = {};
 
     filteredSales.forEach(sale => {
-      const { productId, productType, quantity, selectedToppings, selectedPackagingId, totalSalePrice } = sale;
-      const product = productType === 'drink'
-        ? drinks.find(d => d.id === productId)
-        : foods.find(f => f.id === productId);
-      
       // --- Revenue Calculation ---
-      revenue += totalSalePrice || 0;
+      revenue += sale.totalSalePrice || 0;
 
+      // --- Cost (HPP) Calculation using the new centralized function ---
+      cost += calculateSaleHpp(sale, drinks, foods, rawMaterials);
+      
+      // --- Top Product Calculation ---
+      const product = sale.productType === 'drink'
+        ? drinks.find(d => d.id === sale.productId)
+        : foods.find(f => f.id === sale.productId);
+      
       if (product) {
-        // --- Cost (HPP) Calculation (Robust) ---
-        // 1. Cost of contents (base product cost)
-        let itemCost = product.costPrice || 0;
-        
-        // 2. Cost of packaging for the selected size
-        if (selectedPackagingId && product.packagingOptions) {
-          const packaging = product.packagingOptions.find(p => p.id === selectedPackagingId);
-          if (packaging && packaging.ingredients) {
-            const packagingCost = calculateItemCostPrice(packaging.ingredients, rawMaterials);
-            itemCost += packagingCost || 0;
-          }
-        }
-
-        // 3. Cost of toppings
-        if (selectedToppings && selectedToppings.length > 0) {
-          const toppingsCost = calculateItemCostPrice(selectedToppings, rawMaterials);
-          itemCost += toppingsCost || 0;
-        }
-        
-        cost += (itemCost || 0) * (quantity || 0);
-        
-        // --- Top Product Calculation ---
         const productNameWithSize = `${product.name} ${sale.selectedPackagingName ? `(${sale.selectedPackagingName})` : ''}`;
         if (!salesByProduct[productNameWithSize]) {
             salesByProduct[productNameWithSize] = { name: productNameWithSize, quantity: 0, revenue: 0 };
         }
-        salesByProduct[productNameWithSize].quantity += quantity || 0;
-        salesByProduct[productNameWithSize].revenue += totalSalePrice || 0;
+        salesByProduct[productNameWithSize].quantity += sale.quantity || 0;
+        salesByProduct[productNameWithSize].revenue += sale.totalSalePrice || 0;
       }
     });
     

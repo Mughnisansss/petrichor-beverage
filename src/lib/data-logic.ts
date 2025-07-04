@@ -56,6 +56,46 @@ export function calculateItemCostPrice(ingredients: (Drink | Food)['ingredients'
   }, 0);
 }
 
+/**
+ * Calculates the total Cost of Goods Sold (HPP) for a single sale transaction.
+ * This function is robust and handles missing data gracefully.
+ */
+export function calculateSaleHpp(sale: Sale, drinks: Drink[], foods: Food[], rawMaterials: RawMaterial[]): number {
+  if (!sale) return 0;
+
+  const { productId, productType, selectedToppings, selectedPackagingId, quantity } = sale;
+  const product = productType === 'drink'
+    ? drinks.find(d => d.id === productId)
+    : foods.find(f => f.id === productId);
+
+  if (!product) {
+    return 0; // Product not found, HPP is 0 for this sale.
+  }
+
+  // 1. Start with the product's base cost price.
+  let singleItemCost = product.costPrice || 0;
+
+  // 2. Add cost of packaging for the selected size.
+  if (selectedPackagingId && product.packagingOptions) {
+    const packaging = product.packagingOptions.find(p => p.id === selectedPackagingId);
+    if (packaging && packaging.ingredients) {
+      const packagingCost = calculateItemCostPrice(packaging.ingredients, rawMaterials);
+      singleItemCost += packagingCost || 0;
+    }
+  }
+
+  // 3. Add cost of selected toppings.
+  if (selectedToppings && selectedToppings.length > 0) {
+    const toppingsCost = calculateItemCostPrice(selectedToppings, rawMaterials);
+    singleItemCost += toppingsCost || 0;
+  }
+
+  // 4. Multiply by quantity.
+  const totalCostForSale = (singleItemCost || 0) * (quantity || 0);
+  
+  return isNaN(totalCostForSale) ? 0 : totalCostForSale;
+}
+
 
 // --- Data Manipulation Logic ---
 
