@@ -16,11 +16,6 @@ export default {
         code: ['monospace'],
       },
       colors: {
-        'order-bg': '#FFF8F0',
-        'order-primary': '#6D4C41',
-        'order-secondary': '#E57373',
-        'order-accent': '#FFB74D',
-        'order-text': '#4E342E',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {

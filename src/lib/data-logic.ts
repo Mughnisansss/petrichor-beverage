@@ -4,7 +4,9 @@
  * Contains centralized business logic for data manipulation to ensure consistency
  * between local storage and server-side API operations.
  */
-import type { DbData, Drink, Food, RawMaterial, Sale } from './types';
+import type { DbData, Drink, Food, OperationalCost, RawMaterial, Sale } from './types';
+import { differenceInDays, isWithinInterval, parseISO } from 'date-fns';
+import type { DateRange } from 'react-day-picker';
 
 // --- Validation Logic ---
 
@@ -46,7 +48,7 @@ export function hasFoodAssociatedSales(db: DbData, foodId: string): boolean {
 export function calculateItemCostPrice(ingredients: (Drink | Food)['ingredients'], allRawMaterials: RawMaterial[]): number {
   if (!ingredients || allRawMaterials.length === 0) return 0;
   return ingredients.reduce((acc, item) => {
-    if (!item) return acc; // Skip if item is invalid
+    if (!item || !item.rawMaterialId) return acc; // Skip if item is invalid
     const material = allRawMaterials.find(m => m.id === item.rawMaterialId);
     // Ensure costPerUnit and quantity are valid numbers, otherwise treat as 0.
     const costPerUnit = material?.costPerUnit ?? 0;
@@ -94,6 +96,36 @@ export function calculateSaleHpp(sale: Sale, drinks: Drink[], foods: Food[], raw
   const totalCostForSale = (singleItemCost || 0) * (quantity || 0);
   
   return isNaN(totalCostForSale) ? 0 : totalCostForSale;
+}
+
+/**
+ * Calculates the total operational cost for a given date period, accounting for recurring costs.
+ */
+export function calculateOperationalCostForPeriod(period: DateRange, allCosts: OperationalCost[]): number {
+  if (!period.from || !period.to) return 0;
+
+  // 1. Calculate one-time costs that fall within the period.
+  const oneTimeCosts = allCosts
+    .filter(c => c.recurrence === 'sekali' && isWithinInterval(parseISO(c.date), { start: period.from!, end: period.to! }))
+    .reduce((sum, c) => sum + (c.amount || 0), 0);
+
+  // 2. Calculate the total daily rate for all recurring costs active *before the end of the period*.
+  const totalDailyRate = allCosts
+    .filter(c => c.recurrence !== 'sekali' && parseISO(c.date) <= period.to!)
+    .reduce((sum, c) => {
+      const amount = c.amount || 0;
+      if (c.recurrence === 'harian') return sum + amount;
+      if (c.recurrence === 'mingguan') return sum + (amount / 7);
+      if (c.recurrence === 'bulanan') return sum + (amount / 30);
+      return sum;
+    }, 0);
+
+  // 3. Multiply the daily rate by the number of days in the period.
+  const numberOfDays = differenceInDays(period.to, period.from) + 1;
+  const totalRecurringCost = totalDailyRate * numberOfDays;
+
+  const totalCost = oneTimeCosts + totalRecurringCost;
+  return isNaN(totalCost) ? 0 : totalCost;
 }
 
 

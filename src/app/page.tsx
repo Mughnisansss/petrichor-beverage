@@ -20,6 +20,7 @@ import {
   startOfWeek,
   endOfWeek,
   startOfMonth,
+  endOfMonth,
   subDays,
   addDays,
   format,
@@ -33,11 +34,12 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  ChartLegend,
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, LineChart, Line, Legend, Pie, PieChart, Cell } from "recharts";
-import { calculateSaleHpp } from "@/lib/data-logic";
+import { calculateSaleHpp, calculateOperationalCostForPeriod } from "@/lib/data-logic";
 import { ArrowDown, ArrowUp, BarChartHorizontal, DollarSign, LineChart as LineChartIcon, ShoppingCart, Clock, PieChart as PieChartIcon, Receipt, AlertTriangle, PackageX } from "lucide-react";
 import type { Sale } from "@/lib/types";
 
@@ -52,6 +54,8 @@ const KpiCard = ({ title, value, change, period, icon: Icon }: {
   const isPositive = change !== null && change >= 0;
   const isNegative = change !== null && change < 0;
 
+  // For profit, positive is good. For costs, positive would be bad.
+  // Assuming all these KPIs are 'higher is better' for now.
   const isChangeGood = isPositive;
   const isChangeBad = isNegative;
 
@@ -111,7 +115,7 @@ export default function DashboardPage() {
       case "this_month":
         currentFrom = startOfMonth(now);
         previousFrom = startOfMonth(subMonths(now, 1));
-        previousTo = endOfToday(subMonths(now, 1));
+        previousTo = endOfMonth(previousFrom);
         break;
       case "last_7_days":
       default:
@@ -157,23 +161,7 @@ export default function DashboardPage() {
         cost += calculateSaleHpp(sale, drinks, foods, rawMaterials);
       });
 
-      const oneTimeOpCosts = operationalCosts
-        .filter(c => c.recurrence === 'sekali' && isWithinInterval(parseISO(c.date), { start: period.from!, end: period.to! }))
-        .reduce((sum, c) => sum + (c.amount || 0), 0);
-
-      const recurringDailyRate = operationalCosts
-        .filter(c => c.recurrence !== 'sekali' && parseISO(c.date) <= period.to!)
-        .reduce((sum, c) => {
-          const amount = c.amount || 0;
-          if (c.recurrence === 'harian') return sum + amount;
-          if (c.recurrence === 'mingguan') return sum + (amount / 7);
-          if (c.recurrence === 'bulanan') return sum + (amount / 30);
-          return sum;
-        }, 0);
-
-      const numberOfDays = differenceInDays(period.to!, period.from!) + 1;
-      const totalRecurringCost = recurringDailyRate * numberOfDays;
-      const finalOperationalCost = oneTimeOpCosts + totalRecurringCost;
+      const finalOperationalCost = calculateOperationalCostForPeriod(period, operationalCosts);
       const netProfit = revenue - cost - finalOperationalCost;
       const transactionCount = periodSales.length;
       const averageOrderValue = transactionCount > 0 ? revenue / transactionCount : 0;
@@ -344,7 +332,7 @@ export default function DashboardPage() {
                           return `${num}`;
                       }} />
                       <ChartTooltip cursor={false} content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />} />
-                      <Legend />
+                      <Legend content={<ChartLegendContent />} />
                       <Line dataKey="Pendapatan" type="monotone" stroke="var(--color-Pendapatan)" strokeWidth={2} dot={false} />
                       <Line dataKey="Periode Sebelumnya" type="monotone" stroke="var(--color-Periode Sebelumnya)" strokeWidth={2} strokeDasharray="3 3" dot={false} />
                     </LineChart>

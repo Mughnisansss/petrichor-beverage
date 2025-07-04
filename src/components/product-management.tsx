@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useRef } from "react";
@@ -30,7 +31,7 @@ const ingredientSchema = z.object({
 const packagingInfoSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Nama ukuran tidak boleh kosong."),
-  additionalPrice: z.coerce.number().min(0).default(0),
+  additionalPrice: z.coerce.number().min(0, "Harga tambahan tidak boleh negatif.").default(0),
   ingredients: z.array(ingredientSchema).min(1, "Kemasan harus memiliki setidaknya 1 bahan."),
 });
 
@@ -86,31 +87,14 @@ const PackagingOptionAccordionItem = ({
   packagingItem,
   removePackaging,
   control,
-  rawMaterials,
   packagingMaterials
 }: {
   packIndex: number;
   packagingItem: Record<"id", string>;
   removePackaging: (index: number) => void;
   control: any;
-  rawMaterials: RawMaterial[];
   packagingMaterials: RawMaterial[];
 }) => {
-  const watchedPackagingOptions = useWatch({ control, name: 'packagingOptions' });
-
-  const calculatedAdditionalPrice = useMemo(() => {
-    const packagingOption = watchedPackagingOptions?.[packIndex];
-    if (!packagingOption || !packagingOption.ingredients) return 0;
-
-    return (packagingOption.ingredients || []).reduce((sum, ing) => {
-      const material = rawMaterials.find(m => m.id === ing.rawMaterialId);
-      if (material && material.category === 'packaging' && typeof material.sellingPrice === 'number') {
-        return sum + (material.sellingPrice * (ing.quantity || 0));
-      }
-      return sum;
-    }, 0);
-  }, [watchedPackagingOptions, packIndex, rawMaterials]);
-
   const { fields: subFields, append: subAppend, remove: subRemove } = useFieldArray({
     control,
     name: `packagingOptions.${packIndex}.ingredients`,
@@ -132,11 +116,14 @@ const PackagingOptionAccordionItem = ({
             <FormField control={control} name={`packagingOptions.${packIndex}.name`} render={({ field }) => (
               <FormItem><FormLabel>Nama Ukuran</FormLabel><FormControl><Input {...field} placeholder="cth: Reguler" /></FormControl><FormMessage /></FormItem>
             )} />
-            <div>
-              <Label>Tambahan Harga Jual</Label>
-              <p className="text-lg font-bold pt-2">{formatCurrency(calculatedAdditionalPrice)}</p>
-              <p className="text-xs text-muted-foreground">Otomatis dari harga jual bahan kemasan.</p>
-            </div>
+            <FormField control={control} name={`packagingOptions.${packIndex}.additionalPrice`} render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Tambahan Harga Jual</FormLabel>
+                    <FormControl><Input type="number" {...field} placeholder="cth: 3000" /></FormControl>
+                    <FormDescription>Harga tambahan untuk ukuran ini.</FormDescription>
+                    <FormMessage/>
+                </FormItem>
+            )}/>
           </div>
           <div className="space-y-2">
             <Label className="text-xs">Bahan Kemasan</Label>
@@ -205,18 +192,7 @@ const ProductForm = React.forwardRef<
 
     async function onSubmit(values: ProductFormValues) {
         try {
-            const processedPackagingOptions = (values.packagingOptions || []).map(option => {
-                const additionalPrice = (option.ingredients || []).reduce((sum, ing) => {
-                    const material = rawMaterials.find(m => m.id === ing.rawMaterialId);
-                    if (material && (material.category === 'packaging' || material.category === 'topping') && typeof material.sellingPrice === 'number') {
-                        return sum + (material.sellingPrice * ing.quantity);
-                    }
-                    return sum;
-                }, 0);
-                return { ...option, additionalPrice };
-            });
-
-            const productData = { ...values, costPrice: calculatedCostPrice, packagingOptions: processedPackagingOptions };
+            const productData = { ...values, costPrice: calculatedCostPrice };
             if (editingProduct) {
                 await updateProduct(editingProduct.id, productData);
                 toast({ title: "Sukses", description: `${productTypeName} berhasil diperbarui.` });
@@ -367,7 +343,6 @@ const ProductForm = React.forwardRef<
                            packagingItem={packagingItem}
                            removePackaging={removePackaging}
                            control={form.control}
-                           rawMaterials={rawMaterials}
                            packagingMaterials={packagingMaterials}
                          />
                        ))}

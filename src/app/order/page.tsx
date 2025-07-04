@@ -21,12 +21,12 @@ import { Separator } from "@/components/ui/separator";
 
 // --- Decorative Blobs ---
 const DecorativeBlob1 = () => (
-    <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" className="absolute top-0 left-0 w-1/2 h-1/2 -translate-x-1/3 -translate-y-1/3 text-order-accent/30 opacity-50 z-0">
+    <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" className="absolute top-0 left-0 w-1/2 h-1/2 -translate-x-1/3 -translate-y-1/3 text-accent/30 opacity-50 z-0">
         <path fill="currentColor" d="M429,298.5Q398,347,362.5,385.5Q327,424,278.5,431Q230,438,185,419.5Q140,401,98,370.5Q56,340,55,295Q54,250,56.5,206Q59,162,99,134.5Q139,107,185,91Q231,75,276.5,76Q322,77,361,106.5Q400,136,432,173Q464,210,446.5,250Q429,290,429,298.5Z" />
     </svg>
 );
 const DecorativeBlob2 = () => (
-     <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" className="absolute bottom-0 right-0 w-2/3 h-2/3 translate-x-1/4 translate-y-1/4 text-order-secondary/20 opacity-50 z-0">
+     <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" className="absolute bottom-0 right-0 w-2/3 h-2/3 translate-x-1/4 translate-y-1/4 text-secondary/20 opacity-50 z-0">
         <path fill="currentColor" d="M439.5,394Q363,538,241,475.5Q119,413,88,296.5Q57,180,172,130.5Q287,81,373,155.5Q459,230,439.5,394Z" />
     </svg>
 );
@@ -132,21 +132,21 @@ function ProductCustomizationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-order-bg border-order-primary font-body">
+      <DialogContent className="bg-background border-primary font-body">
         <DialogHeader>
-          <DialogTitle className="font-pacifico text-3xl text-order-primary">{product.name}</DialogTitle>
-          <DialogDescription className="text-order-text">Pilih ukuran, tambahan, dan jumlah untuk pesanan Anda.</DialogDescription>
+          <DialogTitle className="font-pacifico text-3xl text-primary">{product.name}</DialogTitle>
+          <DialogDescription className="text-foreground/80">Pilih ukuran, tambahan, dan jumlah untuk pesanan Anda.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
           
           {packagingOptions.length > 0 && (
             <div className="space-y-2">
-                <h4 className="font-bold text-order-text">Ukuran</h4>
+                <h4 className="font-bold text-foreground">Ukuran</h4>
                 <RadioGroup value={selectedPackagingId} onValueChange={setSelectedPackagingId} className="grid grid-cols-2 gap-2">
                     {packagingOptions.map((pack) => (
                         <Label key={pack.id} htmlFor={pack.id} className={cn(
-                            "flex flex-col items-center justify-center rounded-md border-2 p-3 hover:bg-order-primary/10 cursor-pointer transition-colors",
-                            selectedPackagingId === pack.id ? "bg-order-primary text-white border-order-primary" : "border-order-primary/20 bg-white/50 text-order-text"
+                            "flex flex-col items-center justify-center rounded-md border-2 p-3 hover:bg-primary/10 cursor-pointer transition-colors",
+                            selectedPackagingId === pack.id ? "bg-primary text-primary-foreground border-primary" : "border-input bg-card/50 text-foreground"
                         )}>
                             <RadioGroupItem value={pack.id} id={pack.id} className="sr-only" />
                             <span className="font-bold">{pack.name}</span>
@@ -159,7 +159,7 @@ function ProductCustomizationDialog({
 
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <h4 className="font-bold text-order-text mb-2">Topping</h4>
+              <h4 className="font-bold text-foreground mb-2">Topping</h4>
               {availableToppings.length > 0 ? (
                 <div className="space-y-2 max-h-36 overflow-y-auto pr-2">
                   {availableToppings.map(topping => (
@@ -168,37 +168,37 @@ function ProductCustomizationDialog({
                         <Checkbox 
                           id={`topping-${topping.id}`}
                           onCheckedChange={(checked) => handleCheckboxChange(checked as boolean, topping)}
-                          className="border-order-primary data-[state=checked]:bg-order-primary data-[state=checked]:text-white"
+                          className="border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                         />
-                        <Label htmlFor={`topping-${topping.id}`} className="text-order-text">{topping.name}</Label>
+                        <Label htmlFor={`topping-${topping.id}`} className="text-foreground">{topping.name}</Label>
                       </div>
                       {topping.sellingPrice != null && (
-                        <span className="text-sm text-order-text">+{formatCurrency(topping.sellingPrice)}</span>
+                        <span className="text-sm text-foreground">+{formatCurrency(topping.sellingPrice)}</span>
                       )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-order-text mt-2">Tidak ada topping tersedia.</p>
+                <p className="text-sm text-muted-foreground mt-2">Tidak ada topping tersedia.</p>
               )}
             </div>
              <div>
-                <h4 className="font-bold text-order-text mb-2">Jumlah</h4>
-                <div className="flex items-center justify-center gap-4 border rounded-lg p-2 bg-white/50">
-                    <Button variant="outline" size="icon" className="h-8 w-8 bg-transparent border-order-primary text-order-primary" onClick={() => setQuantity(q => Math.max(1, q - 1))}>-</Button>
-                    <span className="text-2xl font-bold w-12 text-center text-order-text">{quantity}</span>
-                    <Button variant="outline" size="icon" className="h-8 w-8 bg-transparent border-order-primary text-order-primary" onClick={() => setQuantity(q => q + 1)}>+</Button>
+                <h4 className="font-bold text-foreground mb-2">Jumlah</h4>
+                <div className="flex items-center justify-center gap-4 border rounded-lg p-2 bg-card/50">
+                    <Button variant="outline" size="icon" className="h-8 w-8 bg-transparent border-primary text-primary" onClick={() => setQuantity(q => Math.max(1, q - 1))}>-</Button>
+                    <span className="text-2xl font-bold w-12 text-center text-foreground">{quantity}</span>
+                    <Button variant="outline" size="icon" className="h-8 w-8 bg-transparent border-primary text-primary" onClick={() => setQuantity(q => q + 1)}>+</Button>
                 </div>
             </div>
           </div>
         </div>
-        <Separator className="bg-order-primary/20 !my-2" />
-        <div className="flex justify-between items-center text-xl font-bold text-order-text">
+        <Separator className="bg-primary/20 !my-2" />
+        <div className="flex justify-between items-center text-xl font-bold text-foreground">
             <span>Total Harga</span>
             <span>{formatCurrency(totalPrice)}</span>
         </div>
         <DialogFooter>
-          <Button onClick={handleAddToCart} className="bg-order-secondary hover:bg-order-secondary/90 text-white font-bold text-lg py-6"><Plus className="mr-2 h-4 w-4" /> Tambahkan ke Keranjang</Button>
+          <Button onClick={handleAddToCart} className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold text-lg py-6"><Plus className="mr-2 h-4 w-4" /> Tambahkan ke Keranjang</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -214,19 +214,19 @@ function OrderSummaryPanel({ onConfirm }: { onConfirm: () => void }) {
   }, [cart]);
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm border-order-primary/20 shadow-lg">
+    <Card className="bg-card backdrop-blur-sm border-primary/20 shadow-lg">
       <CardHeader className="p-6">
-        <CardTitle className="font-pacifico text-3xl text-order-primary">Keranjang Anda</CardTitle>
+        <CardTitle className="font-pacifico text-3xl text-primary">Keranjang Anda</CardTitle>
       </CardHeader>
       <CardContent className="max-h-[50vh] overflow-y-auto space-y-4">
         {cart.length > 0 ? (
           cart.map(item => (
             <div key={item.cartId} className="flex gap-4">
               <div className="flex-1">
-                <p className="font-bold text-order-text">
+                <p className="font-bold text-foreground">
                   {item.name} {item.selectedPackagingName && `(${item.selectedPackagingName})`}
                 </p>
-                 <ul className="text-xs text-order-text list-disc pl-4 mt-1">
+                 <ul className="text-xs text-muted-foreground list-disc pl-4 mt-1">
                     {item.selectedToppings && item.selectedToppings.length > 0 ? (
                       item.selectedToppings.map(topping => {
                          const toppingInfo = rawMaterials.find(m => m.id === topping.rawMaterialId);
@@ -237,19 +237,19 @@ function OrderSummaryPanel({ onConfirm }: { onConfirm: () => void }) {
                     )}
                   </ul>
                 <div className="flex items-center gap-2 mt-2">
-                  <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-order-primary text-order-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity - 1)}>-</Button>
-                  <span className="w-8 text-center text-lg font-bold text-order-text">{item.quantity}</span>
-                  <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-order-primary text-order-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity + 1)}>+</Button>
+                  <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-primary text-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity - 1)}>-</Button>
+                  <span className="w-8 text-center text-lg font-bold text-foreground">{item.quantity}</span>
+                  <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-primary text-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity + 1)}>+</Button>
                 </div>
               </div>
               <div className="flex flex-col items-end">
-                  <p className="font-semibold text-order-text">{formatCurrency(item.sellingPrice * item.quantity)}</p>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-order-secondary" onClick={() => removeFromCart(item.cartId)}><Trash2 className="h-4 w-4" /></Button>
+                  <p className="font-semibold text-foreground">{formatCurrency(item.sellingPrice * item.quantity)}</p>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-secondary" onClick={() => removeFromCart(item.cartId)}><Trash2 className="h-4 w-4" /></Button>
               </div>
             </div>
           ))
         ) : (
-          <div className="text-center text-order-text h-full flex flex-col justify-center items-center py-8">
+          <div className="text-center text-muted-foreground h-full flex flex-col justify-center items-center py-8">
               <ShoppingCart className="h-12 w-12 mb-4" />
               <p>Keranjang Anda kosong.</p>
               <p className="text-sm">Pilih item dari menu.</p>
@@ -258,12 +258,12 @@ function OrderSummaryPanel({ onConfirm }: { onConfirm: () => void }) {
       </CardContent>
        {cart.length > 0 && (
         <CardFooter className="flex-col items-stretch space-y-4">
-          <Separator className="bg-order-primary/20" />
-          <div className="flex justify-between font-bold text-lg text-order-text">
+          <Separator className="bg-primary/20" />
+          <div className="flex justify-between font-bold text-lg text-foreground">
               <span>Total</span>
               <span>{formatCurrency(total)}</span>
             </div>
-            <Button onClick={onConfirm} className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold text-lg py-6">Masukkan Pesanan</Button>
+            <Button onClick={onConfirm} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-6">Masukkan Pesanan</Button>
         </CardFooter>
       )}
     </Card>
@@ -282,28 +282,28 @@ function OrderSummarySheet({ onConfirm }: { onConfirm: () => void }) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button className="lg:hidden fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg bg-order-secondary hover:bg-order-secondary/90 text-white z-20">
+        <Button className="lg:hidden fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg bg-secondary hover:bg-secondary/90 text-secondary-foreground z-20">
           <ShoppingCart className="h-8 w-8" />
           {cart.length > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-order-primary text-xs font-bold text-order-bg">
+            <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
               {cart.reduce((sum, item) => sum + item.quantity, 0)}
             </span>
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="bg-order-bg border-order-primary/20 flex flex-col">
+      <SheetContent className="bg-background border-primary/20 flex flex-col">
         <SheetHeader>
-          <SheetTitle className="font-pacifico text-3xl text-order-primary">Keranjang Anda</SheetTitle>
+          <SheetTitle className="font-pacifico text-3xl text-primary">Keranjang Anda</SheetTitle>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto -mx-6 px-6 py-4 space-y-4">
           {cart.length > 0 ? (
             cart.map(item => (
               <div key={item.cartId} className="flex gap-4">
                 <div className="flex-1">
-                  <p className="font-bold text-order-text">
+                  <p className="font-bold text-foreground">
                     {item.name} {item.selectedPackagingName && `(${item.selectedPackagingName})`}
                   </p>
-                  <ul className="text-xs text-order-text list-disc pl-4 mt-1">
+                  <ul className="text-xs text-muted-foreground list-disc pl-4 mt-1">
                     {item.selectedToppings && item.selectedToppings.length > 0 ? (
                       item.selectedToppings.map(topping => {
                          const toppingInfo = rawMaterials.find(m => m.id === topping.rawMaterialId);
@@ -314,19 +314,19 @@ function OrderSummarySheet({ onConfirm }: { onConfirm: () => void }) {
                     )}
                   </ul>
                   <div className="flex items-center gap-2 mt-2">
-                    <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-order-primary text-order-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity - 1)}>-</Button>
-                    <span className="w-8 text-center text-lg font-bold text-order-text">{item.quantity}</span>
-                    <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-order-primary text-order-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity + 1)}>+</Button>
+                    <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-primary text-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity - 1)}>-</Button>
+                    <span className="w-8 text-center text-lg font-bold text-foreground">{item.quantity}</span>
+                    <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-primary text-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity + 1)}>+</Button>
                   </div>
                 </div>
                 <div className="flex flex-col items-end">
-                    <p className="font-semibold text-order-text">{formatCurrency(item.sellingPrice * item.quantity)}</p>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-order-secondary" onClick={() => removeFromCart(item.cartId)}><Trash2 className="h-4 w-4" /></Button>
+                    <p className="font-semibold text-foreground">{formatCurrency(item.sellingPrice * item.quantity)}</p>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-secondary" onClick={() => removeFromCart(item.cartId)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
             ))
           ) : (
-            <div className="text-center text-order-text h-full flex flex-col justify-center items-center">
+            <div className="text-center text-muted-foreground h-full flex flex-col justify-center items-center">
                 <ShoppingCart className="h-12 w-12 mb-4" />
                 <p>Keranjang Anda masih kosong.</p>
                 <p className="text-sm">Silakan pilih item dari menu.</p>
@@ -334,14 +334,14 @@ function OrderSummarySheet({ onConfirm }: { onConfirm: () => void }) {
           )}
         </div>
         {cart.length > 0 && (
-          <SheetFooter className="border-t border-order-primary/20 pt-4 -mx-6 px-6">
+          <SheetFooter className="border-t border-primary/20 pt-4 -mx-6 px-6">
             <div className="w-full space-y-4">
-              <div className="flex justify-between font-bold text-lg text-order-text">
+              <div className="flex justify-between font-bold text-lg text-foreground">
                 <span>Total</span>
                 <span>{formatCurrency(total)}</span>
               </div>
               <SheetClose asChild>
-                <Button onClick={onConfirm} className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold text-lg py-6">Masukkan Pesanan</Button>
+                <Button onClick={onConfirm} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-6">Masukkan Pesanan</Button>
               </SheetClose>
             </div>
           </SheetFooter>
@@ -386,7 +386,7 @@ export default function OrderPage() {
           {products.map(item => (
               <Card 
                 key={item.id} 
-                className="flex flex-col overflow-hidden group cursor-pointer rounded-2xl bg-white/60 backdrop-blur-sm border-2 border-order-primary/10 shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2" 
+                className="flex flex-col overflow-hidden group cursor-pointer rounded-2xl bg-card backdrop-blur-sm border-2 border-primary/10 shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2" 
                 onClick={() => handleOrderClick(item, type)}>
                   <div className="relative">
                     <Image
@@ -397,15 +397,15 @@ export default function OrderPage() {
                       className="object-cover w-full h-48 transition-transform duration-300 group-hover:scale-110"
                       data-ai-hint={type === 'drink' ? "drink coffee" : "food pastry"}
                     />
-                     <div className="absolute top-3 right-3 bg-order-primary text-order-bg px-4 py-1.5 rounded-full text-sm font-bold shadow-md">
+                     <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-bold shadow-md">
                         {formatCurrency(item.sellingPrice)}
                     </div>
                   </div>
                 <CardContent className="p-4 flex-grow">
-                    <h3 className="text-lg font-bold truncate text-order-text">{item.name}</h3>
+                    <h3 className="text-lg font-bold truncate text-foreground">{item.name}</h3>
                 </CardContent>
                 <CardFooter className="p-4 pt-0">
-                  <Button className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold rounded-lg">
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg">
                       <Plus className="mr-2 h-4 w-4" /> Pesan
                   </Button>
                 </CardFooter>
@@ -413,16 +413,16 @@ export default function OrderPage() {
           ))}
         </div>
       ) : (
-          <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-order-primary/20 rounded-lg text-center h-48 bg-white/30">
-            <p className="text-order-text font-semibold">Menu {type === 'drink' ? 'Minuman' : 'Makanan'} Akan Segera Hadir!</p>
-            <p className="text-sm text-order-text mt-1">Nantikan produk-produk menarik dari kami.</p>
+          <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-primary/20 rounded-lg text-center h-48 bg-card">
+            <p className="text-foreground font-semibold">Menu {type === 'drink' ? 'Minuman' : 'Makanan'} Akan Segera Hadir!</p>
+            <p className="text-sm text-muted-foreground mt-1">Nantikan produk-produk menarik dari kami.</p>
           </div>
       );
   }
 
   return (
     <MainLayout>
-        <div className="fixed inset-0 -z-10 pointer-events-none bg-order-bg">
+        <div className="fixed inset-0 -z-10 pointer-events-none bg-background">
             <div className="relative w-full h-full">
                 <DecorativeBlob1 />
                 <DecorativeBlob2 />
@@ -440,20 +440,20 @@ export default function OrderPage() {
 
             {/* Dialog for order confirmation */}
             <AlertDialog open={isConfirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-                <AlertDialogContent className="bg-order-bg border-order-primary font-body">
+                <AlertDialogContent className="bg-background border-primary font-body">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="font-pacifico text-3xl text-order-primary text-center">Pesanan Diterima!</AlertDialogTitle>
-                        <AlertDialogDescription className="text-center text-lg text-order-text pt-4">
+                        <AlertDialogTitle className="font-pacifico text-3xl text-primary text-center">Pesanan Diterima!</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center text-lg text-foreground pt-4">
                         Nomor antrian Anda adalah:
                         </AlertDialogDescription>
                         <div className="flex justify-center items-center py-4">
-                            <div className="flex justify-center items-center h-32 w-32 rounded-full bg-order-secondary text-white border-4 border-white shadow-lg">
+                            <div className="flex justify-center items-center h-32 w-32 rounded-full bg-secondary text-secondary-foreground border-4 border-white shadow-lg">
                                 <span className="text-6xl font-bold">{newQueueNumber}</span>
                             </div>
                         </div>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogAction className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold">OK</AlertDialogAction>
+                        <AlertDialogAction className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold">OK</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -461,8 +461,8 @@ export default function OrderPage() {
 
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <div className="flex flex-col items-center text-center mb-16">
-                    <h1 className="font-pacifico text-5xl md:text-7xl text-order-primary tracking-tight">Selamat Datang di <span className="text-order-secondary">{appName}</span></h1>
-                    <p className="text-xl text-order-text mt-4 max-w-2xl">
+                    <h1 className="font-pacifico text-5xl md:text-7xl text-primary tracking-tight">Selamat Datang di <span className="text-secondary">{appName}</span></h1>
+                    <p className="text-xl text-foreground mt-4 max-w-2xl">
                         Pilih menu favorit Anda di bawah ini dan nikmati sensasi rasa yang tak terlupakan.
                     </p>
                 </div>
@@ -472,11 +472,11 @@ export default function OrderPage() {
                         {/* Minuman Section */}
                         <div>
                             <div className="flex items-center gap-4 mb-8">
-                                <div className="bg-order-accent/80 p-3 rounded-full shadow-sm">
-                                    <CupSoda className="h-8 w-8 text-order-primary"/>
+                                <div className="bg-accent/80 p-3 rounded-full shadow-sm">
+                                    <CupSoda className="h-8 w-8 text-primary"/>
                                 </div>
-                                <h2 className="font-pacifico text-5xl text-order-primary">Minuman</h2>
-                                <div className="flex-grow h-1 bg-gradient-to-r from-order-accent/50 to-transparent rounded-full" />
+                                <h2 className="font-pacifico text-5xl text-primary">Minuman</h2>
+                                <div className="flex-grow h-1 bg-gradient-to-r from-accent/50 to-transparent rounded-full" />
                             </div>
                             {renderProductGrid(drinks, 'drink')}
                         </div>
@@ -484,11 +484,11 @@ export default function OrderPage() {
                         {/* Makanan Section */}
                         <div>
                             <div className="flex items-center gap-4 mb-8">
-                            <div className="bg-order-accent/80 p-3 rounded-full shadow-sm">
-                                <Utensils className="h-8 w-8 text-order-primary"/>
+                            <div className="bg-accent/80 p-3 rounded-full shadow-sm">
+                                <Utensils className="h-8 w-8 text-primary"/>
                             </div>
-                                <h2 className="font-pacifico text-5xl text-order-primary">Makanan</h2>
-                                <div className="flex-grow h-1 bg-gradient-to-r from-order-accent/50 to-transparent rounded-full" />
+                                <h2 className="font-pacifico text-5xl text-primary">Makanan</h2>
+                                <div className="flex-grow h-1 bg-gradient-to-r from-accent/50 to-transparent rounded-full" />
                             </div>
                             {renderProductGrid(foods, 'food')}
                         </div>

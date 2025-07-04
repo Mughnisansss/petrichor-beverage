@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from "react";
@@ -34,18 +35,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const displayText = useMemo(() => marqueeText.replace(/{appName}/g, appName), [marqueeText, appName]);
 
   const isActive = (href: string, currentPath: string) => {
-    // Exact match for the dashboard
-    if (href === '/') {
-      return currentPath === '/';
-    }
-    // Highlight "Produk" when on any /racik/* page
-    if (href === '/racik/minuman') {
-      return currentPath.startsWith('/racik');
-    }
-    // Highlight "Kasir" when on kasir page
-    if (href === '/kasir') {
-      return currentPath.startsWith('/kasir');
-    }
+    if (href === '/') return currentPath === '/';
+    if (href === '/racik/minuman') return currentPath.startsWith('/racik');
+    if (href === '/kasir') return currentPath.startsWith('/kasir');
+    if (href === '/dompet') return currentPath.startsWith('/dompet');
     return currentPath.startsWith(href);
   };
 
@@ -101,10 +94,12 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div className={cn(
+      "flex min-h-screen w-full flex-col",
+      isOrderPage && 'theme-order'
+    )}>
       <header className={cn(
-        "sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50",
-        isOrderPage && "bg-order-bg border-order-primary/10"
+        "sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50"
       )}>
         {!isOrderPage && (
           <>
@@ -141,7 +136,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         )}
         <div className={cn(
           "flex-1 overflow-hidden flex items-center h-10 rounded-md",
-           isOrderPage ? "bg-order-primary/10 text-order-primary" : "bg-muted border border-input",
+           isOrderPage ? "bg-primary/10 text-primary" : "bg-muted border border-input",
         )}>
            <div className="relative flex overflow-x-hidden">
               <div className="animate-marquee whitespace-nowrap">
@@ -173,8 +168,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <main className={cn(
-        "flex flex-1 flex-col",
-        isOrderPage ? "bg-order-bg" : "gap-4 p-4 md:gap-8 md:p-8"
+        "flex flex-1 flex-col bg-background",
+        !isOrderPage && "gap-4 p-4 md:gap-8 md:p-8"
       )}>
         {isLoading ? (
           <div className="space-y-6">

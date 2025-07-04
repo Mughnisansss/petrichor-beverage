@@ -57,6 +57,26 @@
     --chart-4: 207 44% 69%;
     --chart-5: 197 71% 93%;
   }
+
+  .theme-order {
+    --background: 26 100% 97%; /* #FFF8F0 */
+    --foreground: 30 31% 25%; /* #4E342E */
+    --card: 0 0% 100% / 0.8; /* white with alpha */
+    --card-foreground: 30 31% 25%;
+    --popover: 26 100% 97%;
+    --popover-foreground: 30 31% 25%;
+    --primary: 13 25% 34%; /* #6D4C41 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 72% 67%; /* #E57373 */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 13 25% 90%;
+    --muted-foreground: 13 25% 45%;
+    --accent: 30 100% 65%; /* #FFB74D */
+    --accent-foreground: 30 31% 25%;
+    --border: 13 25% 80%;
+    --input: 13 25% 70%;
+    --ring: 13 25% 34%;
+  }
 }
 
 @layer base {
