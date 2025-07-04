@@ -6,15 +6,16 @@ import Image from "next/image";
 import { useAppContext } from "@/context/AppContext";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
-import { CupSoda, Utensils, Plus, ShoppingCart, Trash2, Tag } from "lucide-react";
+import { formatCurrency, cn } from "@/lib/utils";
+import { CupSoda, Utensils, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { MainLayout } from "@/components/main-layout";
-import type { Drink, Food, RawMaterial, Ingredient, CartItem } from "@/lib/types";
+import type { Drink, Food, RawMaterial, Ingredient, CartItem, PackagingInfo } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 
@@ -46,23 +47,35 @@ function ProductCustomizationDialog({
   const { rawMaterials, addToCart } = useAppContext();
   const { toast } = useToast();
   const [selectedToppings, setSelectedToppings] = useState<Ingredient[]>([]);
+  const [selectedPackagingId, setSelectedPackagingId] = useState<string | undefined>(undefined);
   const [quantity, setQuantity] = useState(1);
+
+  const availableToppings = useMemo(() => {
+    if (!product || !product.availableToppings) return [];
+    
+    return product.availableToppings
+      .map(toppingId => rawMaterials.find(m => m.id === toppingId))
+      .filter((topping): topping is RawMaterial => topping !== undefined);
+  }, [rawMaterials, product]);
+
+  const packagingOptions = useMemo(() => product?.packagingOptions || [], [product]);
 
   useEffect(() => {
     if (isOpen) {
       setSelectedToppings([]);
       setQuantity(1);
+      // Set default packaging if available
+      if (packagingOptions && packagingOptions.length > 0) {
+        setSelectedPackagingId(packagingOptions[0].id);
+      } else {
+        setSelectedPackagingId(undefined);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, packagingOptions]);
 
-  const availableToppings = useMemo(() => {
-    if (!product || !product.availableToppings) return [];
-    
-    // This now correctly uses the pre-filtered availableToppings from the product data
-    return product.availableToppings
-      .map(toppingId => rawMaterials.find(m => m.id === toppingId))
-      .filter((topping): topping is RawMaterial => topping !== undefined);
-  }, [rawMaterials, product]);
+  const selectedPackaging = useMemo(() => {
+    return packagingOptions.find(p => p.id === selectedPackagingId);
+  }, [packagingOptions, selectedPackagingId]);
   
   const toppingsPrice = useMemo(() => {
     return selectedToppings.reduce((sum, toppingIng) => {
@@ -75,8 +88,11 @@ function ProductCustomizationDialog({
   if (!product) {
     return null;
   }
+
+  const basePrice = product.sellingPrice;
+  const packagingPrice = selectedPackaging?.additionalPrice || 0;
   
-  const finalUnitPrice = product.sellingPrice + toppingsPrice;
+  const finalUnitPrice = basePrice + packagingPrice + toppingsPrice;
   const totalPrice = finalUnitPrice * quantity;
 
   const handleCheckboxChange = (checked: boolean, topping: RawMaterial) => {
@@ -90,28 +106,53 @@ function ProductCustomizationDialog({
   };
 
   const handleAddToCart = () => {
-    addToCart(product, productType, quantity, selectedToppings, finalUnitPrice);
+    // If there are packaging options, a selection is mandatory.
+    if (packagingOptions.length > 0 && !selectedPackagingId) {
+       toast({
+        title: "Pilih Ukuran",
+        description: "Anda harus memilih ukuran kemasan terlebih dahulu.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    addToCart(product, productType, quantity, selectedToppings, selectedPackaging, finalUnitPrice);
     
     toast({
       title: "Ditambahkan ke Keranjang",
-      description: `${quantity}x ${product.name} telah ditambahkan.`,
+      description: `${quantity}x ${product.name}${selectedPackaging ? ` (${selectedPackaging.name})` : ''} telah ditambahkan.`,
     });
     
     onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-        if (!open) {
-            onClose();
-        }
-    }}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="bg-order-bg border-order-primary font-body">
         <DialogHeader>
           <DialogTitle className="font-pacifico text-3xl text-order-primary">{product.name}</DialogTitle>
-          <DialogDescription className="text-order-text/80">Pilih tambahan dan jumlah untuk pesanan Anda.</DialogDescription>
+          <DialogDescription className="text-order-text/80">Pilih ukuran, tambahan, dan jumlah untuk pesanan Anda.</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
+          
+          {packagingOptions.length > 0 && (
+            <div className="space-y-2">
+                <h4 className="font-bold text-order-text">Ukuran</h4>
+                <RadioGroup value={selectedPackagingId} onValueChange={setSelectedPackagingId} className="grid grid-cols-2 gap-2">
+                    {packagingOptions.map((pack) => (
+                        <Label key={pack.id} htmlFor={pack.id} className={cn(
+                            "flex flex-col items-center justify-center rounded-md border-2 p-3 hover:bg-order-accent/50 cursor-pointer",
+                            selectedPackagingId === pack.id ? "bg-order-accent border-order-primary" : "border-order-primary/20 bg-white/50"
+                        )}>
+                            <RadioGroupItem value={pack.id} id={pack.id} className="sr-only" />
+                            <span className="font-bold">{pack.name}</span>
+                            <span className="text-xs">+{formatCurrency(pack.additionalPrice)}</span>
+                        </Label>
+                    ))}
+                </RadioGroup>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-6">
             <div>
               <h4 className="font-bold text-order-text mb-2">Topping</h4>
@@ -146,11 +187,11 @@ function ProductCustomizationDialog({
                 </div>
             </div>
           </div>
-          <Separator className="bg-order-primary/20 !my-6" />
-           <div className="flex justify-between items-center text-xl font-bold text-order-text">
-                <span>Total Harga</span>
-                <span>{formatCurrency(totalPrice)}</span>
-           </div>
+        </div>
+        <Separator className="bg-order-primary/20 !my-2" />
+        <div className="flex justify-between items-center text-xl font-bold text-order-text">
+            <span>Total Harga</span>
+            <span>{formatCurrency(totalPrice)}</span>
         </div>
         <DialogFooter>
           <Button onClick={handleAddToCart} className="bg-order-secondary hover:bg-order-secondary/90 text-white font-bold text-lg py-6"><Plus className="mr-2 h-4 w-4" /> Tambahkan ke Keranjang</Button>
@@ -178,7 +219,9 @@ function OrderSummaryPanel({ onConfirm }: { onConfirm: () => void }) {
           cart.map(item => (
             <div key={item.cartId} className="flex gap-4">
               <div className="flex-1">
-                <p className="font-bold text-order-text">{item.name}</p>
+                <p className="font-bold text-order-text">
+                  {item.name} {item.selectedPackagingName && `(${item.selectedPackagingName})`}
+                </p>
                  {item.selectedToppings && item.selectedToppings.length > 0 && (
                   <ul className="text-xs text-order-text/80 list-disc pl-4 mt-1">
                     {item.selectedToppings.map(topping => {
@@ -251,7 +294,9 @@ function OrderSummarySheet({ onConfirm }: { onConfirm: () => void }) {
             cart.map(item => (
               <div key={item.cartId} className="flex gap-4">
                 <div className="flex-1">
-                  <p className="font-bold text-order-text">{item.name}</p>
+                  <p className="font-bold text-order-text">
+                    {item.name} {item.selectedPackagingName && `(${item.selectedPackagingName})`}
+                  </p>
                    {item.selectedToppings && item.selectedToppings.length > 0 && (
                     <ul className="text-xs text-order-text/80 list-disc pl-4 mt-1">
                       {item.selectedToppings.map(topping => {

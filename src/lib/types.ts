@@ -1,7 +1,4 @@
 
-
-
-
 export interface RawMaterial {
   id: string;
   name: string;
@@ -18,24 +15,33 @@ export interface Ingredient {
   quantity: number;
 }
 
-export interface Drink {
+export interface PackagingInfo {
   id: string;
+  name: string;
+  additionalPrice: number;
+  ingredients: Ingredient[];
+}
+
+export interface Drink {
+  id:string;
   name:string;
   imageUri?: string;
-  ingredients: Ingredient[];
-  costPrice: number; // Calculated from ingredients, stored for historical accuracy
-  sellingPrice: number;
+  ingredients: Ingredient[]; // Contents
+  costPrice: number; // Cost of contents ONLY
+  sellingPrice: number; // BASE selling price
   availableToppings?: string[]; // Array of RawMaterial IDs
+  packagingOptions?: PackagingInfo[];
 }
 
 export interface Food {
   id: string;
   name: string;
   imageUri?: string;
-  ingredients: Ingredient[];
-  costPrice: number; // Calculated from ingredients, stored for historical accuracy
-  sellingPrice: number;
+  ingredients: Ingredient[]; // Contents
+  costPrice: number; // Cost of contents ONLY
+  sellingPrice: number; // BASE selling price
   availableToppings?: string[]; // Array of RawMaterial IDs
+  packagingOptions?: PackagingInfo[];
 }
 
 export interface Sale {
@@ -47,6 +53,8 @@ export interface Sale {
   date: string;
   totalSalePrice: number; // Final price for the line item, after discount. (unitPrice * quantity) * (1 - discount/100)
   selectedToppings?: Ingredient[];
+  selectedPackagingId?: string;
+  selectedPackagingName?: string;
 }
 
 export interface OperationalCost {
@@ -71,8 +79,10 @@ export interface CartItem {
   productType: 'drink' | 'food';
   name: string;
   quantity: number;
-  sellingPrice: number; // Price for a SINGLE unit, including base product + toppings.
+  sellingPrice: number; // Price for a SINGLE unit, including base product + toppings + packaging.
   selectedToppings: Ingredient[];
+  selectedPackagingId?: string;
+  selectedPackagingName?: string;
 }
 
 export interface QueuedOrder {
@@ -82,5 +92,3 @@ export interface QueuedOrder {
   createdAt: string;
   status: 'pending' | 'ready';
 }
-
-    

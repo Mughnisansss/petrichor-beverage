@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { nanoid } from 'nanoid';
-import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem, Ingredient, QueuedOrder } from '@/lib/types';
+import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem, Ingredient, QueuedOrder, PackagingInfo } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { 
   isRawMaterialInUse, 
@@ -243,7 +243,7 @@ interface AppContextType {
   addRawMaterial: (material: Omit<RawMaterial, 'id'>) => Promise<RawMaterial>;
   updateRawMaterial: (id: string, material: Omit<RawMaterial, 'id'>) => Promise<RawMaterial>;
   deleteRawMaterial: (id: string) => Promise<{ ok: boolean, message: string }>;
-  addToCart: (product: Drink | Food, type: 'drink' | 'food', quantity: number, selectedToppings: Ingredient[], finalUnitPrice: number) => void;
+  addToCart: (product: Drink | Food, type: 'drink' | 'food', quantity: number, selectedToppings: Ingredient[], selectedPackaging: PackagingInfo | undefined, finalUnitPrice: number) => void;
   updateCartItemQuantity: (cartId: string, quantity: number) => void;
   removeFromCart: (cartId: string) => void;
   clearCart: () => void;
@@ -309,13 +309,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fetchData();
   }, [fetchData]);
   
-  const addToCart = useCallback((product: Drink | Food, type: 'drink' | 'food', quantity: number, selectedToppings: Ingredient[], finalUnitPrice: number) => {
+  const addToCart = useCallback((product: Drink | Food, type: 'drink' | 'food', quantity: number, selectedToppings: Ingredient[], selectedPackaging: PackagingInfo | undefined, finalUnitPrice: number) => {
     setCart(prevCart => {
-      // Logic to check if an identical item (product + toppings) already exists.
+      // Logic to check if an identical item (product + toppings + packaging) already exists.
       const stringifiedToppings = JSON.stringify(selectedToppings.map(t => t.rawMaterialId).sort());
       
       const existingItemIndex = prevCart.findIndex(item => 
         item.productId === product.id &&
+        item.selectedPackagingId === (selectedPackaging?.id || undefined) &&
         JSON.stringify(item.selectedToppings.map(t => t.rawMaterialId).sort()) === stringifiedToppings
       );
 
@@ -332,8 +333,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             productType: type,
             name: product.name,
             quantity: quantity,
-            sellingPrice: finalUnitPrice, // Price for a SINGLE unit, including toppings
-            selectedToppings: selectedToppings
+            sellingPrice: finalUnitPrice, // Price for a SINGLE unit, including toppings and packaging
+            selectedToppings: selectedToppings,
+            selectedPackagingId: selectedPackaging?.id,
+            selectedPackagingName: selectedPackaging?.name,
         };
         return [...prevCart, newItem];
       }
@@ -400,6 +403,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         discount: 0,
         selectedToppings: item.selectedToppings,
         totalSalePrice: totalSalePrice,
+        selectedPackagingId: item.selectedPackagingId,
+        selectedPackagingName: item.selectedPackagingName,
       };
     });
     

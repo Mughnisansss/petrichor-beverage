@@ -92,31 +92,43 @@ export default function DashboardPage() {
     const salesByProduct: { [key: string]: { name: string; quantity: number; revenue: number } } = {};
 
     filteredSales.forEach(sale => {
-      const { productId, productType, quantity, selectedToppings, totalSalePrice } = sale;
+      const { productId, productType, quantity, selectedToppings, selectedPackagingId, totalSalePrice } = sale;
       const product = productType === 'drink'
         ? drinks.find(d => d.id === productId)
         : foods.find(f => f.id === productId);
       
       // --- Revenue Calculation ---
-      // Use the stored totalSalePrice for accuracy. Fallback for older data.
-      const saleRevenue = totalSalePrice ?? (product ? product.sellingPrice * quantity * (1 - (sale.discount || 0) / 100) : 0);
-      revenue += saleRevenue;
+      revenue += totalSalePrice;
 
       if (product) {
         // --- Cost (HPP) Calculation ---
+        // 1. Cost of contents
         let itemCost = product.costPrice;
+        
+        // 2. Cost of packaging for the selected size
+        if (selectedPackagingId && product.packagingOptions) {
+          const packaging = product.packagingOptions.find(p => p.id === selectedPackagingId);
+          if (packaging) {
+            const packagingCost = calculateItemCostPrice(packaging.ingredients, rawMaterials);
+            itemCost += packagingCost;
+          }
+        }
+
+        // 3. Cost of toppings
         if (selectedToppings && selectedToppings.length > 0) {
           const toppingsCost = calculateItemCostPrice(selectedToppings, rawMaterials);
           itemCost += toppingsCost;
         }
+        
         cost += itemCost * quantity;
         
         // --- Top Product Calculation ---
-        if (!salesByProduct[product.id]) {
-            salesByProduct[product.id] = { name: product.name, quantity: 0, revenue: 0 };
+        const productNameWithSize = `${product.name} ${sale.selectedPackagingName ? `(${sale.selectedPackagingName})` : ''}`;
+        if (!salesByProduct[productNameWithSize]) {
+            salesByProduct[productNameWithSize] = { name: productNameWithSize, quantity: 0, revenue: 0 };
         }
-        salesByProduct[product.id].quantity += quantity;
-        salesByProduct[product.id].revenue += saleRevenue;
+        salesByProduct[productNameWithSize].quantity += quantity;
+        salesByProduct[productNameWithSize].revenue += totalSalePrice;
       }
     });
     
@@ -162,14 +174,7 @@ export default function DashboardPage() {
     const dailyRevenue = new Map<string, number>();
     filteredSales.forEach(sale => {
       const saleDate = format(parseISO(sale.date), "yyyy-MM-dd");
-      const { productId, productType, quantity, totalSalePrice } = sale;
-       const product = productType === 'drink'
-        ? drinks.find(d => d.id === productId)
-        : foods.find(f => f.id === productId);
-
-      // Use stored price for accuracy, with fallback for old data.
-      const revenueForSale = totalSalePrice ?? (product ? product.sellingPrice * quantity * (1 - (sale.discount || 0) / 100) : 0);
-      dailyRevenue.set(saleDate, (dailyRevenue.get(saleDate) || 0) + revenueForSale);
+      dailyRevenue.set(saleDate, (dailyRevenue.get(saleDate) || 0) + sale.totalSalePrice);
     });
 
     const chartData: { date: string; revenue: number }[] = [];
@@ -184,7 +189,7 @@ export default function DashboardPage() {
       currentDate = addDays(currentDate, 1);
     }
     return chartData;
-  }, [date, filteredSales, drinks, foods]);
+  }, [date, filteredSales]);
 
   const chartConfig = {
     revenue: {

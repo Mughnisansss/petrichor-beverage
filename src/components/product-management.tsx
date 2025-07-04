@@ -1,10 +1,12 @@
+
 "use client";
 
 import React, { useState, useMemo, useRef } from "react";
-import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import { useForm, useFieldArray, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
+import { nanoid } from "nanoid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,12 +14,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Drink, Food, RawMaterial } from "@/lib/types";
+import type { Drink, Food, RawMaterial, PackagingInfo } from "@/lib/types";
 import { PlusCircle, Edit, Trash2, X, ImageIcon, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // --- Schemas ---
 const ingredientSchema = z.object({
@@ -25,12 +28,20 @@ const ingredientSchema = z.object({
   quantity: z.coerce.number().min(0.01, "Jumlah > 0"),
 });
 
+const packagingInfoSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, "Nama ukuran tidak boleh kosong."),
+  additionalPrice: z.coerce.number().min(0, "Tambahan harga tidak boleh negatif."),
+  ingredients: z.array(ingredientSchema).min(1, "Kemasan harus memiliki setidaknya 1 bahan."),
+});
+
 const productSchema = z.object({
   name: z.string().min(1, "Nama produk tidak boleh kosong"),
   imageUri: z.string().optional(),
-  sellingPrice: z.coerce.number().min(0, "Harga jual tidak boleh negatif"),
-  ingredients: z.array(ingredientSchema).min(1, "Minimal 1 bahan baku"),
+  sellingPrice: z.coerce.number().min(0, "Harga jual dasar tidak boleh negatif."),
+  ingredients: z.array(ingredientSchema).min(1, "Produk harus memiliki setidaknya 1 bahan isi."),
   availableToppings: z.array(z.string()).optional(),
+  packagingOptions: z.array(packagingInfoSchema).optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -48,7 +59,7 @@ const PriceSuggestionCalculator = ({ costPrice }: { costPrice: number }) => {
         <Card className="bg-muted/50">
             <CardHeader>
                 <CardTitle className="text-lg">Saran Harga Jual</CardTitle>
-                <CardDescription>Berdasarkan HPP di samping.</CardDescription>
+                <CardDescription>Berdasarkan HPP Isi Produk & harga dasar.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-2">
@@ -91,13 +102,16 @@ const ProductForm = React.forwardRef<
     
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),
-        defaultValues: { name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined, availableToppings: [] },
+        defaultValues: { name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined, availableToppings: [], packagingOptions: [] },
     });
 
     const { fields, append, remove } = useFieldArray({ control: form.control, name: "ingredients" });
+    const { fields: packagingFields, append: appendPackaging, remove: removePackaging } = useFieldArray({ control: form.control, name: "packagingOptions" });
     const watchedIngredients = useWatch({ control: form.control, name: 'ingredients' });
 
     const allToppings = useMemo(() => rawMaterials.filter(m => m.category === 'topping'), [rawMaterials]);
+    const packagingMaterials = useMemo(() => rawMaterials.filter(m => m.category === 'packaging'), [rawMaterials]);
+    const contentMaterials = useMemo(() => rawMaterials.filter(m => m.category === 'main'), [rawMaterials]);
 
     const calculatedCostPrice = useMemo(() => {
         if (!watchedIngredients || rawMaterials.length === 0) return 0;
@@ -110,7 +124,7 @@ const ProductForm = React.forwardRef<
 
     async function onSubmit(values: ProductFormValues) {
         try {
-            const productData = { ...values, costPrice: calculatedCostPrice };
+            const productData = { ...values, costPrice: calculatedCostPrice, packagingOptions: values.packagingOptions || [] };
             if (editingProduct) {
                 await updateProduct(editingProduct.id, productData);
                 toast({ title: "Sukses", description: `${productTypeName} berhasil diperbarui.` });
@@ -121,7 +135,7 @@ const ProductForm = React.forwardRef<
             onFinished();
             setEditingProduct(null);
             setPreview(null);
-            form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined, availableToppings: [] });
+            form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined, availableToppings: [], packagingOptions: [] });
         } catch (error) {
             toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
         }
@@ -134,6 +148,7 @@ const ProductForm = React.forwardRef<
             form.reset({
                 ...product,
                 availableToppings: product.availableToppings || [],
+                packagingOptions: product.packagingOptions || [],
             });
         }
     }));
@@ -167,14 +182,14 @@ const ProductForm = React.forwardRef<
 
     return (
          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <FormField control={form.control} name="name" render={({ field }) => (
                         <FormItem><FormLabel>Nama {productTypeName}</FormLabel><FormControl><Input {...field} placeholder={`cth: ${productType === 'minuman' ? 'Es Kopi Susu' : 'Nasi Goreng'}`} /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="sellingPrice" render={({ field }) => (
-                        <FormItem><FormLabel>Harga Jual</FormLabel><FormControl><Input type="number" {...field} placeholder={`cth: ${productType === 'minuman' ? '18000' : '25000'}`} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Harga Jual Dasar</FormLabel><FormControl><Input type="number" {...field} placeholder={`cth: 15000`} /></FormControl><FormDescription>Harga untuk ukuran terkecil/default.</FormDescription><FormMessage /></FormItem>
                     )}/>
                   </div>
                   <div className="space-y-2">
@@ -215,16 +230,19 @@ const ProductForm = React.forwardRef<
                   </div>
                 </div>
                 
+                <Separator/>
+
                 <div>
-                    <FormLabel>Resep / Bahan Baku</FormLabel>
+                    <FormLabel className="text-base font-semibold">Resep Isi Produk</FormLabel>
+                    <FormDescription>Bahan-bahan utama untuk membuat produk ini (di luar kemasan).</FormDescription>
                     <div className="space-y-2 mt-2">
                     {fields.map((field, index) => (
                         <div key={field.id} className="flex items-start gap-2">
                            <FormField control={form.control} name={`ingredients.${index}.rawMaterialId`} render={({ field }) => (
                                 <FormItem className="flex-1">
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Pilih bahan baku..." /></SelectTrigger></FormControl>
-                                    <SelectContent>{rawMaterials.map(m => <SelectItem key={m.id} value={m.id}>{m.name} ({m.unit})</SelectItem>)}</SelectContent>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Pilih bahan isi..." /></SelectTrigger></FormControl>
+                                    <SelectContent>{contentMaterials.map(m => <SelectItem key={m.id} value={m.id}>{m.name} ({m.unit})</SelectItem>)}</SelectContent>
                                     </Select>
                                     <FormMessage/>
                                 </FormItem>
@@ -239,13 +257,75 @@ const ProductForm = React.forwardRef<
                         </div>
                     ))}
                     <Button type="button" variant="outline" size="sm" onClick={() => append({ rawMaterialId: "", quantity: 1 })}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Tambah Bahan
+                        <PlusCircle className="mr-2 h-4 w-4" /> Tambah Bahan Isi
                     </Button>
                     </div>
                 </div>
+                
+                <Separator/>
 
+                <div className="space-y-4">
+                  <FormLabel className="text-base font-semibold">Opsi Kemasan / Ukuran</FormLabel>
+                   <FormDescription>Definisikan berbagai ukuran yang tersedia untuk produk ini.</FormDescription>
+                    <Accordion type="multiple" className="w-full space-y-3">
+                        {packagingFields.map((packagingItem, packIndex) => (
+                            <AccordionItem value={packagingItem.id} key={packagingItem.id} className="border rounded-lg px-4 bg-muted/30">
+                                <AccordionTrigger>
+                                  <div className="flex-1 flex justify-between items-center pr-4">
+                                      {`Opsi Ukuran #${packIndex + 1}`}
+                                      <Button type="button" variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); removePackaging(packIndex); }}>
+                                          <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                  </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="pt-2">
+                                  <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                       <FormField control={form.control} name={`packagingOptions.${packIndex}.name`} render={({ field }) => (
+                                          <FormItem><FormLabel>Nama Ukuran</FormLabel><FormControl><Input {...field} placeholder="cth: Reguler" /></FormControl><FormMessage /></FormItem>
+                                      )}/>
+                                      <FormField control={form.control} name={`packagingOptions.${packIndex}.additionalPrice`} render={({ field }) => (
+                                          <FormItem><FormLabel>Tambahan Harga</FormLabel><FormControl><Input type="number" {...field} placeholder="cth: 3000" /></FormControl><FormMessage /></FormItem>
+                                      )}/>
+                                    </div>
+                                    <div className="space-y-2">
+                                       <Label className="text-xs">Bahan Kemasan</Label>
+                                       <Controller
+                                          control={form.control}
+                                          name={`packagingOptions.${packIndex}.ingredients`}
+                                          render={({ field }) => {
+                                            const { fields: subFields, append: subAppend, remove: subRemove } = useFieldArray({ control: form.control, name: `packagingOptions.${packIndex}.ingredients` });
+                                            return <div className="space-y-2">
+                                              {subFields.map((subItem, subIndex) => (
+                                                <div key={subItem.id} className="flex items-start gap-2">
+                                                  <FormField control={form.control} name={`packagingOptions.${packIndex}.ingredients.${subIndex}.rawMaterialId`} render={({ field }) => (
+                                                    <FormItem className="flex-1"><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih bahan kemasan..." /></SelectTrigger></FormControl><SelectContent>{packagingMaterials.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                                                  )}/>
+                                                  <FormField control={form.control} name={`packagingOptions.${packIndex}.ingredients.${subIndex}.quantity`} render={({ field }) => (
+                                                      <FormItem><FormControl><Input type="number" step="1" {...field} className="w-28" placeholder="Jumlah"/></FormControl><FormMessage/></FormItem>
+                                                  )}/>
+                                                  <Button type="button" variant="ghost" size="icon" onClick={() => subRemove(subIndex)} disabled={subFields.length <= 1}><X className="h-4 w-4" /></Button>
+                                                </div>
+                                              ))}
+                                              <Button type="button" variant="outline" size="sm" onClick={() => subAppend({rawMaterialId: "", quantity: 1})}><PlusCircle className="mr-2 h-4 w-4"/>Tambah Bahan</Button>
+                                            </div>
+                                          }}
+                                        />
+                                    </div>
+                                  </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
+                     <Button type="button" variant="secondary" size="sm" onClick={() => appendPackaging({ id: nanoid(), name: "", additionalPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }] })}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Tambah Opsi Ukuran
+                    </Button>
+                </div>
+
+                <Separator />
+                
                 <div className="space-y-2">
-                  <FormLabel>Topping yang Tersedia (Opsional)</FormLabel>
+                  <FormLabel className="text-base font-semibold">Topping yang Tersedia (Opsional)</FormLabel>
                   <FormDescription>Pilih topping mana saja yang bisa ditambahkan pelanggan ke produk ini.</FormDescription>
                   <FormField
                     control={form.control}
@@ -295,13 +375,13 @@ const ProductForm = React.forwardRef<
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                        <Card><CardHeader><CardTitle>Rincian Harga Pokok (HPP)</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{formatCurrency(calculatedCostPrice)}</p></CardContent></Card>
+                        <Card><CardHeader><CardTitle>HPP Isi Produk</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{formatCurrency(calculatedCostPrice)}</p><FormDescription>Biaya pokok untuk bahan-bahan isi saja, di luar kemasan dan topping.</FormDescription></CardContent></Card>
                     </div>
                     <div><PriceSuggestionCalculator costPrice={calculatedCostPrice} /></div>
                 </div>
                 
                 <Button type="submit">{editingProduct ? "Simpan Perubahan" : `Tambah ${productTypeName}`}</Button>
-                {editingProduct && (<Button type="button" variant="ghost" onClick={() => { setEditingProduct(null); setPreview(null); form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], availableToppings: [] }); }}>Batal Edit</Button>)}
+                {editingProduct && (<Button type="button" variant="ghost" onClick={() => { setEditingProduct(null); setPreview(null); form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], availableToppings: [], packagingOptions: [] }); }}>Batal Edit</Button>)}
             </form>
         </Form>
     );
@@ -380,8 +460,8 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Nama {productTypeName}</TableHead>
-                                <TableHead>Harga Pokok</TableHead>
-                                <TableHead>Harga Jual</TableHead>
+                                <TableHead>Harga Pokok (Isi)</TableHead>
+                                <TableHead>Harga Jual (Dasar)</TableHead>
                                 <TableHead className="text-right">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>

@@ -12,13 +12,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import { Plus, CupSoda, Utensils, ShoppingCart, CheckCircle, Tag, Clock } from "lucide-react";
-import type { Drink, Food, Sale, Ingredient, RawMaterial, QueuedOrder } from "@/lib/types";
+import type { Drink, Food, Sale, Ingredient, RawMaterial, QueuedOrder, PackagingInfo } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 
 
 // --- Helper Component: Orderan Tab ---
@@ -99,7 +99,9 @@ function OrderanTab() {
                                 {order.items.map(item => (
                                     <div key={item.cartId} className="flex justify-between">
                                         <div>
-                                          <p className="font-medium">{item.quantity}x {item.name}</p>
+                                          <p className="font-medium">
+                                            {item.quantity}x {item.name} {item.selectedPackagingName && `(${item.selectedPackagingName})`}
+                                          </p>
                                           {item.selectedToppings && item.selectedToppings.length > 0 && (
                                             <ul className="text-xs text-muted-foreground list-disc pl-5 mt-1">
                                               {item.selectedToppings.map(topping => {
@@ -146,23 +148,35 @@ function QuickSellDialog({
   const { addSale, rawMaterials } = useAppContext();
   const { toast } = useToast();
   const [selectedToppings, setSelectedToppings] = useState<Ingredient[]>([]);
+  const [selectedPackagingId, setSelectedPackagingId] = useState<string | undefined>(undefined);
+
+  const product = productInfo?.product;
+  const packagingOptions = useMemo(() => product?.packagingOptions || [], [product]);
 
   useEffect(() => {
     if (isOpen) {
       setSelectedToppings([]);
+      if (packagingOptions && packagingOptions.length > 0) {
+        setSelectedPackagingId(packagingOptions[0].id);
+      } else {
+        setSelectedPackagingId(undefined);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, packagingOptions]);
 
   const availableToppings = useMemo(() => {
-    if (!productInfo || !productInfo.product.availableToppings) return [];
-    const { product } = productInfo;
+    if (!product || !product.availableToppings) return [];
     return product.availableToppings
         .map(toppingId => rawMaterials.find(m => m.id === toppingId))
         .filter((topping): topping is RawMaterial => topping !== undefined);
-  }, [rawMaterials, productInfo]);
+  }, [rawMaterials, product]);
   
+  const selectedPackaging = useMemo(() => {
+    return packagingOptions.find(p => p.id === selectedPackagingId);
+  }, [packagingOptions, selectedPackagingId]);
+
   if (!productInfo) return null;
-  const { product, type } = productInfo;
+  const { type } = productInfo;
 
   const handleCheckboxChange = (checked: boolean, topping: RawMaterial) => {
     setSelectedToppings(prev => {
@@ -178,24 +192,31 @@ function QuickSellDialog({
       const toppingData = rawMaterials.find(m => m.id === toppingIng.rawMaterialId);
       return sum + (toppingData?.sellingPrice || 0);
   }, 0);
-
-  const finalPrice = product.sellingPrice + toppingsPrice;
+  
+  const packagingPrice = selectedPackaging?.additionalPrice || 0;
+  const finalPrice = product.sellingPrice + packagingPrice + toppingsPrice;
 
   async function handleConfirmSale() {
+    if (packagingOptions.length > 0 && !selectedPackagingId) {
+      toast({ title: "Pilih Ukuran", description: "Anda harus memilih ukuran kemasan.", variant: "destructive" });
+      return;
+    }
     const salePayload: Omit<Sale, 'id' | 'date'> = {
       productId: product.id,
       productType: type,
       quantity: 1, // Quick sell is always quantity 1
       discount: 0,
       selectedToppings: selectedToppings,
-      totalSalePrice: finalPrice, // Since quantity is 1
+      totalSalePrice: finalPrice,
+      selectedPackagingId: selectedPackaging?.id,
+      selectedPackagingName: selectedPackaging?.name,
     };
 
     try {
       await addSale(salePayload);
       toast({
         title: "Penjualan Dicatat",
-        description: `1x ${product.name} berhasil dijual.`,
+        description: `1x ${product.name} ${selectedPackaging ? `(${selectedPackaging.name})` : ''} berhasil dijual.`,
       });
       onOpenChange(false);
     } catch (error) {
@@ -208,30 +229,49 @@ function QuickSellDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Kustomisasi: {product.name}</DialogTitle>
-          <DialogDescription>Pilih tambahan untuk penjualan cepat.</DialogDescription>
+          <DialogDescription>Pilih ukuran dan tambahan untuk penjualan cepat.</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <h4 className="font-semibold">Topping</h4>
-          {availableToppings.length > 0 ? (
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {availableToppings.map(topping => (
-                <div key={topping.id} className="flex items-center justify-between space-x-2">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`qs-topping-${topping.id}`}
-                      onCheckedChange={checked => handleCheckboxChange(checked as boolean, topping)}
-                    />
-                    <Label htmlFor={`qs-topping-${topping.id}`}>{topping.name}</Label>
-                  </div>
-                  {topping.sellingPrice != null && (
-                    <span className="text-sm text-muted-foreground">+{formatCurrency(topping.sellingPrice)}</span>
-                  )}
+        <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
+            {packagingOptions.length > 0 && (
+                <div className="space-y-2">
+                    <h4 className="font-semibold">Ukuran</h4>
+                    <RadioGroup value={selectedPackagingId} onValueChange={setSelectedPackagingId} className="grid grid-cols-3 gap-2">
+                        {packagingOptions.map((pack) => (
+                            <Label key={pack.id} htmlFor={`qs-pack-${pack.id}`} className={cn(
+                                "flex flex-col items-center justify-center rounded-md border-2 p-2 hover:bg-accent/80 cursor-pointer",
+                                selectedPackagingId === pack.id ? "bg-accent border-primary" : "border-input"
+                            )}>
+                                <RadioGroupItem value={pack.id} id={`qs-pack-${pack.id}`} className="sr-only" />
+                                <span className="font-bold text-sm">{pack.name}</span>
+                                <span className="text-xs">+{formatCurrency(pack.additionalPrice)}</span>
+                            </Label>
+                        ))}
+                    </RadioGroup>
                 </div>
-              ))}
+            )}
+            <div className="space-y-2">
+                <h4 className="font-semibold">Topping</h4>
+                {availableToppings.length > 0 ? (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {availableToppings.map(topping => (
+                        <div key={topping.id} className="flex items-center justify-between space-x-2">
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                            id={`qs-topping-${topping.id}`}
+                            onCheckedChange={checked => handleCheckboxChange(checked as boolean, topping)}
+                            />
+                            <Label htmlFor={`qs-topping-${topping.id}`}>{topping.name}</Label>
+                        </div>
+                        {topping.sellingPrice != null && (
+                            <span className="text-sm text-muted-foreground">+{formatCurrency(topping.sellingPrice)}</span>
+                        )}
+                        </div>
+                    ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-muted-foreground">Tidak ada topping tersedia.</p>
+                )}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Tidak ada topping tersedia.</p>
-          )}
         </div>
         <Separator/>
         <div className="flex justify-between items-center text-lg font-bold">
@@ -258,9 +298,10 @@ export default function KasirPage() {
 
   async function handleQuickSell(product: Drink | Food, type: 'drink' | 'food') {
     const hasToppings = product.availableToppings && product.availableToppings.length > 0;
+    const hasPackaging = product.packagingOptions && product.packagingOptions.length > 0;
 
-    // If there are toppings available, open customization dialog.
-    if (hasToppings) {
+    // If there are customizations available, open dialog.
+    if (hasToppings || hasPackaging) {
         setCustomizingProductInfo({ product, type });
         setCustomizeDialogOpen(true);
         return;
@@ -355,7 +396,7 @@ export default function KasirPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Kasir Penjualan Cepat</CardTitle>
-                    <CardDescription>Klik tombol pada item untuk mencatat penjualan. Jika ada topping, dialog kustomisasi akan muncul.</CardDescription>
+                    <CardDescription>Klik tombol pada item untuk mencatat penjualan. Jika ada kustomisasi (ukuran/topping), dialog akan muncul.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                      <div>
@@ -404,13 +445,12 @@ export default function KasirPage() {
                         const product = sale.productType === 'drink'
                             ? drinks.find(d => d.id === sale.productId)
                             : foods.find(f => f.id === sale.productId);
-                        // Use the stored totalSalePrice for accuracy. Fallback for old data.
-                        const total = sale.totalSalePrice ?? (product ? product.sellingPrice * sale.quantity * (1 - sale.discount / 100) : 0);
+                        const total = sale.totalSalePrice;
                         return (
                           <TableRow key={sale.id}>
                             <TableCell>{formatDate(sale.date, "HH:mm")}</TableCell>
                             <TableCell className="font-medium">
-                              {sale.quantity}x {product?.name || 'N/A'}
+                              {sale.quantity}x {product?.name || 'N/A'} {sale.selectedPackagingName && `(${sale.selectedPackagingName})`}
                                {sale.selectedToppings && sale.selectedToppings.length > 0 && (
                                 <ul className="text-xs text-muted-foreground list-disc pl-4 mt-1">
                                   {sale.selectedToppings.map(topping => {
