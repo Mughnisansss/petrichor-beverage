@@ -73,14 +73,13 @@ function ProductCustomizationDialog({
         return sum + (toppingData?.sellingPrice || 0);
     }, 0);
   }, [selectedToppings, rawMaterials]);
-  
-  // This hook call is moved before the early return to respect the Rules of Hooks.
-  const finalUnitPrice = product ? product.sellingPrice + toppingsPrice : 0;
-  const totalPrice = finalUnitPrice * quantity;
 
   if (!product) {
     return null;
   }
+  
+  const finalUnitPrice = product.sellingPrice + toppingsPrice;
+  const totalPrice = finalUnitPrice * quantity;
 
   const handleCheckboxChange = (checked: boolean, topping: RawMaterial) => {
     setSelectedToppings(prev => {
@@ -173,9 +172,9 @@ function OrderSummaryPanel({ onConfirm }: { onConfirm: () => void }) {
 
   return (
     <Card className="sticky top-24 bg-white/80 backdrop-blur-sm border-order-primary/20 shadow-lg">
-      <SheetHeader className="p-6">
-        <SheetTitle className="font-pacifico text-3xl text-order-primary">Keranjang Anda</SheetTitle>
-      </SheetHeader>
+      <CardHeader className="p-6">
+        <CardTitle className="font-pacifico text-3xl text-order-primary">Keranjang Anda</CardTitle>
+      </CardHeader>
       <CardContent className="max-h-[50vh] overflow-y-auto space-y-4">
         {cart.length > 0 ? (
           cart.map(item => (
@@ -217,9 +216,7 @@ function OrderSummaryPanel({ onConfirm }: { onConfirm: () => void }) {
               <span>Total</span>
               <span>{formatCurrency(total)}</span>
             </div>
-          <DialogClose asChild>
-              <Button onClick={onConfirm} className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold text-lg py-6">Masukkan Pesanan</Button>
-          </DialogClose>
+            <Button onClick={onConfirm} className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold text-lg py-6">Masukkan Pesanan</Button>
         </CardFooter>
       )}
     </Card>
@@ -292,9 +289,9 @@ function OrderSummarySheet({ onConfirm }: { onConfirm: () => void }) {
                 <span>Total</span>
                 <span>{formatCurrency(total)}</span>
               </div>
-              <DialogClose asChild>
+              <SheetClose asChild>
                 <Button onClick={onConfirm} className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold text-lg py-6">Masukkan Pesanan</Button>
-              </DialogClose>
+              </SheetClose>
             </div>
           </SheetFooter>
         )}
@@ -454,4 +451,3 @@ export default function OrderPage() {
     </MainLayout>
   );
 }
-
