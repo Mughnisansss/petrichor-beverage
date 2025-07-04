@@ -102,13 +102,13 @@ export default function DashboardPage() {
 
       if (product) {
         // --- Cost (HPP) Calculation ---
-        // 1. Cost of contents
+        // 1. Cost of contents (base product cost)
         let itemCost = product.costPrice;
         
-        // 2. Cost of packaging for the selected size
+        // 2. Cost of packaging for the selected size (CRITICAL FIX)
         if (selectedPackagingId && product.packagingOptions) {
           const packaging = product.packagingOptions.find(p => p.id === selectedPackagingId);
-          if (packaging) {
+          if (packaging && packaging.ingredients) {
             const packagingCost = calculateItemCostPrice(packaging.ingredients, rawMaterials);
             itemCost += packagingCost;
           }

@@ -24,13 +24,7 @@ export function isRawMaterialInUse(db: DbData, materialId: string): boolean {
  * Checks if a drink has any associated sales records.
  */
 export function hasDrinkAssociatedSales(db: DbData, drinkId: string): boolean {
-   return db.sales.some(sale => {
-    // Handle both old and new data structures for robustness
-    const oldSale = sale as any;
-    if (oldSale.drinkId) return oldSale.drinkId === drinkId;
-    // New structure
-    return sale.productId === drinkId && sale.productType === 'drink';
-  });
+   return db.sales.some(sale => sale.productId === drinkId && sale.productType === 'drink');
 }
 
 /**

@@ -152,6 +152,7 @@ function QuickSellDialog({
 
   const product = productInfo?.product;
   const packagingOptions = useMemo(() => product?.packagingOptions || [], [product]);
+  const productIngredients = useMemo(() => product?.ingredients.map(i => i.rawMaterialId) || [], [product]);
 
   useEffect(() => {
     if (isOpen) {
@@ -167,9 +168,11 @@ function QuickSellDialog({
   const availableToppings = useMemo(() => {
     if (!product || !product.availableToppings) return [];
     return product.availableToppings
-        .map(toppingId => rawMaterials.find(m => m.id === toppingId))
-        .filter((topping): topping is RawMaterial => topping !== undefined);
-  }, [rawMaterials, product]);
+      .map(toppingId => rawMaterials.find(m => m.id === toppingId))
+      .filter((topping): topping is RawMaterial => 
+          topping !== undefined && !productIngredients.includes(topping.id)
+      );
+  }, [rawMaterials, product, productIngredients]);
   
   const selectedPackaging = useMemo(() => {
     return packagingOptions.find(p => p.id === selectedPackagingId);
@@ -197,6 +200,7 @@ function QuickSellDialog({
   const finalPrice = product.sellingPrice + packagingPrice + toppingsPrice;
 
   async function handleConfirmSale() {
+    if (!product) return;
     if (packagingOptions.length > 0 && !selectedPackagingId) {
       toast({ title: "Pilih Ukuran", description: "Anda harus memilih ukuran kemasan.", variant: "destructive" });
       return;
@@ -228,7 +232,7 @@ function QuickSellDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Kustomisasi: {product.name}</DialogTitle>
+          <DialogTitle>Kustomisasi: {product?.name || 'Produk'}</DialogTitle>
           <DialogDescription>Pilih ukuran dan tambahan untuk penjualan cepat.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-2">

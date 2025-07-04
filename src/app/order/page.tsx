@@ -49,14 +49,18 @@ function ProductCustomizationDialog({
   const [selectedToppings, setSelectedToppings] = useState<Ingredient[]>([]);
   const [selectedPackagingId, setSelectedPackagingId] = useState<string | undefined>(undefined);
   const [quantity, setQuantity] = useState(1);
+  
+  const productIngredients = useMemo(() => product?.ingredients.map(i => i.rawMaterialId) || [], [product]);
 
   const availableToppings = useMemo(() => {
     if (!product || !product.availableToppings) return [];
     
     return product.availableToppings
       .map(toppingId => rawMaterials.find(m => m.id === toppingId))
-      .filter((topping): topping is RawMaterial => topping !== undefined);
-  }, [rawMaterials, product]);
+      .filter((topping): topping is RawMaterial => 
+        topping !== undefined && !productIngredients.includes(topping.id)
+      );
+  }, [rawMaterials, product, productIngredients]);
 
   const packagingOptions = useMemo(() => product?.packagingOptions || [], [product]);
 
