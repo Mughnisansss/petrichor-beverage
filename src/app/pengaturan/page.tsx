@@ -10,6 +10,13 @@ import { useAppContext } from "@/context/AppContext";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function PengaturanPage() {
   const { toast } = useToast();
@@ -24,15 +31,19 @@ export default function PengaturanPage() {
     setStorageMode,
     appName,
     setAppName,
+    logoIcon,
+    setLogoIcon,
   } = useAppContext();
 
   const [selectedMode, setSelectedMode] = useState(storageMode);
   const [localAppName, setLocalAppName] = useState(appName);
+  const [localLogoIcon, setLocalLogoIcon] = useState(logoIcon);
 
   useEffect(() => {
     setSelectedMode(storageMode);
     setLocalAppName(appName);
-  }, [storageMode, appName]);
+    setLocalLogoIcon(logoIcon);
+  }, [storageMode, appName, logoIcon]);
 
   const handleSaveSettings = () => {
     const changesMade: string[] = [];
@@ -42,6 +53,11 @@ export default function PengaturanPage() {
       changesMade.push("Nama aplikasi diperbarui.");
     }
     
+    if (localLogoIcon !== logoIcon) {
+      setLogoIcon(localLogoIcon);
+      changesMade.push("Ikon aplikasi diperbarui.");
+    }
+
     if (selectedMode !== storageMode) {
       setStorageMode(selectedMode);
       changesMade.push("Mode penyimpanan diubah.");
@@ -78,6 +94,7 @@ export default function PengaturanPage() {
     }
     const allData = {
       appName,
+      logoIcon,
       drinks,
       foods,
       sales,
@@ -162,7 +179,7 @@ export default function PengaturanPage() {
     });
   }
 
-  const hasChanges = (selectedMode !== storageMode) || (localAppName.trim() && localAppName.trim() !== appName);
+  const hasChanges = (selectedMode !== storageMode) || (localAppName.trim() && localAppName.trim() !== appName) || (localLogoIcon !== logoIcon);
 
   return (
     <MainLayout>
@@ -187,6 +204,25 @@ export default function PengaturanPage() {
                 />
                 <p className="text-sm text-muted-foreground">
                   Nama ini akan muncul sebagai logo dan di beberapa judul halaman.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="logoIcon">Ikon Aplikasi</Label>
+                <Select value={localLogoIcon} onValueChange={setLocalLogoIcon}>
+                  <SelectTrigger id="logoIcon" className="w-full md:w-[280px]">
+                    <SelectValue placeholder="Pilih ikon..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CupSoda">Gelas Soda</SelectItem>
+                    <SelectItem value="Coffee">Cangkir Kopi</SelectItem>
+                    <SelectItem value="Bean">Biji Kopi</SelectItem>
+                    <SelectItem value="GlassWater">Gelas Air</SelectItem>
+                    <SelectItem value="Beer">Gelas Bir</SelectItem>
+                    <SelectItem value="Wine">Gelas Anggur</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  Ikon ini akan muncul di sebelah nama aplikasi Anda.
                 </p>
               </div>
             </div>
@@ -229,7 +265,7 @@ export default function PengaturanPage() {
               
               <div className="p-4 border rounded-lg space-y-2">
                 <h4 className="font-semibold text-base">Cadangan Penuh</h4>
-                 <p className="text-xs text-muted-foreground">Unduh satu file berisi semua data (termasuk nama aplikasi). Berguna untuk backup.</p>
+                 <p className="text-xs text-muted-foreground">Unduh satu file berisi semua data (termasuk nama & ikon aplikasi). Berguna untuk backup.</p>
                 <Button onClick={handleExportJson} variant="secondary" disabled={isLoading}>
                   Ekspor Semua Data (JSON)
                 </Button>

@@ -223,6 +223,8 @@ interface AppContextType {
   setStorageMode: (mode: StorageMode) => void;
   appName: string;
   setAppName: (name: string) => void;
+  logoIcon: string;
+  setLogoIcon: (iconName: string) => void;
   fetchData: () => Promise<void>;
   addDrink: (drink: Omit<Drink, 'id'>) => Promise<Drink>;
   updateDrink: (id: string, drink: Omit<Drink, 'id'>) => Promise<Drink>;
@@ -249,6 +251,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [storageMode, setStorageMode] = useLocalStorage<StorageMode>('sipsavvy_storage_mode', 'local');
   const [appName, setAppName] = useLocalStorage<string>('sipsavvy_appName', 'SipSavvy');
+  const [logoIcon, setLogoIcon] = useLocalStorage<string>('sipsavvy_logoIcon', 'CupSoda');
   const [cart, setCart] = useLocalStorage<CartItem[]>('sipsavvy_cart', []);
   const [dbData, setDbData] = useState<DbData>({ drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
   const [isLoading, setIsLoading] = useState(true);
@@ -356,6 +359,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setStorageMode,
       appName,
       setAppName,
+      logoIcon,
+      setLogoIcon,
       addDrink: wrapWithRefetch(currentService.addDrink),
       updateDrink: wrapWithRefetch(currentService.updateDrink),
       deleteDrink: wrapWithRefetch(currentService.deleteDrink),
@@ -375,7 +380,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       removeFromCart,
       clearCart,
     };
-  }, [dbData, cart, isLoading, fetchData, storageMode, setStorageMode, appName, setAppName, currentService, addToCart, updateCartItemQuantity, removeFromCart, clearCart]);
+  }, [dbData, cart, isLoading, fetchData, storageMode, setStorageMode, appName, setAppName, logoIcon, setLogoIcon, currentService, addToCart, updateCartItemQuantity, removeFromCart, clearCart]);
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 }
