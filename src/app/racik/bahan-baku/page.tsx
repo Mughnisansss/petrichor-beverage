@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -66,7 +65,7 @@ export default function BahanBakuPage() {
   
   useEffect(() => {
     if (isFormVisible) {
-      if (watchedCategory === 'main' || watchedCategory === 'packaging') {
+      if (watchedCategory === 'packaging') {
         form.setValue('sellingPrice', costPerUnit);
       }
     }
@@ -77,7 +76,7 @@ export default function BahanBakuPage() {
       const costPerUnitValue = values.totalCost / values.totalQuantity;
       let finalSellingPrice = values.sellingPrice;
       
-      if (values.category === 'main' || values.category === 'packaging') {
+      if (watchedCategory === 'packaging' || watchedCategory === 'main') {
           finalSellingPrice = costPerUnitValue;
       }
 
@@ -316,7 +315,6 @@ export default function BahanBakuPage() {
                     <TableCell>{categoryLabels[material.category] || 'Utama'}</TableCell>
                     <TableCell>
                       {formatCurrency(material.totalCost)} / {material.totalQuantity} {material.unit}
-                      <p className="text-xs text-muted-foreground">({formatCurrency(material.costPerUnit)} per {material.unit})</p>
                     </TableCell>
                     <TableCell>
                       {formatCurrency(material.sellingPrice || 0)}
