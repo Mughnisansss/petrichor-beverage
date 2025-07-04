@@ -58,7 +58,7 @@ const apiService = {
 };
 
 // --- Local Storage Service ---
-const LOCAL_STORAGE_KEY = 'sipsavvy_data';
+const LOCAL_STORAGE_KEY = 'petrichor_data';
 
 const getLocalData = (): DbData => {
   if (typeof window === 'undefined') {
@@ -255,13 +255,13 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [storageMode, setStorageMode] = useLocalStorage<StorageMode>('sipsavvy_storage_mode', 'local');
-  const [appName, setAppName] = useLocalStorage<string>('sipsavvy_appName', 'SipSavvy');
-  const [logoImageUri, setLogoImageUri] = useLocalStorage<string | null>('sipsavvy_logoImageUri', null);
-  const [marqueeText, setMarqueeText] = useLocalStorage<string>('sipsavvy_marqueeText', 'Selamat Datang di {appName}!');
-  const [cart, setCart] = useLocalStorage<CartItem[]>('sipsavvy_customer_cart', []);
-  const [orderQueue, setOrderQueue] = useLocalStorage<QueuedOrder[]>('sipsavvy_order_queue', []);
-  const [lastQueueNumber, setLastQueueNumber] = useLocalStorage<number>('sipsavvy_last_queue_number', 0);
+  const [storageMode, setStorageMode] = useLocalStorage<StorageMode>('petrichor_storage_mode', 'local');
+  const [appName, setAppName] = useLocalStorage<string>('petrichor_appName', 'Petrichor');
+  const [logoImageUri, setLogoImageUri] = useLocalStorage<string | null>('petrichor_logoImageUri', null);
+  const [marqueeText, setMarqueeText] = useLocalStorage<string>('petrichor_marqueeText', 'Selamat Datang di {appName}!');
+  const [cart, setCart] = useLocalStorage<CartItem[]>('petrichor_customer_cart', []);
+  const [orderQueue, setOrderQueue] = useLocalStorage<QueuedOrder[]>('petrichor_order_queue', []);
+  const [lastQueueNumber, setLastQueueNumber] = useLocalStorage<number>('petrichor_last_queue_number', 0);
   const [dbData, setDbData] = useState<DbData>({ drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
   const [isLoading, setIsLoading] = useState(true);
 

@@ -1,7 +1,7 @@
 
-# SipSavvy - Aplikasi Kasir & Manajemen Kafe
+# Petrichor - Aplikasi Kasir & Manajemen Kafe
 
-SipSavvy adalah aplikasi web lengkap yang dibuat dengan Next.js, dirancang untuk membantu pemilik bisnis F&B (khususnya kafe atau kedai minuman) mengelola operasi harian mereka. Aplikasi ini menyediakan serangkaian fitur yang terintegrasi, mulai dari etalase menu untuk pelanggan hingga dasbor analitik mendalam untuk pemilik.
+Petrichor adalah aplikasi web lengkap yang dibuat dengan Next.js, dirancang untuk membantu pemilik bisnis F&B (khususnya kafe atau kedai minuman) mengelola operasi harian mereka. Aplikasi ini menyediakan serangkaian fitur yang terintegrasi, mulai dari etalase menu untuk pelanggan hingga dasbor analitik mendalam untuk pemilik.
 
 ## Fitur Utama
 
