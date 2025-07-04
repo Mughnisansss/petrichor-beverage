@@ -1,7 +1,1126 @@
+
 {
-  "drinks": [],
-  "sales": [],
-  "operationalCosts": [],
-  "rawMaterials": [],
-  "foods": []
+  "drinks": [
+    {
+      "id": "drink01",
+      "name": "Es Kopi Susu Gula Aren",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm001",
+          "quantity": 15
+        },
+        {
+          "rawMaterialId": "rm002",
+          "quantity": 20
+        },
+        {
+          "rawMaterialId": "rm003",
+          "quantity": 100
+        }
+      ],
+      "costPrice": 4450,
+      "sellingPrice": 18000,
+      "availableToppings": [
+        "tp001",
+        "tp003",
+        "tp004"
+      ],
+      "packagingOptions": [
+        {
+          "id": "packOpt01",
+          "name": "Reguler",
+          "additionalPrice": 0,
+          "ingredients": [
+            {
+              "rawMaterialId": "pk001",
+              "quantity": 1
+            },
+            {
+              "rawMaterialId": "pk003",
+              "quantity": 1
+            }
+          ]
+        },
+        {
+          "id": "packOpt02",
+          "name": "Large",
+          "additionalPrice": 3000,
+          "ingredients": [
+            {
+              "rawMaterialId": "pk002",
+              "quantity": 1
+            },
+            {
+              "rawMaterialId": "pk003",
+              "quantity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "drink02",
+      "name": "Americano",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm001",
+          "quantity": 18
+        },
+        {
+          "rawMaterialId": "rm012",
+          "quantity": 150
+        }
+      ],
+      "costPrice": 3750,
+      "sellingPrice": 15000,
+      "availableToppings": [],
+      "packagingOptions": [
+        {
+          "id": "packOpt01",
+          "name": "Reguler",
+          "additionalPrice": 0,
+          "ingredients": [
+            {
+              "rawMaterialId": "pk001",
+              "quantity": 1
+            },
+            {
+              "rawMaterialId": "pk003",
+              "quantity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "drink03",
+      "name": "Es Cokelat Klasik",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm004",
+          "quantity": 25
+        },
+        {
+          "rawMaterialId": "rm003",
+          "quantity": 120
+        }
+      ],
+      "costPrice": 4600,
+      "sellingPrice": 20000,
+      "availableToppings": [
+        "tp002",
+        "tp003"
+      ],
+      "packagingOptions": [
+        {
+          "id": "packOpt01",
+          "name": "Reguler",
+          "additionalPrice": 0,
+          "ingredients": [
+            {
+              "rawMaterialId": "pk001",
+              "quantity": 1
+            },
+            {
+              "rawMaterialId": "pk003",
+              "quantity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "drink04",
+      "name": "Matcha Latte",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm005",
+          "quantity": 10
+        },
+        {
+          "rawMaterialId": "rm003",
+          "quantity": 150
+        }
+      ],
+      "costPrice": 5250,
+      "sellingPrice": 22000,
+      "availableToppings": [
+        "tp001",
+        "tp005"
+      ],
+      "packagingOptions": [
+        {
+          "id": "packOpt01",
+          "name": "Reguler",
+          "additionalPrice": 0,
+          "ingredients": [
+            {
+              "rawMaterialId": "pk001",
+              "quantity": 1
+            },
+            {
+              "rawMaterialId": "pk003",
+              "quantity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "drink05",
+      "name": "Vanilla Latte",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm001",
+          "quantity": 15
+        },
+        {
+          "rawMaterialId": "rm003",
+          "quantity": 100
+        },
+        {
+          "rawMaterialId": "rm006",
+          "quantity": 15
+        }
+      ],
+      "costPrice": 5100,
+      "sellingPrice": 21000,
+      "availableToppings": [],
+      "packagingOptions": [
+        {
+          "id": "packOpt01",
+          "name": "Reguler",
+          "additionalPrice": 0,
+          "ingredients": [
+            {
+              "rawMaterialId": "pk001",
+              "quantity": 1
+            },
+            {
+              "rawMaterialId": "pk003",
+              "quantity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "drink06",
+      "name": "Caramel Macchiato",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm001",
+          "quantity": 15
+        },
+        {
+          "rawMaterialId": "rm003",
+          "quantity": 100
+        },
+        {
+          "rawMaterialId": "rm006",
+          "quantity": 10
+        },
+        {
+          "rawMaterialId": "rm014",
+          "quantity": 10
+        }
+      ],
+      "costPrice": 6200,
+      "sellingPrice": 25000,
+      "availableToppings": [],
+      "packagingOptions": [
+        {
+          "id": "packOpt01",
+          "name": "Reguler",
+          "additionalPrice": 0,
+          "ingredients": [
+            {
+              "rawMaterialId": "pk001",
+              "quantity": 1
+            },
+            {
+              "rawMaterialId": "pk003",
+              "quantity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "drink07",
+      "name": "Es Teh Leci",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm015",
+          "quantity": 1
+        },
+        {
+          "rawMaterialId": "rm016",
+          "quantity": 15
+        },
+        {
+          "rawMaterialId": "rm012",
+          "quantity": 200
+        }
+      ],
+      "costPrice": 2800,
+      "sellingPrice": 12000,
+      "availableToppings": [
+        "tp005"
+      ],
+      "packagingOptions": [
+        {
+          "id": "packOpt01",
+          "name": "Reguler",
+          "additionalPrice": 0,
+          "ingredients": [
+            {
+              "rawMaterialId": "pk001",
+              "quantity": 1
+            },
+            {
+              "rawMaterialId": "pk003",
+              "quantity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "drink08",
+      "name": "Mojito Mint",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm017",
+          "quantity": 20
+        },
+        {
+          "rawMaterialId": "rm018",
+          "quantity": 5
+        },
+        {
+          "rawMaterialId": "rm019",
+          "quantity": 200
+        }
+      ],
+      "costPrice": 4500,
+      "sellingPrice": 18000,
+      "availableToppings": [],
+      "packagingOptions": [
+        {
+          "id": "packOpt01",
+          "name": "Reguler",
+          "additionalPrice": 0,
+          "ingredients": [
+            {
+              "rawMaterialId": "pk001",
+              "quantity": 1
+            },
+            {
+              "rawMaterialId": "pk003",
+              "quantity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "drink09",
+      "name": "Kopi Hitam Tubruk",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm001",
+          "quantity": 20
+        },
+        {
+          "rawMaterialId": "rm012",
+          "quantity": 150
+        }
+      ],
+      "costPrice": 4150,
+      "sellingPrice": 10000,
+      "availableToppings": [],
+      "packagingOptions": [
+        {
+          "id": "packOpt03",
+          "name": "Cangkir",
+          "additionalPrice": 0,
+          "ingredients": [
+            {
+              "rawMaterialId": "pk005",
+              "quantity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "drink10",
+      "name": "Air Mineral",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [],
+      "costPrice": 3000,
+      "sellingPrice": 5000,
+      "availableToppings": [],
+      "packagingOptions": [
+        {
+          "id": "packOpt04",
+          "name": "Botol",
+          "additionalPrice": 0,
+          "ingredients": [
+            {
+              "rawMaterialId": "rm012",
+              "quantity": 600
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sales": [
+    {
+      "id": "sale01",
+      "productId": "drink01",
+      "productType": "drink",
+      "quantity": 2,
+      "discount": 0,
+      "date": "2024-05-28T10:30:00Z",
+      "totalSalePrice": 42000,
+      "selectedToppings": [
+        {
+          "rawMaterialId": "tp001",
+          "quantity": 1
+        }
+      ],
+      "selectedPackagingId": "packOpt02",
+      "selectedPackagingName": "Large"
+    },
+    {
+      "id": "sale02",
+      "productId": "food01",
+      "productType": "food",
+      "quantity": 1,
+      "discount": 10,
+      "date": "2024-05-28T11:00:00Z",
+      "totalSalePrice": 16200,
+      "selectedToppings": [],
+      "selectedPackagingId": null,
+      "selectedPackagingName": null
+    },
+    {
+      "id": "sale03",
+      "productId": "drink03",
+      "productType": "drink",
+      "quantity": 1,
+      "discount": 0,
+      "date": "2024-05-27T14:15:00Z",
+      "totalSalePrice": 20000,
+      "selectedToppings": [],
+      "selectedPackagingId": "packOpt01",
+      "selectedPackagingName": "Reguler"
+    },
+    {
+      "id": "sale04",
+      "productId": "food02",
+      "productType": "food",
+      "quantity": 1,
+      "discount": 0,
+      "date": "2024-05-26T19:45:00Z",
+      "totalSalePrice": 25000,
+      "selectedToppings": [],
+      "selectedPackagingId": null,
+      "selectedPackagingName": null
+    },
+    {
+      "id": "sale05",
+      "productId": "drink04",
+      "productType": "drink",
+      "quantity": 1,
+      "discount": 0,
+      "date": "2024-05-25T09:00:00Z",
+      "totalSalePrice": 26000,
+      "selectedToppings": [
+        {
+          "rawMaterialId": "tp005",
+          "quantity": 1
+        }
+      ],
+      "selectedPackagingId": "packOpt01",
+      "selectedPackagingName": "Reguler"
+    },
+    {
+      "id": "sale06",
+      "productId": "drink01",
+      "productType": "drink",
+      "quantity": 1,
+      "discount": 0,
+      "date": "2024-05-20T13:00:00Z",
+      "totalSalePrice": 18000,
+      "selectedToppings": [],
+      "selectedPackagingId": "packOpt01",
+      "selectedPackagingName": "Reguler"
+    },
+    {
+      "id": "sale07",
+      "productId": "food03",
+      "productType": "food",
+      "quantity": 3,
+      "discount": 0,
+      "date": "2024-05-15T16:20:00Z",
+      "totalSalePrice": 54000,
+      "selectedToppings": [],
+      "selectedPackagingId": null,
+      "selectedPackagingName": null
+    },
+    {
+      "id": "sale08",
+      "productId": "drink02",
+      "productType": "drink",
+      "quantity": 1,
+      "discount": 0,
+      "date": "2024-05-10T08:30:00Z",
+      "totalSalePrice": 15000,
+      "selectedToppings": [],
+      "selectedPackagingId": "packOpt01",
+      "selectedPackagingName": "Reguler"
+    },
+    {
+      "id": "sale09",
+      "productId": "food05",
+      "productType": "food",
+      "quantity": 1,
+      "discount": 0,
+      "date": "2024-05-05T12:00:00Z",
+      "totalSalePrice": 28000,
+      "selectedToppings": [],
+      "selectedPackagingId": null,
+      "selectedPackagingName": null
+    },
+    {
+      "id": "sale10",
+      "productId": "drink01",
+      "productType": "drink",
+      "quantity": 1,
+      "discount": 0,
+      "date": "2024-05-01T17:00:00Z",
+      "totalSalePrice": 21000,
+      "selectedToppings": [],
+      "selectedPackagingId": "packOpt02",
+      "selectedPackagingName": "Large"
+    },
+    {
+      "id": "sale11",
+      "productId": "drink05",
+      "productType": "drink",
+      "quantity": 2,
+      "discount": 5,
+      "date": "2024-05-28T15:00:00Z",
+      "totalSalePrice": 39900,
+      "selectedToppings": [],
+      "selectedPackagingId": "packOpt01",
+      "selectedPackagingName": "Reguler"
+    },
+    {
+      "id": "sale12",
+      "productId": "food04",
+      "productType": "food",
+      "quantity": 1,
+      "discount": 0,
+      "date": "2024-05-28T18:00:00Z",
+      "totalSalePrice": 15000,
+      "selectedToppings": [],
+      "selectedPackagingId": null,
+      "selectedPackagingName": null
+    }
+  ],
+  "operationalCosts": [
+    {
+      "id": "op01",
+      "description": "Gaji Karyawan - Mei",
+      "amount": 3000000,
+      "date": "2024-05-25T00:00:00Z",
+      "recurrence": "bulanan"
+    },
+    {
+      "id": "op02",
+      "description": "Sewa Tempat - Mei",
+      "amount": 2000000,
+      "date": "2024-05-01T00:00:00Z",
+      "recurrence": "bulanan"
+    },
+    {
+      "id": "op03",
+      "description": "Tagihan Listrik & Air - April",
+      "amount": 750000,
+      "date": "2024-05-10T00:00:00Z",
+      "recurrence": "bulanan"
+    },
+    {
+      "id": "op04",
+      "description": "Langganan Internet",
+      "amount": 350000,
+      "date": "2024-05-15T00:00:00Z",
+      "recurrence": "bulanan"
+    },
+    {
+      "id": "op05",
+      "description": "Iuran Kebersihan & Keamanan",
+      "amount": 50000,
+      "date": "2024-05-05T00:00:00Z",
+      "recurrence": "mingguan"
+    },
+    {
+      "id": "op06",
+      "description": "Pembelian Gas Elpiji",
+      "amount": 25000,
+      "date": "2024-05-27T00:00:00Z",
+      "recurrence": "sekali"
+    },
+    {
+      "id": "op07",
+      "description": "Belanja Mingguan (kantong plastik, dll)",
+      "amount": 100000,
+      "date": "2024-05-26T00:00:00Z",
+      "recurrence": "mingguan"
+    },
+    {
+      "id": "op08",
+      "description": "Biaya Iklan Instagram",
+      "amount": 250000,
+      "date": "2024-05-20T00:00:00Z",
+      "recurrence": "sekali"
+    },
+    {
+      "id": "op09",
+      "description": "Restock Air Galon",
+      "amount": 19000,
+      "date": "2024-05-28T00:00:00Z",
+      "recurrence": "harian"
+    },
+    {
+      "id": "op10",
+      "description": "Service Mesin Kopi",
+      "amount": 500000,
+      "date": "2024-05-12T00:00:00Z",
+      "recurrence": "sekali"
+    }
+  ],
+  "rawMaterials": [
+    {
+      "id": "rm001",
+      "name": "Biji Kopi Arabika",
+      "unit": "gram",
+      "totalQuantity": 1000,
+      "totalCost": 200000,
+      "costPerUnit": 200,
+      "category": "main",
+      "sellingPrice": 200
+    },
+    {
+      "id": "rm002",
+      "name": "Gula Aren Cair",
+      "unit": "ml",
+      "totalQuantity": 1000,
+      "totalCost": 45000,
+      "costPerUnit": 45,
+      "category": "main",
+      "sellingPrice": 45
+    },
+    {
+      "id": "rm003",
+      "name": "Susu UHT Full Cream",
+      "unit": "ml",
+      "totalQuantity": 1000,
+      "totalCost": 18000,
+      "costPerUnit": 18,
+      "category": "main",
+      "sellingPrice": 18
+    },
+    {
+      "id": "rm004",
+      "name": "Bubuk Cokelat Premium",
+      "unit": "gram",
+      "totalQuantity": 500,
+      "totalCost": 60000,
+      "costPerUnit": 120,
+      "category": "main",
+      "sellingPrice": 120
+    },
+    {
+      "id": "rm005",
+      "name": "Bubuk Matcha Asli",
+      "unit": "gram",
+      "totalQuantity": 250,
+      "totalCost": 75000,
+      "costPerUnit": 300,
+      "category": "main",
+      "sellingPrice": 300
+    },
+    {
+      "id": "rm006",
+      "name": "Sirup Vanila",
+      "unit": "ml",
+      "totalQuantity": 750,
+      "totalCost": 80000,
+      "costPerUnit": 106.67,
+      "category": "main",
+      "sellingPrice": 106.67
+    },
+    {
+      "id": "rm007",
+      "name": "Tepung Terigu Protein Sedang",
+      "unit": "gram",
+      "totalQuantity": 1000,
+      "totalCost": 15000,
+      "costPerUnit": 15,
+      "category": "main",
+      "sellingPrice": 15
+    },
+    {
+      "id": "rm008",
+      "name": "Mentega",
+      "unit": "gram",
+      "totalQuantity": 200,
+      "totalCost": 25000,
+      "costPerUnit": 125,
+      "category": "main",
+      "sellingPrice": 125
+    },
+    {
+      "id": "rm009",
+      "name": "Telur Ayam",
+      "unit": "pcs",
+      "totalQuantity": 15,
+      "totalCost": 30000,
+      "costPerUnit": 2000,
+      "category": "main",
+      "sellingPrice": 2000
+    },
+    {
+      "id": "rm010",
+      "name": "Kentang Beku (Shoestring)",
+      "unit": "gram",
+      "totalQuantity": 1000,
+      "totalCost": 35000,
+      "costPerUnit": 35,
+      "category": "main",
+      "sellingPrice": 35
+    },
+    {
+      "id": "rm011",
+      "name": "Minyak Goreng",
+      "unit": "ml",
+      "totalQuantity": 2000,
+      "totalCost": 32000,
+      "costPerUnit": 16,
+      "category": "main",
+      "sellingPrice": 16
+    },
+    {
+      "id": "rm012",
+      "name": "Air Mineral Botol",
+      "unit": "ml",
+      "totalQuantity": 600,
+      "totalCost": 3000,
+      "costPerUnit": 5,
+      "category": "main",
+      "sellingPrice": 5
+    },
+    {
+      "id": "rm013",
+      "name": "Roti Tawar Gandum",
+      "unit": "lembar",
+      "totalQuantity": 10,
+      "totalCost": 15000,
+      "costPerUnit": 1500,
+      "category": "main",
+      "sellingPrice": 1500
+    },
+    {
+      "id": "rm014",
+      "name": "Saus Karamel",
+      "unit": "ml",
+      "totalQuantity": 500,
+      "totalCost": 55000,
+      "costPerUnit": 110,
+      "category": "main",
+      "sellingPrice": 110
+    },
+    {
+      "id": "rm015",
+      "name": "Teh Celup",
+      "unit": "pcs",
+      "totalQuantity": 25,
+      "totalCost": 15000,
+      "costPerUnit": 600,
+      "category": "main",
+      "sellingPrice": 600
+    },
+    {
+      "id": "rm016",
+      "name": "Sirup Leci",
+      "unit": "ml",
+      "totalQuantity": 750,
+      "totalCost": 70000,
+      "costPerUnit": 93.33,
+      "category": "main",
+      "sellingPrice": 93.33
+    },
+    {
+      "id": "rm017",
+      "name": "Sirup Mojito",
+      "unit": "ml",
+      "totalQuantity": 750,
+      "totalCost": 90000,
+      "costPerUnit": 120,
+      "category": "main",
+      "sellingPrice": 120
+    },
+    {
+      "id": "rm018",
+      "name": "Daun Mint",
+      "unit": "gram",
+      "totalQuantity": 50,
+      "totalCost": 10000,
+      "costPerUnit": 200,
+      "category": "main",
+      "sellingPrice": 200
+    },
+    {
+      "id": "rm019",
+      "name": "Air Soda",
+      "unit": "ml",
+      "totalQuantity": 1500,
+      "totalCost": 15000,
+      "costPerUnit": 10,
+      "category": "main",
+      "sellingPrice": 10
+    },
+    {
+      "id": "pk001",
+      "name": "Gelas Plastik Reguler (16 oz)",
+      "unit": "pcs",
+      "totalQuantity": 50,
+      "totalCost": 35000,
+      "costPerUnit": 700,
+      "category": "packaging",
+      "sellingPrice": 700
+    },
+    {
+      "id": "pk002",
+      "name": "Gelas Plastik Large (22 oz)",
+      "unit": "pcs",
+      "totalQuantity": 50,
+      "totalCost": 45000,
+      "costPerUnit": 900,
+      "category": "packaging",
+      "sellingPrice": 900
+    },
+    {
+      "id": "pk003",
+      "name": "Tutup Gelas Cembung",
+      "unit": "pcs",
+      "totalQuantity": 50,
+      "totalCost": 15000,
+      "costPerUnit": 300,
+      "category": "packaging",
+      "sellingPrice": 300
+    },
+    {
+      "id": "pk004",
+      "name": "Kantong Kertas",
+      "unit": "pcs",
+      "totalQuantity": 100,
+      "totalCost": 50000,
+      "costPerUnit": 500,
+      "category": "packaging",
+      "sellingPrice": 500
+    },
+    {
+      "id": "pk005",
+      "name": "Cangkir Keramik",
+      "unit": "pcs",
+      "totalQuantity": 12,
+      "totalCost": 180000,
+      "costPerUnit": 15000,
+      "category": "packaging",
+      "sellingPrice": 15000
+    },
+    {
+      "id": "tp001",
+      "name": "Boba Pearl",
+      "unit": "gram",
+      "totalQuantity": 1000,
+      "totalCost": 30000,
+      "costPerUnit": 30,
+      "category": "topping",
+      "sellingPrice": 3000
+    },
+    {
+      "id": "tp002",
+      "name": "Cheese Foam",
+      "unit": "ml",
+      "totalQuantity": 500,
+      "totalCost": 25000,
+      "costPerUnit": 50,
+      "category": "topping",
+      "sellingPrice": 4000
+    },
+    {
+      "id": "tp003",
+      "name": "Oreo Crumb",
+      "unit": "gram",
+      "totalQuantity": 250,
+      "totalCost": 20000,
+      "costPerUnit": 80,
+      "category": "topping",
+      "sellingPrice": 3000
+    },
+    {
+      "id": "tp004",
+      "name": "Coffee Jelly",
+      "unit": "gram",
+      "totalQuantity": 500,
+      "totalCost": 22000,
+      "costPerUnit": 44,
+      "category": "topping",
+      "sellingPrice": 3500
+    },
+    {
+      "id": "tp005",
+      "name": "Grass Jelly (Cincau)",
+      "unit": "gram",
+      "totalQuantity": 1000,
+      "totalCost": 15000,
+      "costPerUnit": 15,
+      "category": "topping",
+      "sellingPrice": 4000
+    }
+  ],
+  "foods": [
+    {
+      "id": "food01",
+      "name": "Kentang Goreng",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm010",
+          "quantity": 200
+        },
+        {
+          "rawMaterialId": "rm011",
+          "quantity": 50
+        }
+      ],
+      "costPrice": 7800,
+      "sellingPrice": 18000,
+      "availableToppings": [],
+      "packagingOptions": [
+        {
+          "id": "packOptFood01",
+          "name": "Take Away",
+          "additionalPrice": 0,
+          "ingredients": [
+            {
+              "rawMaterialId": "pk004",
+              "quantity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "food02",
+      "name": "Brownies Cokelat",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm007",
+          "quantity": 50
+        },
+        {
+          "rawMaterialId": "rm008",
+          "quantity": 30
+        },
+        {
+          "rawMaterialId": "rm009",
+          "quantity": 1
+        },
+        {
+          "rawMaterialId": "rm004",
+          "quantity": 20
+        }
+      ],
+      "costPrice": 8900,
+      "sellingPrice": 25000,
+      "availableToppings": [
+        "tp002"
+      ],
+      "packagingOptions": []
+    },
+    {
+      "id": "food03",
+      "name": "Donat Gula",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm007",
+          "quantity": 100
+        },
+        {
+          "rawMaterialId": "rm008",
+          "quantity": 20
+        },
+        {
+          "rawMaterialId": "rm009",
+          "quantity": 1
+        }
+      ],
+      "costPrice": 6000,
+      "sellingPrice": 18000,
+      "availableToppings": [],
+      "packagingOptions": []
+    },
+    {
+      "id": "food04",
+      "name": "Croissant Mentega",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm007",
+          "quantity": 80
+        },
+        {
+          "rawMaterialId": "rm008",
+          "quantity": 40
+        }
+      ],
+      "costPrice": 6200,
+      "sellingPrice": 15000,
+      "availableToppings": [],
+      "packagingOptions": []
+    },
+    {
+      "id": "food05",
+      "name": "Roti Bakar Keju",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm013",
+          "quantity": 2
+        },
+        {
+          "rawMaterialId": "rm008",
+          "quantity": 10
+        }
+      ],
+      "costPrice": 4250,
+      "sellingPrice": 28000,
+      "availableToppings": [],
+      "packagingOptions": []
+    },
+    {
+      "id": "food06",
+      "name": "Singkong Goreng",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm010",
+          "quantity": 250
+        },
+        {
+          "rawMaterialId": "rm011",
+          "quantity": 60
+        }
+      ],
+      "costPrice": 9710,
+      "sellingPrice": 16000,
+      "availableToppings": [],
+      "packagingOptions": []
+    },
+    {
+      "id": "food07",
+      "name": "Pisang Goreng Krispi",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm007",
+          "quantity": 50
+        }
+      ],
+      "costPrice": 750,
+      "sellingPrice": 12000,
+      "availableToppings": [
+        "tp003",
+        "tp002"
+      ],
+      "packagingOptions": []
+    },
+    {
+      "id": "food08",
+      "name": "Onion Ring",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm007",
+          "quantity": 60
+        },
+        {
+          "rawMaterialId": "rm011",
+          "quantity": 50
+        }
+      ],
+      "costPrice": 1700,
+      "sellingPrice": 17000,
+      "availableToppings": [],
+      "packagingOptions": []
+    },
+    {
+      "id": "food09",
+      "name": "Cireng Bumbu Rujak",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm007",
+          "quantity": 100
+        },
+        {
+          "rawMaterialId": "rm011",
+          "quantity": 50
+        }
+      ],
+      "costPrice": 2300,
+      "sellingPrice": 15000,
+      "availableToppings": [],
+      "packagingOptions": []
+    },
+    {
+      "id": "food10",
+      "name": "Tahu Krispi",
+      "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [
+        {
+          "rawMaterialId": "rm007",
+          "quantity": 40
+        },
+        {
+          "rawMaterialId": "rm011",
+          "quantity": 40
+        }
+      ],
+      "costPrice": 1240,
+      "sellingPrice": 13000,
+      "availableToppings": [],
+      "packagingOptions": []
+    }
+  ]
 }
