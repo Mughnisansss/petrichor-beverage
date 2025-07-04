@@ -67,10 +67,8 @@ export default function BahanBakuPage() {
   useEffect(() => {
     if (isFormVisible) {
       if (watchedCategory === 'main' || watchedCategory === 'packaging') {
-        // Automatically set sellingPrice to HPP for main and packaging
         form.setValue('sellingPrice', costPerUnit);
       }
-      // If category is 'topping', do nothing, preserving manual input.
     }
   }, [costPerUnit, watchedCategory, form, isFormVisible]);
 
@@ -79,7 +77,6 @@ export default function BahanBakuPage() {
       const costPerUnitValue = values.totalCost / values.totalQuantity;
       let finalSellingPrice = values.sellingPrice;
       
-      // Ensure selling price for non-toppings is always the HPP
       if (values.category === 'main' || values.category === 'packaging') {
           finalSellingPrice = costPerUnitValue;
       }
@@ -322,14 +319,7 @@ export default function BahanBakuPage() {
                       <p className="text-xs text-muted-foreground">({formatCurrency(material.costPerUnit)} per {material.unit})</p>
                     </TableCell>
                     <TableCell>
-                      {material.category === 'topping' ? (
-                        formatCurrency(material.sellingPrice || 0)
-                      ) : (
-                        <div>
-                          {formatCurrency(material.sellingPrice || 0)}
-                          <p className="text-xs text-muted-foreground italic">(Sesuai HPP)</p>
-                        </div>
-                      )}
+                      {formatCurrency(material.sellingPrice || 0)}
                     </TableCell>
                     <TableCell className="flex gap-2 justify-end">
                       <Button variant="outline" size="icon" onClick={() => handleEdit(material)}>
