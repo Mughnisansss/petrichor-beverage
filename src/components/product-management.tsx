@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useRef } from "react";
@@ -31,7 +30,8 @@ const ingredientSchema = z.object({
 const packagingInfoSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Nama ukuran tidak boleh kosong."),
-  additionalPrice: z.coerce.number().min(0, "Tambahan harga tidak boleh negatif."),
+  // additionalPrice is now calculated, not part of the form validation schema for input
+  additionalPrice: z.coerce.number().min(0).default(0),
   ingredients: z.array(ingredientSchema).min(1, "Kemasan harus memiliki setidaknya 1 bahan."),
 });
 
@@ -108,6 +108,7 @@ const ProductForm = React.forwardRef<
     const { fields, append, remove } = useFieldArray({ control: form.control, name: "ingredients" });
     const { fields: packagingFields, append: appendPackaging, remove: removePackaging } = useFieldArray({ control: form.control, name: "packagingOptions" });
     const watchedIngredients = useWatch({ control: form.control, name: 'ingredients' });
+    const watchedPackagingOptions = useWatch({ control: form.control, name: 'packagingOptions' });
 
     const allToppings = useMemo(() => rawMaterials.filter(m => m.category === 'topping'), [rawMaterials]);
     const packagingMaterials = useMemo(() => rawMaterials.filter(m => m.category === 'packaging'), [rawMaterials]);
@@ -124,7 +125,18 @@ const ProductForm = React.forwardRef<
 
     async function onSubmit(values: ProductFormValues) {
         try {
-            const productData = { ...values, costPrice: calculatedCostPrice, packagingOptions: values.packagingOptions || [] };
+            const processedPackagingOptions = (values.packagingOptions || []).map(option => {
+                const additionalPrice = (option.ingredients || []).reduce((sum, ing) => {
+                    const material = rawMaterials.find(m => m.id === ing.rawMaterialId);
+                    if (material && (material.category === 'packaging' || material.category === 'topping') && typeof material.sellingPrice === 'number') {
+                        return sum + (material.sellingPrice * ing.quantity);
+                    }
+                    return sum;
+                }, 0);
+                return { ...option, additionalPrice };
+            });
+
+            const productData = { ...values, costPrice: calculatedCostPrice, packagingOptions: processedPackagingOptions };
             if (editingProduct) {
                 await updateProduct(editingProduct.id, productData);
                 toast({ title: "Sukses", description: `${productTypeName} berhasil diperbarui.` });
@@ -268,54 +280,71 @@ const ProductForm = React.forwardRef<
                   <FormLabel className="text-base font-semibold">Opsi Kemasan / Ukuran</FormLabel>
                    <FormDescription>Definisikan berbagai ukuran yang tersedia untuk produk ini.</FormDescription>
                     <Accordion type="multiple" className="w-full space-y-3">
-                        {packagingFields.map((packagingItem, packIndex) => (
-                            <AccordionItem value={packagingItem.id} key={packagingItem.id} className="border rounded-lg px-4 bg-muted/30">
-                                <AccordionTrigger>
-                                  <div className="flex-1 flex justify-between items-center pr-4">
-                                      {`Opsi Ukuran #${packIndex + 1}`}
-                                      <Button type="button" variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); removePackaging(packIndex); }}>
-                                          <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                  </div>
-                                </AccordionTrigger>
-                                <AccordionContent className="pt-2">
-                                  <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                       <FormField control={form.control} name={`packagingOptions.${packIndex}.name`} render={({ field }) => (
-                                          <FormItem><FormLabel>Nama Ukuran</FormLabel><FormControl><Input {...field} placeholder="cth: Reguler" /></FormControl><FormMessage /></FormItem>
-                                      )}/>
-                                      <FormField control={form.control} name={`packagingOptions.${packIndex}.additionalPrice`} render={({ field }) => (
-                                          <FormItem><FormLabel>Tambahan Harga</FormLabel><FormControl><Input type="number" {...field} placeholder="cth: 3000" /></FormControl><FormMessage /></FormItem>
-                                      )}/>
-                                    </div>
-                                    <div className="space-y-2">
-                                       <Label className="text-xs">Bahan Kemasan</Label>
-                                       <Controller
-                                          control={form.control}
-                                          name={`packagingOptions.${packIndex}.ingredients`}
-                                          render={({ field }) => {
-                                            const { fields: subFields, append: subAppend, remove: subRemove } = useFieldArray({ control: form.control, name: `packagingOptions.${packIndex}.ingredients` });
-                                            return <div className="space-y-2">
-                                              {subFields.map((subItem, subIndex) => (
-                                                <div key={subItem.id} className="flex items-start gap-2">
-                                                  <FormField control={form.control} name={`packagingOptions.${packIndex}.ingredients.${subIndex}.rawMaterialId`} render={({ field }) => (
-                                                    <FormItem className="flex-1"><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih bahan kemasan..." /></SelectTrigger></FormControl><SelectContent>{packagingMaterials.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
-                                                  )}/>
-                                                  <FormField control={form.control} name={`packagingOptions.${packIndex}.ingredients.${subIndex}.quantity`} render={({ field }) => (
-                                                      <FormItem><FormControl><Input type="number" step="1" {...field} className="w-28" placeholder="Jumlah"/></FormControl><FormMessage/></FormItem>
-                                                  )}/>
-                                                  <Button type="button" variant="ghost" size="icon" onClick={() => subRemove(subIndex)} disabled={subFields.length <= 1}><X className="h-4 w-4" /></Button>
+                        {packagingFields.map((packagingItem, packIndex) => {
+                             const calculatedAdditionalPrice = useMemo(() => {
+                                const packagingOption = watchedPackagingOptions?.[packIndex];
+                                if (!packagingOption || !packagingOption.ingredients) return 0;
+                                
+                                return packagingOption.ingredients.reduce((sum, ing) => {
+                                    const material = rawMaterials.find(m => m.id === ing.rawMaterialId);
+                                    if (material && material.category === 'packaging' && typeof material.sellingPrice === 'number') {
+                                        return sum + (material.sellingPrice * (ing.quantity || 0));
+                                    }
+                                    return sum;
+                                }, 0);
+                            }, [watchedPackagingOptions, packIndex, rawMaterials]);
+
+                            return (
+                                <AccordionItem value={packagingItem.id} key={packagingItem.id} className="border rounded-lg px-4 bg-muted/30">
+                                    <AccordionTrigger>
+                                      <div className="flex-1 flex justify-between items-center pr-4">
+                                          {`Opsi Ukuran #${packIndex + 1}`}
+                                          <Button type="button" variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); removePackaging(packIndex); }}>
+                                              <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                      </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-2">
+                                      <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                           <FormField control={form.control} name={`packagingOptions.${packIndex}.name`} render={({ field }) => (
+                                              <FormItem><FormLabel>Nama Ukuran</FormLabel><FormControl><Input {...field} placeholder="cth: Reguler" /></FormControl><FormMessage /></FormItem>
+                                          )}/>
+                                          <div>
+                                             <Label>Tambahan Harga Jual</Label>
+                                             <p className="text-lg font-bold pt-2">{formatCurrency(calculatedAdditionalPrice)}</p>
+                                             <p className="text-xs text-muted-foreground">Otomatis dari harga jual bahan kemasan.</p>
+                                          </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                           <Label className="text-xs">Bahan Kemasan</Label>
+                                           <Controller
+                                              control={form.control}
+                                              name={`packagingOptions.${packIndex}.ingredients`}
+                                              render={({ field }) => {
+                                                const { fields: subFields, append: subAppend, remove: subRemove } = useFieldArray({ control: form.control, name: `packagingOptions.${packIndex}.ingredients` });
+                                                return <div className="space-y-2">
+                                                  {subFields.map((subItem, subIndex) => (
+                                                    <div key={subItem.id} className="flex items-start gap-2">
+                                                      <FormField control={form.control} name={`packagingOptions.${packIndex}.ingredients.${subIndex}.rawMaterialId`} render={({ field }) => (
+                                                        <FormItem className="flex-1"><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih bahan kemasan..." /></SelectTrigger></FormControl><SelectContent>{packagingMaterials.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                                                      )}/>
+                                                      <FormField control={form.control} name={`packagingOptions.${packIndex}.ingredients.${subIndex}.quantity`} render={({ field }) => (
+                                                          <FormItem><FormControl><Input type="number" step="1" {...field} className="w-28" placeholder="Jumlah"/></FormControl><FormMessage/></FormItem>
+                                                      )}/>
+                                                      <Button type="button" variant="ghost" size="icon" onClick={() => subRemove(subIndex)} disabled={subFields.length <= 1}><X className="h-4 w-4" /></Button>
+                                                    </div>
+                                                  ))}
+                                                  <Button type="button" variant="outline" size="sm" onClick={() => subAppend({rawMaterialId: "", quantity: 1})}><PlusCircle className="mr-2 h-4 w-4"/>Tambah Bahan</Button>
                                                 </div>
-                                              ))}
-                                              <Button type="button" variant="outline" size="sm" onClick={() => subAppend({rawMaterialId: "", quantity: 1})}><PlusCircle className="mr-2 h-4 w-4"/>Tambah Bahan</Button>
-                                            </div>
-                                          }}
-                                        />
-                                    </div>
-                                  </div>
-                                </AccordionContent>
-                            </AccordionItem>
-                        ))}
+                                              }}
+                                            />
+                                        </div>
+                                      </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            );
+                        })}
                     </Accordion>
                      <Button type="button" variant="secondary" size="sm" onClick={() => appendPackaging({ id: nanoid(), name: "", additionalPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }] })}>
                         <PlusCircle className="mr-2 h-4 w-4" /> Tambah Opsi Ukuran

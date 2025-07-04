@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from "react";
@@ -210,15 +209,15 @@ export default function BahanBakuPage() {
                     )}
                   />
                 </div>
-                {watchedCategory === 'topping' && (
+                {(watchedCategory === 'topping' || watchedCategory === 'packaging') && (
                   <FormField
                     control={form.control}
                     name="sellingPrice"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Harga Jual Topping (Rp)</FormLabel>
+                        <FormLabel>Harga Jual (Rp)</FormLabel>
                         <FormControl><Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber || 0)} placeholder="cth: 3000" /></FormControl>
-                        <FormDescription>Harga yang dibayar pelanggan untuk tambahan topping ini.</FormDescription>
+                        <FormDescription>Harga yang dibayar pelanggan untuk tambahan item ini.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -256,7 +255,7 @@ export default function BahanBakuPage() {
                       <p className="text-xs text-muted-foreground">({formatCurrency(material.costPerUnit)} per {material.unit})</p>
                     </TableCell>
                     <TableCell>
-                      {material.category === 'topping' && typeof material.sellingPrice === 'number' ? formatCurrency(material.sellingPrice) : 'N/A'}
+                      {(material.category === 'topping' || material.category === 'packaging') && typeof material.sellingPrice === 'number' ? formatCurrency(material.sellingPrice) : 'N/A'}
                     </TableCell>
                     <TableCell className="flex gap-2 justify-end">
                       <Button variant="outline" size="icon" onClick={() => handleEdit(material)}>
