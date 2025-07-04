@@ -256,7 +256,7 @@ export default function BahanBakuPage() {
                       <p className="text-xs text-muted-foreground">({formatCurrency(material.costPerUnit)} per {material.unit})</p>
                     </TableCell>
                     <TableCell>
-                      {material.category === 'topping' && material.sellingPrice ? formatCurrency(material.sellingPrice) : 'N/A'}
+                      {material.category === 'topping' && typeof material.sellingPrice === 'number' ? formatCurrency(material.sellingPrice) : 'N/A'}
                     </TableCell>
                     <TableCell className="flex gap-2 justify-end">
                       <Button variant="outline" size="icon" onClick={() => handleEdit(material)}>
@@ -282,4 +282,6 @@ export default function BahanBakuPage() {
     </div>
   );
 }
+    
+
     
