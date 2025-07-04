@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -99,7 +100,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
+      <header className={cn(
+        "sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50",
+        isOrderPage && "bg-order-bg border-order-primary/10"
+      )}>
         {!isOrderPage && (
           <>
             <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
@@ -133,19 +137,22 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             </div>
           </>
         )}
-        <div className="flex-1 overflow-hidden flex items-center h-10 border border-input rounded-md bg-muted">
+        <div className={cn(
+          "flex-1 overflow-hidden flex items-center h-10 border border-input rounded-md bg-muted",
+           isOrderPage && "bg-order-accent/50 text-order-primary border-order-primary/20"
+        )}>
            <div className="relative flex overflow-x-hidden">
               <div className="animate-marquee whitespace-nowrap">
-                <span className="mx-4 text-sm font-medium text-muted-foreground">Selamat Datang di {appName}!</span>
-                <span className="mx-4 text-sm font-medium text-muted-foreground">Selamat Datang di {appName}!</span>
-                <span className="mx-4 text-sm font-medium text-muted-foreground">Selamat Datang di {appName}!</span>
-                <span className="mx-4 text-sm font-medium text-muted-foreground">Selamat Datang di {appName}!</span>
+                <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+                <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+                <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+                <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
               </div>
               <div className="absolute top-0 animate-marquee2 whitespace-nowrap">
-                 <span className="mx-4 text-sm font-medium text-muted-foreground">Selamat Datang di {appName}!</span>
-                 <span className="mx-4 text-sm font-medium text-muted-foreground">Selamat Datang di {appName}!</span>
-                 <span className="mx-4 text-sm font-medium text-muted-foreground">Selamat Datang di {appName}!</span>
-                 <span className="mx-4 text-sm font-medium text-muted-foreground">Selamat Datang di {appName}!</span>
+                 <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+                 <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+                 <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+                 <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
               </div>
             </div>
         </div>
@@ -161,7 +168,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           )}
         </div>
       </header>
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+      <main className={cn(
+        "flex flex-1 flex-col",
+        isOrderPage ? "bg-order-bg" : "gap-4 p-4 md:gap-8 md:p-8"
+      )}>
         {isLoading ? (
           <div className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
