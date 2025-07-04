@@ -65,10 +65,12 @@ export default function BahanBakuPage() {
   const costPerUnit = (watchedTotalCost && watchedTotalQuantity > 0) ? watchedTotalCost / watchedTotalQuantity : 0;
   
   useEffect(() => {
-    if (watchedCategory === 'topping' || watchedCategory === 'packaging') {
-      form.setValue('sellingPrice', costPerUnit, { shouldValidate: true });
+    if (isOpen) {
+      if (watchedCategory === 'topping' || watchedCategory === 'packaging') {
+        form.setValue('sellingPrice', costPerUnit, { shouldValidate: true });
+      }
     }
-  }, [costPerUnit, watchedCategory, form.setValue]);
+  }, [costPerUnit, watchedCategory, form.setValue, form, isFormVisible]);
 
   async function onSubmit(values: MaterialFormValues) {
     try {
@@ -263,12 +265,12 @@ export default function BahanBakuPage() {
                                 <Input 
                                     type="number" 
                                     {...field} 
-                                    value={costPerUnit || 0}
-                                    readOnly
+                                    value={field.value || 0}
+                                    readOnly={true}
                                     className="bg-muted/50 focus-visible:ring-0 focus-visible:ring-offset-0"
                                 />
                             </FormControl>
-                            <FormDescription>Dihitung otomatis sama dengan HPP. Anda tidak mengambil profit dari item ini.</FormDescription>
+                            <FormDescription>Otomatis disamakan dengan HPP. Anda tidak mengambil profit dari item ini.</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -312,7 +314,7 @@ export default function BahanBakuPage() {
                       <p className="text-xs text-muted-foreground">({formatCurrency(material.costPerUnit)} per {material.unit})</p>
                     </TableCell>
                     <TableCell>
-                      {(material.category === 'topping' || material.category === 'packaging') && typeof material.sellingPrice === 'number' ? formatCurrency(material.sellingPrice) : 'N/A'}
+                      {(material.category === 'topping' || material.category === 'packaging') && typeof material.sellingPrice === 'number' ? formatCurrency(material.sellingPrice) : '—'}
                     </TableCell>
                     <TableCell className="flex gap-2 justify-end">
                       <Button variant="outline" size="icon" onClick={() => handleEdit(material)}>
@@ -338,3 +340,5 @@ export default function BahanBakuPage() {
     </div>
   );
 }
+
+    
