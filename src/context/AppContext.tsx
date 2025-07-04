@@ -26,6 +26,11 @@ const apiService = {
     ]);
     return { drinks, foods, sales, operationalCosts, rawMaterials };
   },
+  importData: async (data: DbData): Promise<{ ok: boolean, message: string }> => {
+    const res = await fetch('/api/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const responseData = await res.json();
+    return { ok: res.ok, message: responseData.message };
+  },
   addDrink: async (drink: Omit<Drink, 'id'>): Promise<Drink> => (await fetch('/api/drinks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(drink) })).json(),
   updateDrink: async (id: string, drink: Omit<Drink, 'id'>): Promise<Drink> => (await fetch(`/api/drinks/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(drink) })).json(),
   deleteDrink: async (id: string) => {
@@ -94,6 +99,13 @@ const setLocalData = (data: DbData) => {
 
 const localStorageService = {
   getData: async (): Promise<DbData> => Promise.resolve(getLocalData()),
+  importData: async (data: DbData): Promise<{ ok: boolean, message: string }> => {
+    if (!data || !Array.isArray(data.drinks) || !Array.isArray(data.foods) || !Array.isArray(data.sales) || !Array.isArray(data.operationalCosts) || !Array.isArray(data.rawMaterials)) {
+      return Promise.resolve({ ok: false, message: 'Data JSON tidak valid atau formatnya salah.' });
+    }
+    setLocalData(data);
+    return Promise.resolve({ ok: true, message: 'Data berhasil diimpor.' });
+  },
   addRawMaterial: async (material: Omit<RawMaterial, 'id'>): Promise<RawMaterial> => {
     const data = getLocalData();
     const newMaterial = { ...material, id: nanoid() };
@@ -234,6 +246,7 @@ interface AppContextType {
   addCashExpense: (expense: { description: string, amount: number }) => void;
   deleteCashExpense: (id: string) => void;
   fetchData: () => Promise<void>;
+  importData: (data: DbData) => Promise<{ ok: boolean, message: string }>;
   addDrink: (drink: Omit<Drink, 'id'>) => Promise<Drink>;
   updateDrink: (id: string, drink: Omit<Drink, 'id'>) => Promise<Drink>;
   deleteDrink: (id: string) => Promise<{ ok: boolean, message: string }>;
@@ -423,6 +436,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setOrderQueue(prevQueue => prevQueue.filter(o => o.id !== orderId));
   }, [orderQueue, currentService, setOrderQueue, fetchData]);
 
+  const importData = useCallback(async (data: any): Promise<{ ok: boolean, message: string }> => {
+    const { appName, logoImageUri, marqueeText, ...dbData } = data;
+
+    const result = await currentService.importData(dbData);
+    
+    if (result.ok) {
+       // Also update settings stored in localStorage regardless of mode
+       if (appName) setAppName(appName);
+       if (logoImageUri) setLogoImageUri(logoImageUri);
+       if (marqueeText) setMarqueeText(marqueeText);
+    }
+    return result;
+  }, [currentService, setAppName, setLogoImageUri, setMarqueeText]);
 
   const wrappedService = useMemo(() => {
     const wrap = <T extends (...args: any[]) => Promise<any>>(fn: T) => {
@@ -488,6 +514,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     deleteCashExpense,
     fetchData,
     ...wrappedService,
+    importData,
     addToCart,
     updateCartItemQuantity,
     removeFromCart,
@@ -498,7 +525,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }), [
     dbData, cart, orderQueue, isLoading, storageMode, setStorageMode, appName, setAppName, 
     logoImageUri, setLogoImageUri, marqueeText, setMarqueeText, fetchData, 
-    wrappedService, addToCart, updateCartItemQuantity, removeFromCart, clearCart,
+    wrappedService, importData, addToCart, updateCartItemQuantity, removeFromCart, clearCart,
     submitCustomerOrder, updateQueuedOrderStatus, processQueuedOrder,
     initialCapital, setInitialCapital, cashExpenses, addCashExpense, deleteCashExpense
   ]);

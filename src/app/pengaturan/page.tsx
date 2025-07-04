@@ -10,9 +10,10 @@ import { useAppContext } from "@/context/AppContext";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
-import { ImageIcon, Upload, Trash2 } from "lucide-react";
+import { ImageIcon, Upload, Trash2, UploadCloud, Download } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 export default function PengaturanPage() {
   const { toast } = useToast();
@@ -31,12 +32,14 @@ export default function PengaturanPage() {
     setLogoImageUri,
     marqueeText,
     setMarqueeText,
+    importData,
   } = useAppContext();
 
   const [selectedMode, setSelectedMode] = useState(storageMode);
   const [localAppName, setLocalAppName] = useState(appName);
   const [localMarqueeText, setLocalMarqueeText] = useState(marqueeText);
   const [preview, setPreview] = useState<string | null>(logoImageUri);
+  const [fileToImport, setFileToImport] = useState<File | null>(null);
 
   useEffect(() => {
     setSelectedMode(storageMode);
@@ -138,7 +141,7 @@ export default function PengaturanPage() {
       rawMaterials,
       operationalCosts,
     };
-    const filename = `${appName.toLowerCase().replace(/\s/g, '_')}_backup.json`;
+    const filename = `${appName.toLowerCase().replace(/\s/g, '_')}_backup_${new Date().toISOString().split('T')[0]}.json`;
     downloadFile(JSON.stringify(allData, null, 2), filename, "application/json");
   };
 
@@ -215,6 +218,65 @@ export default function PengaturanPage() {
       }
     });
   }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type === "application/json") {
+      setFileToImport(file);
+    } else {
+      setFileToImport(null);
+      if (file) {
+        toast({
+          title: "File Tidak Sesuai",
+          description: "Harap pilih file dengan format .json.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleImportJson = async () => {
+    if (!fileToImport) {
+      toast({ title: "Tidak Ada File", description: "Pilih file backup .json terlebih dahulu.", variant: "destructive" });
+      return;
+    }
+
+    if (!window.confirm("Yakin ingin mengimpor data? Tindakan ini akan MENIMPA semua data aplikasi yang ada saat ini dan tidak dapat dibatalkan.")) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const text = e.target?.result;
+        if (typeof text !== 'string') {
+          throw new Error("Gagal membaca file.");
+        }
+        const data = JSON.parse(text);
+
+        const result = await importData(data);
+
+        if (result.ok) {
+          toast({
+            title: "Impor Berhasil",
+            description: "Data Anda telah berhasil dipulihkan. Halaman akan dimuat ulang.",
+          });
+          setFileToImport(null);
+          // A full page reload is safest to ensure all components get the new state
+          window.location.reload(); 
+        } else {
+          throw new Error(result.message || "Gagal mengimpor data.");
+        }
+      } catch (error) {
+        toast({
+          title: "Error Saat Impor",
+          description: `Gagal memproses file. Pastikan file backup valid. Error: ${(error as Error).message}`,
+          variant: "destructive",
+        });
+      }
+    };
+    reader.readAsText(fileToImport);
+  };
 
   const hasChanges = (selectedMode !== storageMode) || (localAppName.trim() && localAppName.trim() !== appName) || (localMarqueeText.trim() && localMarqueeText.trim() !== marqueeText);
 
@@ -327,28 +389,48 @@ export default function PengaturanPage() {
             </div>
             
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Ekspor Data</h3>
+              <h3 className="text-lg font-medium">Manajemen Data</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Unduh data Anda saat ini dalam format JSON (untuk cadangan penuh) atau CSV (untuk diolah di spreadsheet).
+                Impor atau ekspor data aplikasi Anda. Berguna untuk backup atau migrasi ke perangkat lain.
               </p>
-              
-              <div className="p-4 border rounded-lg space-y-2">
-                <h4 className="font-semibold text-base">Cadangan Penuh</h4>
-                 <p className="text-xs text-muted-foreground">Unduh satu file berisi semua data (termasuk nama & logo aplikasi). Berguna untuk backup.</p>
-                <Button onClick={handleExportJson} variant="secondary" disabled={isLoading}>
-                  Ekspor Semua Data (JSON)
-                </Button>
-              </div>
 
-              <div className="p-4 border rounded-lg space-y-2">
-                <h4 className="font-semibold text-base">Ekspor per Tabel (CSV)</h4>
-                <p className="text-xs text-muted-foreground">Unduh data spesifik untuk dianalisis di Excel atau sejenisnya.</p>
-                <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => exportDataAsCsv(sales, 'penjualan.csv', processSalesForCsv)} variant="outline" disabled={isLoading}>Penjualan</Button>
-                  <Button onClick={() => exportDataAsCsv(drinks, 'minuman.csv', processProductsForCsv)} variant="outline" disabled={isLoading}>Minuman</Button>
-                  <Button onClick={() => exportDataAsCsv(foods, 'makanan.csv', processProductsForCsv)} variant="outline" disabled={isLoading}>Makanan</Button>
-                  <Button onClick={() => exportDataAsCsv(rawMaterials, 'bahan_baku.csv')} variant="outline" disabled={isLoading}>Bahan Baku</Button>
-                  <Button onClick={() => exportDataAsCsv(operationalCosts, 'biaya_operasional.csv')} variant="outline" disabled={isLoading}>Biaya Operasional</Button>
+              <div className="p-4 border rounded-lg space-y-4">
+                <h4 className="font-semibold text-base">Impor Data dari Backup</h4>
+                <p className="text-sm text-muted-foreground">
+                  Pulihkan semua data dari file backup (.json). <strong className="text-destructive">Tindakan ini akan menimpa semua data yang ada saat ini.</strong>
+                </p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Label htmlFor="importFile" className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer")}>
+                    <UploadCloud className="mr-2 h-4 w-4" /> Pilih File...
+                  </Label>
+                  <Input id="importFile" type="file" accept=".json" onChange={handleFileSelect} className="hidden" />
+                  <Button onClick={handleImportJson} disabled={!fileToImport || isLoading}>Impor Data</Button>
+                </div>
+                {fileToImport && (
+                  <p className="text-sm text-muted-foreground">File dipilih: <strong>{fileToImport.name}</strong></p>
+                )}
+              </div>
+              
+              <div className="p-4 border rounded-lg space-y-4">
+                <h4 className="font-semibold text-base">Ekspor Data</h4>
+                <div className="space-y-2">
+                    <h5 className="font-medium">Cadangan Penuh</h5>
+                    <p className="text-xs text-muted-foreground">Unduh satu file berisi semua data. Berguna untuk backup atau pindah perangkat.</p>
+                    <Button onClick={handleExportJson} variant="secondary" disabled={isLoading}>
+                      <Download className="mr-2 h-4 w-4" /> Ekspor Semua Data (JSON)
+                    </Button>
+                </div>
+                <Separator className="my-4" />
+                <div className="space-y-2">
+                  <h5 className="font-medium">Ekspor per Tabel (CSV)</h5>
+                  <p className="text-xs text-muted-foreground">Unduh data spesifik untuk dianalisis di Excel atau sejenisnya.</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button onClick={() => exportDataAsCsv(sales, 'penjualan.csv', processSalesForCsv)} variant="outline" disabled={isLoading}>Penjualan</Button>
+                    <Button onClick={() => exportDataAsCsv(drinks, 'minuman.csv', processProductsForCsv)} variant="outline" disabled={isLoading}>Minuman</Button>
+                    <Button onClick={() => exportDataAsCsv(foods, 'makanan.csv', processProductsForCsv)} variant="outline" disabled={isLoading}>Makanan</Button>
+                    <Button onClick={() => exportDataAsCsv(rawMaterials, 'bahan_baku.csv')} variant="outline" disabled={isLoading}>Bahan Baku</Button>
+                    <Button onClick={() => exportDataAsCsv(operationalCosts, 'biaya_operasional.csv')} variant="outline" disabled={isLoading}>Biaya Operasional</Button>
+                  </div>
                 </div>
               </div>
             </div>
