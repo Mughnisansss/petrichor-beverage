@@ -2,8 +2,9 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import Image from "next/image";
 import { useAppContext } from "@/context/AppContext";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { CupSoda, Utensils, Plus } from "lucide-react";
@@ -128,25 +129,41 @@ export default function OrderPage() {
   
   const renderProductGrid = (products: (Drink[] | Food[]), type: 'drink' | 'food') => {
      return products.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {products.map(item => (
-              <Card key={item.id} className="flex flex-col text-left cursor-pointer hover:border-primary" onClick={() => handleOrderClick(item, type)}>
-                  <CardHeader>
-                      <CardTitle>{item.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                      <p className="text-xl font-semibold text-primary">{formatCurrency(item.sellingPrice)}</p>
-                  </CardContent>
-                  <CardFooter>
-                      <Button className="w-full">
-                          Pesan
-                      </Button>
-                  </CardFooter>
+              <Card 
+                key={item.id} 
+                className="flex flex-col overflow-hidden group cursor-pointer rounded-xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2" 
+                onClick={() => handleOrderClick(item, type)}>
+                  <div className="relative">
+                    <Image
+                      src={`https://placehold.co/600x400.png`}
+                      alt={item.name}
+                      width={600}
+                      height={400}
+                      className="object-cover w-full h-48 transition-transform duration-300 group-hover:scale-110"
+                      data-ai-hint={type === 'drink' ? "drink coffee" : "food pastry"}
+                    />
+                     <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-bold shadow-md">
+                        {formatCurrency(item.sellingPrice)}
+                    </div>
+                  </div>
+                <CardContent className="p-4 flex-grow">
+                    <h3 className="text-lg font-bold truncate">{item.name}</h3>
+                </CardContent>
+                <CardFooter className="p-4 pt-0">
+                  <Button className="w-full">
+                      <Plus className="mr-2 h-4 w-4" /> Pesan
+                  </Button>
+                </CardFooter>
               </Card>
           ))}
         </div>
       ) : (
-          <p className="text-muted-foreground">Menu {type === 'drink' ? 'minuman' : 'makanan'} akan segera hadir.</p>
+          <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg text-center h-48">
+            <p className="text-muted-foreground font-semibold">Menu {type === 'drink' ? 'Minuman' : 'Makanan'} Akan Segera Hadir!</p>
+            <p className="text-sm text-muted-foreground mt-1">Nantikan produk-produk menarik dari kami.</p>
+          </div>
       );
   }
 
@@ -159,28 +176,34 @@ export default function OrderPage() {
           productType={productType}
         />
 
-        <div className="flex flex-col items-center text-center mb-8">
-            <h1 className="text-4xl font-bold tracking-tight">Selamat Datang di {appName}</h1>
-            <p className="text-lg text-muted-foreground mt-2">Silakan lihat menu kami di bawah ini.</p>
+        <div className="flex flex-col items-center text-center mb-12">
+            <h1 className="text-5xl font-extrabold tracking-tight">Selamat Datang di <span className="text-primary">{appName}</span></h1>
+            <p className="text-xl text-muted-foreground mt-3">
+                Pilih menu favorit Anda di bawah ini
+            </p>
         </div>
 
-        <div className="space-y-12">
+        <div className="space-y-16">
             {/* Minuman Section */}
             <div>
-                <div className="flex items-center gap-4 mb-6">
-                    <CupSoda className="h-8 w-8 text-primary"/>
-                    <h2 className="text-3xl font-bold">Minuman</h2>
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="bg-primary/10 p-3 rounded-full">
+                        <CupSoda className="h-8 w-8 text-primary"/>
+                    </div>
+                    <h2 className="text-4xl font-bold">Minuman</h2>
+                    <Separator className="flex-grow bg-primary/20 h-1" />
                 </div>
                 {renderProductGrid(drinks, 'drink')}
             </div>
 
-            <Separator />
-
             {/* Makanan Section */}
             <div>
-                <div className="flex items-center gap-4 mb-6">
-                    <Utensils className="h-8 w-8 text-primary"/>
-                    <h2 className="text-3xl font-bold">Makanan</h2>
+                <div className="flex items-center gap-4 mb-8">
+                     <div className="bg-primary/10 p-3 rounded-full">
+                        <Utensils className="h-8 w-8 text-primary"/>
+                    </div>
+                    <h2 className="text-4xl font-bold">Makanan</h2>
+                    <Separator className="flex-grow bg-primary/20 h-1" />
                 </div>
                 {renderProductGrid(foods, 'food')}
             </div>
