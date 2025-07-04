@@ -6,9 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,15 +38,24 @@ const categoryLabels: Record<RawMaterial['category'], string> = {
   topping: 'Topping'
 };
 
+const defaultFormValues: MaterialFormValues = { 
+  name: "", 
+  unit: "", 
+  totalQuantity: 1, 
+  totalCost: 0, 
+  category: 'main', 
+  sellingPrice: 0 
+};
+
 export default function BahanBakuPage() {
   const { rawMaterials, addRawMaterial, updateRawMaterial, deleteRawMaterial } = useAppContext();
-  const [isDialogOpen, setDialogOpen] = useState(false);
+  const [isFormVisible, setFormVisible] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
   const { toast } = useToast();
 
   const form = useForm<MaterialFormValues>({
     resolver: zodResolver(materialSchema),
-    defaultValues: { name: "", unit: "", totalQuantity: 1, totalCost: 0, category: 'main', sellingPrice: 0 },
+    defaultValues: defaultFormValues,
   });
   
   const watchedCategory = form.watch("category");
@@ -68,7 +76,9 @@ export default function BahanBakuPage() {
         await addRawMaterial(materialData);
         toast({ title: "Sukses", description: "Bahan baku berhasil ditambahkan." });
       }
-      setDialogOpen(false);
+      setFormVisible(false);
+      setEditingMaterial(null);
+      form.reset(defaultFormValues);
     } catch (error) {
       toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
     }
@@ -84,14 +94,21 @@ export default function BahanBakuPage() {
       category: material.category || 'main',
       sellingPrice: material.sellingPrice || 0,
     });
-    setDialogOpen(true);
+    setFormVisible(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
   const handleAddNew = () => {
     setEditingMaterial(null);
-    form.reset({ name: "", unit: "", totalQuantity: 1, totalCost: 0, category: 'main', sellingPrice: 0 });
-    setDialogOpen(true);
+    form.reset(defaultFormValues);
+    setFormVisible(true);
   };
+  
+  const handleCancel = () => {
+      setFormVisible(false);
+      setEditingMaterial(null);
+      form.reset(defaultFormValues);
+  }
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Apakah Anda yakin ingin menghapus bahan baku ini? Menghapus bahan ini akan memengaruhi HPP pada resep yang ada, namun tidak mengubah data penjualan yang sudah tercatat.")) return;
@@ -110,141 +127,151 @@ export default function BahanBakuPage() {
     <div className="flex flex-col gap-8">
       <div className="flex justify-between items-center">
           <h1 className="text-2xl font-semibold">Manajemen Bahan Baku</h1>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-           setDialogOpen(open);
-           if (!open) {
-              form.reset();
-              setEditingMaterial(null);
-           }
-         }}>
-          <Button onClick={handleAddNew}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Tambah Bahan Baku
+          <Button onClick={() => {
+            if (isFormVisible) {
+                handleCancel();
+            } else {
+                handleAddNew();
+            }
+          }}>
+            <PlusCircle className="mr-2 h-4 w-4" /> 
+            {isFormVisible ? "Tutup Form" : "Tambah Bahan Baku"}
           </Button>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingMaterial ? "Edit Bahan Baku" : "Tambah Bahan Baku"}</DialogTitle>
-              <DialogDescription>
-                Masukkan data sesuai pembelian terakhir Anda. Harga per satuan akan dihitung otomatis.
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nama Bahan</FormLabel>
-                      <FormControl><Input {...field} placeholder="cth: Biji Kopi Arabika" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="unit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Satuan Resep</FormLabel>
-                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Pilih satuan..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="gram">gram</SelectItem>
-                          <SelectItem value="ml">ml</SelectItem>
-                          <SelectItem value="liter">liter</SelectItem>
-                          <SelectItem value="kg">kg</SelectItem>
-                          <SelectItem value="pcs">pcs</SelectItem>
-                          <SelectItem value="buah">buah</SelectItem>
-                          <SelectItem value="botol">botol</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>Satuan yang akan Anda gunakan saat membuat resep.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Kategori Bahan</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Pilih kategori..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="main">Bahan Utama</SelectItem>
-                            <SelectItem value="topping">Topping / Tambahan</SelectItem>
-                            <SelectItem value="packaging">Kemasan / Packaging</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>Klasifikasi bahan untuk resep dan kustomisasi.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                 <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="totalQuantity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Jumlah Beli</FormLabel>
-                        <FormControl><Input type="number" step="any" {...field} placeholder="cth: 1000" /></FormControl>
-                        <FormDescription>Jumlah dalam satuan resep di atas.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="totalCost"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Total Biaya (Rp)</FormLabel>
-                        <FormControl><Input type="number" {...field} placeholder="cth: 200000" /></FormControl>
-                         <FormDescription>Total harga pembelian.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <Separator />
-                
-                <div className="p-4 rounded-md bg-muted">
-                    <Label>Harga Pokok per Satuan (HPP)</Label>
-                    <p className="font-bold text-2xl text-primary">{formatCurrency(costPerUnit || 0)}</p>
-                    <FormDescription>Dihitung otomatis dari: Total Biaya / Jumlah Beli.</FormDescription>
-                </div>
-                
-                {(watchedCategory === 'topping' || watchedCategory === 'packaging') && (
-                  <FormField
-                    control={form.control}
-                    name="sellingPrice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Harga Jual (Rp)</FormLabel>
-                        <FormControl><Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber || 0)} placeholder="cth: 3000" /></FormControl>
-                        <FormDescription>Harga yang dibayar pelanggan untuk tambahan item ini. Sebaiknya lebih tinggi dari HPP di atas.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-                <Button type="submit">{editingMaterial ? "Simpan Perubahan" : "Tambah"}</Button>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
       </div>
+
+      {isFormVisible && (
+          <Card>
+            <CardHeader>
+              <CardTitle>{editingMaterial ? "Edit Bahan Baku" : "Tambah Bahan Baku"}</CardTitle>
+              <CardDescription>
+                Masukkan data sesuai pembelian terakhir Anda. Harga per satuan akan dihitung otomatis.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nama Bahan</FormLabel>
+                          <FormControl><Input {...field} placeholder="cth: Biji Kopi Arabika" /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={form.control}
+                      name="unit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Satuan Resep</FormLabel>
+                           <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih satuan..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="gram">gram</SelectItem>
+                              <SelectItem value="ml">ml</SelectItem>
+                              <SelectItem value="liter">liter</SelectItem>
+                              <SelectItem value="kg">kg</SelectItem>
+                              <SelectItem value="pcs">pcs</SelectItem>
+                              <SelectItem value="buah">buah</SelectItem>
+                              <SelectItem value="botol">botol</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>Satuan yang akan Anda gunakan saat membuat resep.</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Kategori Bahan</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Pilih kategori..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="main">Bahan Utama</SelectItem>
+                                <SelectItem value="topping">Topping / Tambahan</SelectItem>
+                                <SelectItem value="packaging">Kemasan / Packaging</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>Klasifikasi bahan untuk resep dan kustomisasi.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                     <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="totalQuantity"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Jumlah Beli</FormLabel>
+                            <FormControl><Input type="number" step="any" {...field} placeholder="cth: 1000" /></FormControl>
+                            <FormDescription>Jumlah dalam satuan resep di atas.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="totalCost"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Total Biaya (Rp)</FormLabel>
+                            <FormControl><Input type="number" {...field} placeholder="cth: 200000" /></FormControl>
+                             <FormDescription>Total harga pembelian.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div className="p-4 rounded-md bg-muted">
+                        <Label>Harga Pokok per Satuan (HPP)</Label>
+                        <p className="font-bold text-2xl text-primary">{formatCurrency(costPerUnit || 0)}</p>
+                        <FormDescription>Dihitung otomatis dari: Total Biaya / Jumlah Beli.</FormDescription>
+                    </div>
+                    
+                    {(watchedCategory === 'topping' || watchedCategory === 'packaging') && (
+                      <FormField
+                        control={form.control}
+                        name="sellingPrice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Harga Jual (Rp)</FormLabel>
+                            <FormControl><Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber || 0)} placeholder="cth: 3000" /></FormControl>
+                            <FormDescription>Harga yang dibayar pelanggan untuk tambahan item ini. Sebaiknya lebih tinggi dari HPP di atas.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    <div className="flex items-center gap-2">
+                        <Button type="submit">{editingMaterial ? "Simpan Perubahan" : "Tambah"}</Button>
+                        {editingMaterial && (
+                          <Button variant="ghost" type="button" onClick={handleCancel}>Batal Edit</Button>
+                        )}
+                    </div>
+                  </form>
+                </Form>
+            </CardContent>
+          </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Daftar Bahan Baku</CardTitle>
