@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, Settings } from "lucide-react";
@@ -26,10 +26,12 @@ const topNavItems = [
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isLoading, appName, cart } = useAppContext();
+  const { isLoading, appName, cart, marqueeText } = useAppContext();
   
   const settingsHref = "/pengaturan";
   const isOrderPage = pathname === '/order';
+  
+  const displayText = useMemo(() => marqueeText.replace(/{appName}/g, appName), [marqueeText, appName]);
 
   const isActive = (href: string, currentPath: string) => {
     // Exact match for the dashboard
@@ -143,16 +145,16 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         )}>
            <div className="relative flex overflow-x-hidden">
               <div className="animate-marquee whitespace-nowrap">
-                <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
-                <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
-                <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
-                <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+                <span className="mx-4 text-sm font-medium">{displayText}</span>
+                <span className="mx-4 text-sm font-medium">{displayText}</span>
+                <span className="mx-4 text-sm font-medium">{displayText}</span>
+                <span className="mx-4 text-sm font-medium">{displayText}</span>
               </div>
               <div className="absolute top-0 animate-marquee2 whitespace-nowrap">
-                 <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
-                 <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
-                 <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
-                 <span className="mx-4 text-sm font-medium">Selamat Datang di {appName}!</span>
+                 <span className="mx-4 text-sm font-medium">{displayText}</span>
+                 <span className="mx-4 text-sm font-medium">{displayText}</span>
+                 <span className="mx-4 text-sm font-medium">{displayText}</span>
+                 <span className="mx-4 text-sm font-medium">{displayText}</span>
               </div>
             </div>
         </div>

@@ -225,6 +225,8 @@ interface AppContextType {
   setAppName: (name: string) => void;
   logoImageUri: string | null;
   setLogoImageUri: (uri: string | null) => void;
+  marqueeText: string;
+  setMarqueeText: (text: string) => void;
   fetchData: () => Promise<void>;
   addDrink: (drink: Omit<Drink, 'id'>) => Promise<Drink>;
   updateDrink: (id: string, drink: Omit<Drink, 'id'>) => Promise<Drink>;
@@ -252,6 +254,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [storageMode, setStorageMode] = useLocalStorage<StorageMode>('sipsavvy_storage_mode', 'local');
   const [appName, setAppName] = useLocalStorage<string>('sipsavvy_appName', 'SipSavvy');
   const [logoImageUri, setLogoImageUri] = useLocalStorage<string | null>('sipsavvy_logoImageUri', null);
+  const [marqueeText, setMarqueeText] = useLocalStorage<string>('sipsavvy_marqueeText', 'Selamat Datang di {appName}!');
   const [cart, setCart] = useLocalStorage<CartItem[]>('sipsavvy_cart', []);
   const [dbData, setDbData] = useState<DbData>({ drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
   const [isLoading, setIsLoading] = useState(true);
@@ -361,6 +364,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setAppName,
       logoImageUri,
       setLogoImageUri,
+      marqueeText,
+      setMarqueeText,
       addDrink: wrapWithRefetch(currentService.addDrink),
       updateDrink: wrapWithRefetch(currentService.updateDrink),
       deleteDrink: wrapWithRefetch(currentService.deleteDrink),
@@ -380,7 +385,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       removeFromCart,
       clearCart,
     };
-  }, [dbData, cart, isLoading, fetchData, storageMode, setStorageMode, appName, setAppName, logoImageUri, setLogoImageUri, currentService, addToCart, updateCartItemQuantity, removeFromCart, clearCart]);
+  }, [dbData, cart, isLoading, fetchData, storageMode, setStorageMode, appName, setAppName, logoImageUri, setLogoImageUri, marqueeText, setMarqueeText, currentService, addToCart, updateCartItemQuantity, removeFromCart, clearCart]);
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 }

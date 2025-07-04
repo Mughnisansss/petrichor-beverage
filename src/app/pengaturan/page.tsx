@@ -29,17 +29,21 @@ export default function PengaturanPage() {
     setAppName,
     logoImageUri,
     setLogoImageUri,
+    marqueeText,
+    setMarqueeText,
   } = useAppContext();
 
   const [selectedMode, setSelectedMode] = useState(storageMode);
   const [localAppName, setLocalAppName] = useState(appName);
+  const [localMarqueeText, setLocalMarqueeText] = useState(marqueeText);
   const [preview, setPreview] = useState<string | null>(logoImageUri);
 
   useEffect(() => {
     setSelectedMode(storageMode);
     setLocalAppName(appName);
     setPreview(logoImageUri);
-  }, [storageMode, appName, logoImageUri]);
+    setLocalMarqueeText(marqueeText);
+  }, [storageMode, appName, logoImageUri, marqueeText]);
 
   const handleSaveSettings = () => {
     const changesMade: string[] = [];
@@ -47,6 +51,11 @@ export default function PengaturanPage() {
     if (localAppName.trim() && localAppName.trim() !== appName) {
       setAppName(localAppName.trim());
       changesMade.push("Nama aplikasi diperbarui.");
+    }
+    
+    if (localMarqueeText.trim() && localMarqueeText.trim() !== marqueeText) {
+      setMarqueeText(localMarqueeText.trim());
+      changesMade.push("Teks berjalan diperbarui.");
     }
 
     if (selectedMode !== storageMode) {
@@ -122,6 +131,7 @@ export default function PengaturanPage() {
     const allData = {
       appName,
       logoImageUri,
+      marqueeText,
       drinks,
       foods,
       sales,
@@ -206,7 +216,7 @@ export default function PengaturanPage() {
     });
   }
 
-  const hasChanges = (selectedMode !== storageMode) || (localAppName.trim() && localAppName.trim() !== appName);
+  const hasChanges = (selectedMode !== storageMode) || (localAppName.trim() && localAppName.trim() !== appName) || (localMarqueeText.trim() && localMarqueeText.trim() !== marqueeText);
 
   return (
     <MainLayout>
@@ -231,6 +241,18 @@ export default function PengaturanPage() {
                 />
                 <p className="text-sm text-muted-foreground">
                   Nama ini akan muncul sebagai logo dan di beberapa judul halaman.
+                </p>
+              </div>
+               <div className="space-y-2">
+                <Label htmlFor="marqueeText">Teks Berjalan</Label>
+                <Input
+                  id="marqueeText"
+                  value={localMarqueeText}
+                  onChange={(e) => setLocalMarqueeText(e.target.value)}
+                  placeholder="Pesan selamat datang atau promosi"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Gunakan `&#123;appName&#125;` untuk menampilkan nama aplikasi secara dinamis.
                 </p>
               </div>
               <div className="space-y-2">
