@@ -65,7 +65,7 @@ export default function BahanBakuPage() {
   const costPerUnit = (watchedTotalCost && watchedTotalQuantity > 0) ? watchedTotalCost / watchedTotalQuantity : 0;
   
   useEffect(() => {
-    if (isOpen) {
+    if (isFormVisible) {
       if (watchedCategory === 'topping' || watchedCategory === 'packaging') {
         form.setValue('sellingPrice', costPerUnit, { shouldValidate: true });
       }
