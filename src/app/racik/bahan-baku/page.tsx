@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -16,6 +17,8 @@ import type { RawMaterial } from "@/lib/types";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 const materialSchema = z.object({
   name: z.string().min(1, "Nama bahan tidak boleh kosong"),
@@ -48,11 +51,15 @@ export default function BahanBakuPage() {
   });
   
   const watchedCategory = form.watch("category");
+  const watchedTotalQuantity = form.watch("totalQuantity");
+  const watchedTotalCost = form.watch("totalCost");
+
+  const costPerUnit = (watchedTotalCost && watchedTotalQuantity > 0) ? watchedTotalCost / watchedTotalQuantity : 0;
 
   async function onSubmit(values: MaterialFormValues) {
     try {
-      const costPerUnit = values.totalCost / values.totalQuantity;
-      const materialData = { ...values, costPerUnit };
+      const costPerUnitValue = values.totalCost / values.totalQuantity;
+      const materialData = { ...values, costPerUnit: costPerUnitValue };
 
       if (editingMaterial) {
         await updateRawMaterial(editingMaterial.id, materialData);
@@ -209,6 +216,15 @@ export default function BahanBakuPage() {
                     )}
                   />
                 </div>
+                
+                <Separator />
+                
+                <div className="p-4 rounded-md bg-muted">
+                    <Label>Harga Pokok per Satuan (HPP)</Label>
+                    <p className="font-bold text-2xl text-primary">{formatCurrency(costPerUnit || 0)}</p>
+                    <FormDescription>Dihitung otomatis dari: Total Biaya / Jumlah Beli.</FormDescription>
+                </div>
+                
                 {(watchedCategory === 'topping' || watchedCategory === 'packaging') && (
                   <FormField
                     control={form.control}
@@ -217,7 +233,7 @@ export default function BahanBakuPage() {
                       <FormItem>
                         <FormLabel>Harga Jual (Rp)</FormLabel>
                         <FormControl><Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber || 0)} placeholder="cth: 3000" /></FormControl>
-                        <FormDescription>Harga yang dibayar pelanggan untuk tambahan item ini.</FormDescription>
+                        <FormDescription>Harga yang dibayar pelanggan untuk tambahan item ini. Sebaiknya lebih tinggi dari HPP di atas.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -281,6 +297,3 @@ export default function BahanBakuPage() {
     </div>
   );
 }
-    
-
-    
