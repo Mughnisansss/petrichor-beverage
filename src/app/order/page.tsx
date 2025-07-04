@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { useAppContext } from "@/context/AppContext";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { CupSoda, Utensils, Plus, ShoppingCart, Trash2, Tag } from "lucide-react";
@@ -57,10 +57,14 @@ function ProductCustomizationDialog({
 
   const availableToppings = useMemo(() => {
     if (!product || !product.availableToppings) return [];
-    // Get the full RawMaterial objects for the allowed topping IDs
-    return product.availableToppings.map(toppingId => 
-      rawMaterials.find(m => m.id === toppingId)
-    ).filter((topping): topping is RawMaterial => topping !== undefined);
+    
+    const productIngredientIds = new Set(product.ingredients.map(ing => ing.rawMaterialId));
+
+    return product.availableToppings
+      .map(toppingId => rawMaterials.find(m => m.id === toppingId))
+      .filter((topping): topping is RawMaterial => 
+          topping !== undefined && !productIngredientIds.has(topping.id)
+      );
   }, [rawMaterials, product]);
   
   const toppingsPrice = useMemo(() => {
@@ -69,6 +73,10 @@ function ProductCustomizationDialog({
         return sum + (toppingData?.sellingPrice || 0);
     }, 0);
   }, [selectedToppings, rawMaterials]);
+  
+  // This hook call is moved before the early return to respect the Rules of Hooks.
+  const finalUnitPrice = product ? product.sellingPrice + toppingsPrice : 0;
+  const totalPrice = finalUnitPrice * quantity;
 
   if (!product) {
     return null;
@@ -83,9 +91,6 @@ function ProductCustomizationDialog({
       }
     });
   };
-
-  const finalUnitPrice = product.sellingPrice + toppingsPrice;
-  const totalPrice = finalUnitPrice * quantity;
 
   const handleAddToCart = () => {
     addToCart(product, productType, quantity, selectedToppings, finalUnitPrice);
@@ -158,13 +163,72 @@ function ProductCustomizationDialog({
   );
 }
 
+// --- Order Summary Panel (for Desktop) ---
+function OrderSummaryPanel({ onConfirm }: { onConfirm: () => void }) {
+  const { cart, updateCartItemQuantity, removeFromCart, rawMaterials } = useAppContext();
 
-// --- Order Summary Sheet ---
-function OrderSummarySheet({
-  onConfirm
-}: {
-  onConfirm: () => void;
-}) {
+  const total = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.sellingPrice * item.quantity, 0);
+  }, [cart]);
+
+  return (
+    <Card className="sticky top-24 bg-white/80 backdrop-blur-sm border-order-primary/20 shadow-lg">
+      <SheetHeader className="p-6">
+        <SheetTitle className="font-pacifico text-3xl text-order-primary">Keranjang Anda</SheetTitle>
+      </SheetHeader>
+      <CardContent className="max-h-[50vh] overflow-y-auto space-y-4">
+        {cart.length > 0 ? (
+          cart.map(item => (
+            <div key={item.cartId} className="flex gap-4">
+              <div className="flex-1">
+                <p className="font-bold text-order-text">{item.name}</p>
+                 {item.selectedToppings && item.selectedToppings.length > 0 && (
+                  <ul className="text-xs text-order-text/80 list-disc pl-4 mt-1">
+                    {item.selectedToppings.map(topping => {
+                       const toppingInfo = rawMaterials.find(m => m.id === topping.rawMaterialId);
+                       return <li key={topping.rawMaterialId}>{toppingInfo?.name || '...'}</li>
+                    })}
+                  </ul>
+                )}
+                <div className="flex items-center gap-2 mt-2">
+                  <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-order-primary text-order-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity - 1)}>-</Button>
+                  <span>{item.quantity}</span>
+                  <Button variant="outline" size="icon" className="h-6 w-6 bg-transparent border-order-primary text-order-primary" onClick={() => updateCartItemQuantity(item.cartId, item.quantity + 1)}>+</Button>
+                </div>
+              </div>
+              <div className="flex flex-col items-end">
+                  <p className="font-semibold text-order-text">{formatCurrency(item.sellingPrice * item.quantity)}</p>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-order-secondary" onClick={() => removeFromCart(item.cartId)}><Trash2 className="h-4 w-4" /></Button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center text-order-text/80 h-full flex flex-col justify-center items-center py-8">
+              <ShoppingCart className="h-12 w-12 mb-4" />
+              <p>Keranjang Anda kosong.</p>
+              <p className="text-sm">Pilih item dari menu.</p>
+          </div>
+        )}
+      </CardContent>
+       {cart.length > 0 && (
+        <CardFooter className="flex-col items-stretch space-y-4">
+          <Separator className="bg-order-primary/20" />
+          <div className="flex justify-between font-bold text-lg text-order-text">
+              <span>Total</span>
+              <span>{formatCurrency(total)}</span>
+            </div>
+          <DialogClose asChild>
+              <Button onClick={onConfirm} className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold text-lg py-6">Masukkan Pesanan</Button>
+          </DialogClose>
+        </CardFooter>
+      )}
+    </Card>
+  );
+}
+
+
+// --- Order Summary Sheet (for Mobile) ---
+function OrderSummarySheet({ onConfirm }: { onConfirm: () => void }) {
   const { cart, updateCartItemQuantity, removeFromCart, rawMaterials } = useAppContext();
 
   const total = useMemo(() => {
@@ -174,7 +238,7 @@ function OrderSummarySheet({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg bg-order-secondary hover:bg-order-secondary/90 text-white z-20">
+        <Button className="lg:hidden fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg bg-order-secondary hover:bg-order-secondary/90 text-white z-20">
           <ShoppingCart className="h-8 w-8" />
           {cart.length > 0 && (
             <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-order-primary text-xs font-bold">
@@ -229,7 +293,7 @@ function OrderSummarySheet({
                 <span>{formatCurrency(total)}</span>
               </div>
               <DialogClose asChild>
-                <Button onClick={onConfirm} className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold text-lg py-6">Konfirmasi Pesanan</Button>
+                <Button onClick={onConfirm} className="w-full bg-order-primary hover:bg-order-primary/90 text-white font-bold text-lg py-6">Masukkan Pesanan</Button>
               </DialogClose>
             </div>
           </SheetFooter>
@@ -270,7 +334,7 @@ export default function OrderPage() {
 
   const renderProductGrid = (products: (Drink[] | Food[]), type: 'drink' | 'food') => {
      return products.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {products.map(item => (
               <Card 
                 key={item.id} 
@@ -351,31 +415,37 @@ export default function OrderPage() {
                       Pilih menu favorit Anda di bawah ini dan nikmati sensasi rasa yang tak terlupakan.
                   </p>
               </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                <div className="lg:col-span-2 space-y-20">
+                    {/* Minuman Section */}
+                    <div>
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="bg-order-accent/80 p-3 rounded-full shadow-sm">
+                                <CupSoda className="h-8 w-8 text-order-primary"/>
+                            </div>
+                            <h2 className="font-pacifico text-5xl text-order-primary">Minuman</h2>
+                            <div className="flex-grow h-1 bg-gradient-to-r from-order-accent/50 to-transparent rounded-full" />
+                        </div>
+                        {renderProductGrid(drinks, 'drink')}
+                    </div>
 
-              <div className="space-y-20">
-                  {/* Minuman Section */}
-                  <div>
-                      <div className="flex items-center gap-4 mb-8">
-                          <div className="bg-order-accent/80 p-3 rounded-full shadow-sm">
-                              <CupSoda className="h-8 w-8 text-order-primary"/>
-                          </div>
-                          <h2 className="font-pacifico text-5xl text-order-primary">Minuman</h2>
-                          <div className="flex-grow h-1 bg-gradient-to-r from-order-accent/50 to-transparent rounded-full" />
-                      </div>
-                      {renderProductGrid(drinks, 'drink')}
-                  </div>
-
-                  {/* Makanan Section */}
-                  <div>
-                      <div className="flex items-center gap-4 mb-8">
+                    {/* Makanan Section */}
+                    <div>
+                        <div className="flex items-center gap-4 mb-8">
                            <div className="bg-order-accent/80 p-3 rounded-full shadow-sm">
                               <Utensils className="h-8 w-8 text-order-primary"/>
                           </div>
-                          <h2 className="font-pacifico text-5xl text-order-primary">Makanan</h2>
-                          <div className="flex-grow h-1 bg-gradient-to-r from-order-accent/50 to-transparent rounded-full" />
-                      </div>
-                      {renderProductGrid(foods, 'food')}
-                  </div>
+                            <h2 className="font-pacifico text-5xl text-order-primary">Makanan</h2>
+                            <div className="flex-grow h-1 bg-gradient-to-r from-order-accent/50 to-transparent rounded-full" />
+                        </div>
+                        {renderProductGrid(foods, 'food')}
+                    </div>
+                </div>
+
+                <div className="hidden lg:block lg:col-span-1">
+                   <OrderSummaryPanel onConfirm={handleConfirmOrder} />
+                </div>
               </div>
             </div>
           </div>
@@ -384,3 +454,4 @@ export default function OrderPage() {
     </MainLayout>
   );
 }
+
