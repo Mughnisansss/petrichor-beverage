@@ -21,7 +21,6 @@ const topNavItems = [
   { href: "/order", label: "Order" },
   { href: "/kasir", label: "Kasir" },
   { href: "/dompet", label: "Dompet" },
-  { href: "/", label: "Dasbor" },
   { href: "/racik/minuman", label: "Produk" },
 ];
 
