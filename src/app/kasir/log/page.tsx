@@ -6,9 +6,35 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useAppContext } from "@/context/AppContext";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
 
 export default function LogPenjualanPage() {
-    const { sales, drinks, foods, rawMaterials } = useAppContext();
+    const { sales, drinks, foods, rawMaterials, deleteSale } = useAppContext();
+    const { toast } = useToast();
+
+    const handleDelete = async (saleId: string) => {
+        if (window.confirm("Apakah Anda yakin ingin menghapus catatan penjualan ini? Tindakan ini tidak dapat dibatalkan.")) {
+            try {
+                const result = await deleteSale(saleId);
+                 if (!result.ok) {
+                    throw new Error(result.message);
+                }
+                toast({
+                    title: "Sukses",
+                    description: result.message
+                });
+            } catch (error) {
+                 toast({
+                    title: "Error",
+                    description: (error as Error).message,
+                    variant: "destructive"
+                });
+            }
+        }
+    }
 
     return (
         <Card>
@@ -25,6 +51,7 @@ export default function LogPenjualanPage() {
                                 <TableHead>Produk</TableHead>
                                 <TableHead>Info Tambahan</TableHead>
                                 <TableHead className="text-right">Total</TableHead>
+                                <TableHead className="w-[100px] text-right">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -58,12 +85,18 @@ export default function LogPenjualanPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right font-semibold">{formatCurrency(sale.totalSalePrice)}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="destructive" size="icon" onClick={() => handleDelete(sale.id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                    <span className="sr-only">Hapus</span>
+                                                </Button>
+                                            </TableCell>
                                         </TableRow>
                                     );
                                 })
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">
+                                    <TableCell colSpan={5} className="h-24 text-center">
                                         Belum ada riwayat penjualan.
                                     </TableCell>
                                 </TableRow>

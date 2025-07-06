@@ -46,6 +46,11 @@ const apiService = {
     return { ok: res.ok, message: data.message };
   },
   addSale: async (sale: Omit<Sale, 'id' | 'date'>): Promise<Sale> => (await fetch('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sale) })).json(),
+  deleteSale: async (id: string) => {
+    const res = await fetch(`/api/sales/${id}`, { method: 'DELETE' });
+    const data = res.ok ? { message: 'Penjualan berhasil dihapus.' } : await res.json();
+    return { ok: res.ok, message: data.message };
+  },
   batchAddSales: async (sales: Omit<Sale, 'id' | 'date'>[]): Promise<Sale[]> => (await fetch('/api/sales/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sales) })).json(),
   addOperationalCost: async (cost: Omit<OperationalCost, 'id' | 'date'>): Promise<OperationalCost> => (await fetch('/api/operasional', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cost) })).json(),
   updateOperationalCost: async (id: string, cost: Omit<OperationalCost, 'id' | 'date'>): Promise<OperationalCost> => (await fetch(`/api/operasional/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cost) })).json(),
@@ -191,6 +196,12 @@ const localStorageService = {
     setLocalData(data);
     return Promise.resolve(newSale);
   },
+  deleteSale: async (id: string) => {
+    const data = getLocalData();
+    data.sales = data.sales.filter(s => s.id !== id);
+    setLocalData(data);
+    return Promise.resolve({ ok: true, message: 'Penjualan berhasil dihapus.' });
+  },
   batchAddSales: async (sales: Omit<Sale, 'id' | 'date'>[]): Promise<Sale[]> => {
     const data = getLocalData();
     const newSales = sales.map(s => ({ ...s, id: nanoid(), date: new Date().toISOString() }));
@@ -254,6 +265,7 @@ interface AppContextType {
   updateFood: (id: string, food: Omit<Food, 'id'>) => Promise<Food>;
   deleteFood: (id: string) => Promise<{ ok: boolean, message: string }>;
   addSale: (sale: Omit<Sale, 'id' | 'date'>) => Promise<Sale>;
+  deleteSale: (id: string) => Promise<{ ok: boolean; message: string }>;
   batchAddSales: (sales: Omit<Sale, 'id' | 'date'>[]) => Promise<Sale[]>;
   addOperationalCost: (cost: Omit<OperationalCost, 'id' | 'date'>) => Promise<OperationalCost>;
   updateOperationalCost: (id: string, cost: Omit<OperationalCost, 'id'|'date'>) => Promise<OperationalCost>;
@@ -469,6 +481,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateFood: wrap(currentService.updateFood),
       deleteFood: wrap(currentService.deleteFood),
       addSale: wrap(currentService.addSale),
+      deleteSale: wrap(currentService.deleteSale),
       batchAddSales: wrap(currentService.batchAddSales),
       addOperationalCost: wrap(currentService.addOperationalCost),
       updateOperationalCost: wrap(currentService.updateOperationalCost),
