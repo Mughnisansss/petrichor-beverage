@@ -65,6 +65,8 @@ const apiService = {
     const data = res.ok ? { message: 'Bahan baku berhasil dihapus.' } : await res.json();
     return { ok: res.ok, message: data.message };
   },
+  importRawMaterialsFromCsv: async (materials: Omit<RawMaterial, 'id'>[]): Promise<RawMaterial[]> => (await fetch('/api/bahan-baku/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(materials) })).json(),
+  importOperationalCostsFromCsv: async (costs: Omit<OperationalCost, 'id'>[]): Promise<OperationalCost[]> => (await fetch('/api/operasional/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(costs) })).json(),
 };
 
 // --- Local Storage Service ---
@@ -232,6 +234,42 @@ const localStorageService = {
     setLocalData(data);
     return Promise.resolve({ ok: true, message: 'Biaya berhasil dihapus.' });
   },
+  importRawMaterialsFromCsv: async (materials: Omit<RawMaterial, 'id'>[]): Promise<RawMaterial[]> => {
+    const data = getLocalData();
+    if (!data.rawMaterials) data.rawMaterials = [];
+
+    const materialsToAdd: RawMaterial[] = materials.map(mat => ({
+      id: nanoid(),
+      name: mat.name || 'Tanpa Nama',
+      unit: mat.unit || 'pcs',
+      totalQuantity: Number(mat.totalQuantity) || 0,
+      totalCost: Number(mat.totalCost) || 0,
+      costPerUnit: (Number(mat.totalCost) || 0) / (Number(mat.totalQuantity) || 1),
+      category: mat.category || 'main',
+      sellingPrice: mat.sellingPrice || ((Number(mat.totalCost) || 0) / (Number(mat.totalQuantity) || 1)),
+    }));
+
+    data.rawMaterials.push(...materialsToAdd);
+    setLocalData(data);
+    return Promise.resolve(materialsToAdd);
+  },
+  importOperationalCostsFromCsv: async (costs: Omit<OperationalCost, 'id'>[]): Promise<OperationalCost[]> => {
+    const data = getLocalData();
+    if (!data.operationalCosts) data.operationalCosts = [];
+
+    const costsToAdd: OperationalCost[] = costs.map(cost => ({
+      id: nanoid(),
+      description: cost.description || 'Tanpa Deskripsi',
+      amount: Number(cost.amount) || 0,
+      date: cost.date || new Date().toISOString(),
+      recurrence: cost.recurrence || 'sekali',
+    }));
+
+    data.operationalCosts.unshift(...costsToAdd);
+    data.operationalCosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    setLocalData(data);
+    return Promise.resolve(costsToAdd);
+  },
 };
 
 interface AppContextType {
@@ -280,6 +318,8 @@ interface AppContextType {
   submitCustomerOrder: () => Promise<number>;
   updateQueuedOrderStatus: (orderId: string, status: 'pending' | 'ready') => Promise<void>;
   processQueuedOrder: (orderId: string) => Promise<void>;
+  importRawMaterialsFromCsv: (materials: Omit<RawMaterial, 'id'>[]) => Promise<RawMaterial[]>;
+  importOperationalCostsFromCsv: (costs: Omit<OperationalCost, 'id'>[]) => Promise<OperationalCost[]>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -489,6 +529,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addRawMaterial: wrap(currentService.addRawMaterial),
       updateRawMaterial: wrap(currentService.updateRawMaterial),
       deleteRawMaterial: wrap(currentService.deleteRawMaterial),
+      importRawMaterialsFromCsv: wrap(currentService.importRawMaterialsFromCsv),
+      importOperationalCostsFromCsv: wrap(currentService.importOperationalCostsFromCsv),
     }
   }, [currentService, fetchData]);
 
