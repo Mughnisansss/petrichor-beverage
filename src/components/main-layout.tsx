@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from "react";
@@ -140,8 +141,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                  <div className="relative flex overflow-x-hidden">
                     <div className="animate-marquee whitespace-nowrap">
                       <span className="mx-4 text-sm font-medium">{displayText}</span>
+                      <span className="mx-4 text-sm font-medium">{displayText}</span>
                     </div>
                     <div className="absolute top-0 animate-marquee2 whitespace-nowrap">
+                       <span className="mx-4 text-sm font-medium">{displayText}</span>
                        <span className="mx-4 text-sm font-medium">{displayText}</span>
                     </div>
                   </div>
