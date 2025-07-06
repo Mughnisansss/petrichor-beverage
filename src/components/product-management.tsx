@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useRef } from "react";
@@ -224,10 +225,10 @@ const ProductForm = React.forwardRef<
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (file.size > 1 * 1024 * 1024) { // 1MB limit
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
             toast({
                 title: "Ukuran File Terlalu Besar",
-                description: "Silakan pilih gambar dengan ukuran di bawah 1MB.",
+                description: "Silakan pilih gambar dengan ukuran di bawah 5MB.",
                 variant: "destructive"
             });
             return;

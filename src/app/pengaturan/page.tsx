@@ -62,8 +62,8 @@ export default function PengaturanPage() {
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 1 * 1024 * 1024) { // 1MB limit
-        toast({ title: "Ukuran File Terlalu Besar", description: "Silakan pilih gambar dengan ukuran di bawah 1MB.", variant: "destructive" });
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({ title: "Ukuran File Terlalu Besar", description: "Silakan pilih gambar dengan ukuran di bawah 5MB.", variant: "destructive" });
         return;
     }
     const reader = new FileReader();
@@ -242,7 +242,7 @@ export default function PengaturanPage() {
                         {preview && <Button variant="ghost" size="sm" onClick={handleRemoveLogo} className="justify-start"><Trash2 className="mr-2 h-4 w-4" /> Hapus Logo</Button>}
                     </div>
                 </div>
-                <p className="text-sm text-muted-foreground">Rasio 1:1 direkomendasikan. Maks 1MB.</p>
+                <p className="text-sm text-muted-foreground">Rasio 1:1 direkomendasikan. Maks 5MB.</p>
               </div>
             </div>
             <div className="space-y-4">
