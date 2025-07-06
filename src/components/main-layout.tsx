@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo } from "react";
@@ -15,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 
@@ -55,13 +56,16 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           </Button>
         </SheetTrigger>
         <SheetContent side="left">
-          <nav className="grid gap-6 text-lg font-medium">
+           <SheetHeader className="border-b pb-4">
+            <SheetTitle className="sr-only">Menu Navigasi</SheetTitle>
             <Link
               href="/"
               className="flex items-center gap-2 text-lg font-semibold"
             >
               <Logo />
             </Link>
+          </SheetHeader>
+          <nav className="grid gap-4 py-4 text-lg font-medium">
             {topNavItems.map((item) => (
               <Link
                 key={item.href}
