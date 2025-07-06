@@ -103,12 +103,7 @@ const PackagingOptionAccordionItem = ({
   return (
     <AccordionItem value={packagingItem.id} className="border rounded-lg px-4 bg-muted/30">
       <AccordionTrigger>
-        <div className="flex-1 flex justify-between items-center pr-4">
-          {`Opsi Ukuran #${packIndex + 1}`}
-          <Button type="button" variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); removePackaging(packIndex); }}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        {`Opsi Ukuran #${packIndex + 1}`}
       </AccordionTrigger>
       <AccordionContent className="pt-2">
         <div className="space-y-4">
@@ -141,6 +136,13 @@ const PackagingOptionAccordionItem = ({
               ))}
               <Button type="button" variant="outline" size="sm" onClick={() => subAppend({ rawMaterialId: "", quantity: 1 })}><PlusCircle className="mr-2 h-4 w-4" />Tambah Bahan</Button>
             </div>
+          </div>
+          <Separator className="!my-4"/>
+          <div className="flex justify-end">
+              <Button type="button" variant="destructive" size="sm" onClick={() => removePackaging(packIndex)}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Hapus Opsi Ukuran
+              </Button>
           </div>
         </div>
       </AccordionContent>
