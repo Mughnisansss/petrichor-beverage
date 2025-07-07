@@ -8,6 +8,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,19 +40,36 @@ const defaultFormValues: PurchaseFormValues = {
   sellingPrice: 0 
 };
 
+// Schema for editing details only
+const detailsSchema = z.object({
+  name: z.string().min(1, "Nama tidak boleh kosong."),
+  unit: z.string().min(1, "Satuan tidak boleh kosong."),
+  category: z.enum(['main', 'packaging', 'topping']),
+});
+type DetailsFormValues = z.infer<typeof detailsSchema>;
+
+
 export default function BahanBakuPage() {
   const { rawMaterials, addRawMaterial, updateRawMaterial, deleteRawMaterial } = useAppContext();
   const [isFormOpen, setFormOpen] = useState(false);
+  const [isEditDialogOpen, setEditDialogOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
+  const [editingDetailsMaterial, setEditingDetailsMaterial] = useState<RawMaterial | null>(null);
   const { toast } = useToast();
 
   const totalInventoryValue = useMemo(() => {
     return rawMaterials.reduce((sum, material) => sum + (material.totalCost || 0), 0);
   }, [rawMaterials]);
 
+  // Form for new/restock
   const form = useForm<PurchaseFormValues>({
     resolver: zodResolver(purchaseSchema),
     defaultValues: defaultFormValues,
+  });
+  
+  // Form for editing details
+  const detailsForm = useForm<DetailsFormValues>({
+    resolver: zodResolver(detailsSchema),
   });
   
   const watchedPurchaseQuantity = form.watch("purchaseQuantity");
@@ -69,6 +87,7 @@ export default function BahanBakuPage() {
     }
   }, [newPurchaseHpp, form, isFormOpen, watchedCategory]);
 
+  // Submit handler for Restock/New
   async function onSubmit(values: PurchaseFormValues) {
     try {
       let finalSellingPrice = values.sellingPrice;
@@ -116,6 +135,26 @@ export default function BahanBakuPage() {
       toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
     }
   }
+
+  // Submit handler for Editing Details
+  async function onDetailsSubmit(values: DetailsFormValues) {
+    if (!editingDetailsMaterial) return;
+    try {
+      // Combine old financial data with new detail data
+      const payload = {
+          ...editingDetailsMaterial,
+          name: values.name,
+          unit: values.unit,
+          category: values.category,
+      };
+      const { id, ...updateData } = payload;
+      await updateRawMaterial(id, updateData);
+      toast({ title: "Sukses", description: "Detail bahan baku berhasil diperbarui." });
+      setEditDialogOpen(false);
+    } catch (error) {
+      toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
+    }
+  }
   
   const openFormForNew = () => {
     setEditingMaterial(null);
@@ -130,13 +169,22 @@ export default function BahanBakuPage() {
       name: material.name,
       unit: material.unit,
       category: material.category || 'main',
-      // Pre-fill with last purchase data for convenience
       purchaseQuantity: material.lastPurchaseQuantity || 1,
       purchaseCost: material.lastPurchaseCost || material.costPerUnit,
       sellingPrice: material.sellingPrice || 0,
     });
     setFormOpen(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  const handleEditDetails = (material: RawMaterial) => {
+    setEditingDetailsMaterial(material);
+    detailsForm.reset({
+        name: material.name,
+        unit: material.unit,
+        category: material.category,
+    });
+    setEditDialogOpen(true);
   };
   
   const closeForm = () => {
@@ -233,38 +281,64 @@ export default function BahanBakuPage() {
             </Card>
         )}
 
+        <Dialog open={isEditDialogOpen} onOpenChange={setEditDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Edit Detail Bahan Baku</DialogTitle>
+                </DialogHeader>
+                <Form {...detailsForm}>
+                    <form onSubmit={detailsForm.handleSubmit(onDetailsSubmit)} className="space-y-4">
+                        <FormField control={detailsForm.control} name="name" render={({ field }) => (
+                            <FormItem><FormLabel>Nama Bahan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                        <FormField control={detailsForm.control} name="unit" render={({ field }) => (
+                            <FormItem><FormLabel>Satuan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                        <FormField control={detailsForm.control} name="category" render={({ field }) => (
+                            <FormItem><FormLabel>Kategori</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="main">Bahan Utama</SelectItem><SelectItem value="topping">Topping / Tambahan</SelectItem><SelectItem value="packaging">Kemasan / Packaging</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                        )}/>
+                        <Button type="submit">Simpan Perubahan</Button>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+
+
         <Card>
             <CardHeader>
                 <CardTitle>Daftar Inventaris Bahan Baku</CardTitle>
-                <CardDescription>Klik "Restock" untuk menambah stok item yang ada, atau "Tambah Bahan Baku" untuk item baru.</CardDescription>
+                <CardDescription>Klik "Restock" untuk menambah stok, atau "Edit" untuk mengubah detail nama/kategori.</CardDescription>
             </CardHeader>
             <CardContent>
             <Table>
                 <TableHeader>
                 <TableRow>
                     <TableHead>Nama Bahan</TableHead>
-                    <TableHead>Kategori</TableHead>
                     <TableHead>Stok Saat Ini</TableHead>
+                    <TableHead>Total Biaya Stok</TableHead>
                     <TableHead>HPP / Unit</TableHead>
-                    <TableHead className="text-right w-[150px]">Aksi</TableHead>
+                    <TableHead className="text-right w-[220px]">Aksi</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
                 {rawMaterials.length > 0 ? (
                     rawMaterials.map(material => (
                     <TableRow key={material.id}>
-                        <TableCell className="font-medium">{material.name}</TableCell>
-                        <TableCell className="capitalize">{material.category}</TableCell>
+                        <TableCell className="font-medium">{material.name} <span className="text-muted-foreground text-xs">({material.category})</span></TableCell>
                         <TableCell>
                             <div className="font-semibold">{material.totalQuantity.toLocaleString()}</div>
                             <div className="text-xs text-muted-foreground">{material.unit}</div>
                         </TableCell>
+                         <TableCell>{formatCurrency(material.totalCost)}</TableCell>
                         <TableCell>{formatCurrency(material.costPerUnit)} / {material.unit}</TableCell>
                         <TableCell className="text-right">
                            <div className="flex gap-2 justify-end">
-                                <Button variant="outline" size="sm" onClick={() => openFormForRestock(material)}>
+                                <Button variant="secondary" size="sm" onClick={() => openFormForRestock(material)}>
                                     <PackagePlus className="h-4 w-4 mr-2" />
                                     Restock
+                                </Button>
+                                <Button variant="outline" size="icon" onClick={() => handleEditDetails(material)}>
+                                    <Edit className="h-4 w-4" />
                                 </Button>
                                 <Button variant="destructive" size="icon" onClick={() => handleDelete(material.id)}>
                                     <Trash2 className="h-4 w-4" />
@@ -288,3 +362,4 @@ export default function BahanBakuPage() {
   );
 }
 
+    
