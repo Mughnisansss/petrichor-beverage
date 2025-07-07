@@ -7,13 +7,13 @@ import * as z from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { LogOut, AlertTriangle, KeyRound } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/context/AppContext";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const loginSchema = z.object({
   email: z.string().email("Format email tidak valid"),
@@ -88,7 +88,19 @@ export default function AkunPengaturanPage() {
                                  <FormField control={form.control} name="password" render={({ field }) => (
                                     <FormItem><FormLabel>Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>
                                 )}/>
-                                <Button type="submit" disabled={isLoading}>{isLoading ? "Memproses..." : "Login"}</Button>
+                                <div className="flex items-center gap-2">
+                                  <Button type="submit" disabled={isLoading}>{isLoading ? "Memproses..." : "Login"}</Button>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button type="button" variant="ghost" disabled>Buat Akun</Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Fitur pembuatan akun akan segera hadir.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
                             </form>
                         </Form>
                          <Alert className="mt-6">
