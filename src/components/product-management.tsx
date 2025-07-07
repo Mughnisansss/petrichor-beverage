@@ -124,14 +124,14 @@ const PackagingOptionAccordionItem = ({
             <Label className="text-xs">Bahan Kemasan</Label>
             <div className="space-y-2">
               {subFields.map((subItem, subIndex) => (
-                <div key={subItem.id} className="flex items-start gap-2">
+                <div key={subItem.id} className="flex items-center gap-2">
+                  <Button type="button" variant="ghost" size="icon" onClick={() => subRemove(subIndex)} disabled={subFields.length <= 1}><Trash2 className="h-4 w-4" /></Button>
                   <FormField control={control} name={`packagingOptions.${packIndex}.ingredients.${subIndex}.rawMaterialId`} render={({ field }) => (
                     <FormItem className="flex-1"><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih bahan kemasan..." /></SelectTrigger></FormControl><SelectContent>{packagingMaterials.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
                   )} />
                   <FormField control={control} name={`packagingOptions.${packIndex}.ingredients.${subIndex}.quantity`} render={({ field }) => (
                     <FormItem><FormControl><Input type="number" step="1" {...field} className="w-28" placeholder="Jumlah" /></FormControl><FormMessage /></FormItem>
                   )} />
-                  <Button type="button" variant="ghost" size="icon" onClick={() => subRemove(subIndex)} disabled={subFields.length <= 1}><X className="h-4 w-4" /></Button>
                 </div>
               ))}
               <Button type="button" variant="outline" size="sm" onClick={() => subAppend({ rawMaterialId: "", quantity: 1 })}><PlusCircle className="mr-2 h-4 w-4" />Tambah Bahan</Button>
@@ -307,7 +307,8 @@ const ProductForm = React.forwardRef<
                     <FormDescription>Bahan-bahan utama untuk membuat produk ini (di luar kemasan).</FormDescription>
                     <div className="space-y-2 mt-2">
                     {fields.map((field, index) => (
-                        <div key={field.id} className="flex items-start gap-2">
+                        <div key={field.id} className="flex items-center gap-2">
+                           <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={fields.length <= 1}><Trash2 className="h-4 w-4" /></Button>
                            <FormField control={form.control} name={`ingredients.${index}.rawMaterialId`} render={({ field }) => (
                                 <FormItem className="flex-1">
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -323,7 +324,6 @@ const ProductForm = React.forwardRef<
                                     <FormMessage/>
                                 </FormItem>
                             )}/>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={fields.length <= 1}><X className="h-4 w-4" /></Button>
                         </div>
                     ))}
                     <Button type="button" variant="outline" size="sm" onClick={() => append({ rawMaterialId: "", quantity: 1 })}>
