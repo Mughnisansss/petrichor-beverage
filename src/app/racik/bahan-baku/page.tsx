@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -48,6 +49,10 @@ export default function BahanBakuPage() {
   const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
   const [restockMultipliers, setRestockMultipliers] = useState<Record<string, string>>({});
   const { toast } = useToast();
+
+  const totalInventoryValue = useMemo(() => {
+    return rawMaterials.reduce((sum, material) => sum + (material.totalCost || 0), 0);
+  }, [rawMaterials]);
 
   const form = useForm<MaterialFormValues>({
     resolver: zodResolver(materialSchema),
@@ -201,16 +206,22 @@ export default function BahanBakuPage() {
     <div className="flex flex-col gap-8">
         <div className="flex justify-between items-center">
             <h1 className="text-2xl font-semibold">Manajemen Bahan Baku</h1>
-            <Button onClick={() => {
-                if (isFormVisible) {
-                    handleCancel();
-                } else {
-                    handleAddNew();
-                }
-            }}>
-                <PlusCircle className="mr-2 h-4 w-4" /> 
-                {isFormVisible ? "Tutup Form" : "Tambah Bahan Baku"}
-            </Button>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                  <div className="text-sm font-medium text-muted-foreground">Total Nilai Stok</div>
+                  <div className="text-xl font-bold">{formatCurrency(totalInventoryValue)}</div>
+              </div>
+              <Button onClick={() => {
+                  if (isFormVisible) {
+                      handleCancel();
+                  } else {
+                      handleAddNew();
+                  }
+              }}>
+                  <PlusCircle className="mr-2 h-4 w-4" /> 
+                  {isFormVisible ? "Tutup Form" : "Tambah Bahan Baku"}
+              </Button>
+            </div>
         </div>
 
         {isFormVisible && (
