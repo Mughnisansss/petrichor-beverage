@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -39,22 +38,25 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const setValue = (value: T | ((val: T) => T)) => {
-    if (typeof window == "undefined") {
+  const setValue = useCallback((value: T | ((val: T) => T)) => {
+    if (typeof window === 'undefined') {
       console.warn(
         `Tried setting localStorage key “${key}” even though environment is not a client`
       );
+      return;
     }
 
     try {
-      const newValue = value instanceof Function ? value(storedValue) : value;
-      window.localStorage.setItem(key, JSON.stringify(newValue));
-      setStoredValue(newValue);
+      // Use the updater function form of setState to avoid dependency on storedValue
+      setStoredValue((currentStoredValue) => {
+        const newValue = value instanceof Function ? value(currentStoredValue) : value;
+        window.localStorage.setItem(key, JSON.stringify(newValue));
+        return newValue;
+      });
     } catch (error) {
       console.warn(`Error setting localStorage key “${key}”:`, error);
     }
-  };
-
+  }, [key]);
 
   // This effect listens for changes in other tabs
   useEffect(() => {
