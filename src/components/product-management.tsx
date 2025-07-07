@@ -446,8 +446,21 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
     const { toast } = useToast();
     const [isFormVisible, setFormVisible] = useState(false);
     const formRef = useRef<{ handleEdit: (product: Product) => void }>(null);
+    const [categoryFilter, setCategoryFilter] = useState('all');
 
     const productTypeName = productType === 'minuman' ? 'Minuman' : 'Makanan';
+
+    const subCategories = useMemo(() => {
+        const categories = new Set(products.map(p => p.subCategory).filter(Boolean) as string[]);
+        return ['all', ...Array.from(categories)];
+    }, [products]);
+
+    const filteredProducts = useMemo(() => {
+        if (categoryFilter === 'all') {
+            return products;
+        }
+        return products.filter(p => p.subCategory === categoryFilter);
+    }, [products, categoryFilter]);
 
     const handleDelete = async (id: string) => {
         if (!window.confirm(`Apakah Anda yakin ingin menghapus ${productType} ini? Riwayat penjualan tidak akan terhapus.`)) return;
@@ -497,7 +510,26 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
             )}
 
             <Card>
-                <CardHeader><CardTitle>Daftar {productTypeName}</CardTitle></CardHeader>
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle>Daftar {productTypeName}</CardTitle>
+                            <CardDescription>Lihat dan kelola semua {productType} yang terdaftar.</CardDescription>
+                        </div>
+                        <div className="w-full max-w-[200px]">
+                            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Filter kategori..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {subCategories.map(cat => (
+                                        <SelectItem key={cat} value={cat}>{cat === 'all' ? 'Semua Kategori' : cat}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
@@ -509,8 +541,8 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {products.length > 0 ? (
-                            products.map(product => (
+                            {filteredProducts.length > 0 ? (
+                            filteredProducts.map(product => (
                                 <TableRow key={product.id}>
                                     <TableCell className="font-medium flex items-center gap-3">
                                       <Image 
@@ -545,7 +577,7 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
                             ) : (
                             <TableRow>
                                 <TableCell colSpan={4} className="h-24 text-center">
-                                    Belum ada data {productType}.
+                                    Belum ada data {productType} untuk kategori ini.
                                 </TableCell>
                             </TableRow>
                             )}
