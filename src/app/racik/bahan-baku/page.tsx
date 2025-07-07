@@ -8,15 +8,14 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
 import type { RawMaterial } from "@/lib/types";
-import { PlusCircle, Edit, Trash2, CopyPlus } from "lucide-react";
+import { PlusCircle, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
@@ -48,108 +47,13 @@ const defaultFormValues: MaterialFormValues = {
   sellingPrice: 0 
 };
 
-// --- Restock Dialog Component ---
-const restockSchema = z.object({
-  multiplier: z.coerce.number().min(1, "Pengali harus minimal 1").default(1),
-});
-type RestockFormValues = z.infer<typeof restockSchema>;
-
-function RestockDialog({
-  material,
-  isOpen,
-  onOpenChange,
-  onConfirm,
-}: {
-  material: RawMaterial | null;
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: (material: RawMaterial, values: RestockFormValues) => Promise<void>;
-}) {
-  const form = useForm<RestockFormValues>({
-    resolver: zodResolver(restockSchema),
-    defaultValues: { multiplier: 1 },
-  });
-
-  useEffect(() => {
-    if (isOpen) {
-      form.reset({ multiplier: 1 });
-    }
-  }, [isOpen, form]);
-
-  if (!material) return null;
-
-  const multiplier = form.watch("multiplier");
-  const newTotalQuantity = material.totalQuantity * multiplier;
-  const newTotalCost = material.totalCost * multiplier;
-  const newCostPerUnit = (newTotalQuantity > 0) ? newTotalCost / newTotalQuantity : 0;
-
-  const handleSubmit = (values: RestockFormValues) => {
-    onConfirm(material, values);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Restock: {material.name}</DialogTitle>
-          <DialogDescription>
-            Masukkan jumlah lot/paket pembelian baru berdasarkan data pembelian terakhir. Ini akan memperbarui harga pokok bahan baku.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="multiplier"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Pengali Pembelian</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} min="1" step="1" placeholder="cth: 3" />
-                  </FormControl>
-                  <FormDescription>
-                    Jika pembelian terakhir adalah 1 pak, dan sekarang Anda membeli 3 pak, isi '3'.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Card className="bg-muted">
-                <CardHeader className="p-4">
-                    <CardTitle className="text-base">Detail Pembelian Terakhir</CardTitle>
-                    <CardDescription className="text-xs">Ini akan digunakan sebagai dasar pengali.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                    <p><strong>{material.totalQuantity.toLocaleString()} {material.unit}</strong> seharga <strong>{formatCurrency(material.totalCost)}</strong></p>
-                </CardContent>
-            </Card>
-            
-            <Separator />
-            
-            <div className="space-y-1 text-sm">
-                <p className="font-semibold">Kalkulasi Pembelian Baru:</p>
-                <div className="flex justify-between"><span>Jumlah Baru:</span> <span className="font-bold">{newTotalQuantity.toLocaleString()} {material.unit}</span></div>
-                <div className="flex justify-between"><span>Total Biaya Baru:</span> <span className="font-bold">{formatCurrency(newTotalCost)}</span></div>
-                <div className="flex justify-between text-primary"><span>HPP per Unit Baru:</span> <span className="font-bold">{formatCurrency(newCostPerUnit)}</span></div>
-            </div>
-
-            <DialogFooter>
-                <Button type="submit">Konfirmasi & Update HPP</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 // --- Main Page Component ---
 export default function BahanBakuPage() {
   const { rawMaterials, addRawMaterial, updateRawMaterial, deleteRawMaterial } = useAppContext();
   const [isFormVisible, setFormVisible] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
-  const [isRestockDialogOpen, setRestockDialogOpen] = useState(false);
-  const [restockingMaterial, setRestockingMaterial] = useState<RawMaterial | null>(null);
+  const [restockQuantities, setRestockQuantities] = useState<Record<string, number>>({});
   const { toast } = useToast();
 
   const form = useForm<MaterialFormValues>({
@@ -234,14 +138,22 @@ export default function BahanBakuPage() {
     }
   };
 
-  const handleRestockClick = (material: RawMaterial) => {
-    setRestockingMaterial(material);
-    setRestockDialogOpen(true);
+  const handleRestockQuantityChange = (materialId: string, value: string) => {
+    const quantity = parseInt(value, 10);
+    setRestockQuantities(prev => ({
+        ...prev,
+        [materialId]: isNaN(quantity) || quantity < 1 ? 1 : quantity,
+    }));
   };
-  
-  async function handleConfirmRestock(material: RawMaterial, values: RestockFormValues) {
+
+  const handleRestock = async (material: RawMaterial) => {
     try {
-        const { multiplier } = values;
+        const multiplier = restockQuantities[material.id] || 1;
+        if (multiplier <= 0) {
+          toast({ title: "Jumlah Tidak Valid", description: "Pengali restock harus lebih dari 0.", variant: "destructive"});
+          return;
+        }
+
         const newTotalQuantity = material.totalQuantity * multiplier;
         const newTotalCost = material.totalCost * multiplier;
         const newCostPerUnit = newTotalQuantity > 0 ? newTotalCost / newTotalQuantity : 0;
@@ -262,20 +174,13 @@ export default function BahanBakuPage() {
 
         await updateRawMaterial(material.id, payload);
         toast({ title: "Sukses", description: `Stok & HPP untuk ${material.name} berhasil diperbarui.` });
-        setRestockDialogOpen(false);
     } catch (error) {
         toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
     }
-  }
+  };
   
   return (
     <div className="flex flex-col gap-8">
-        <RestockDialog
-            isOpen={isRestockDialogOpen}
-            onOpenChange={setRestockDialogOpen}
-            material={restockingMaterial}
-            onConfirm={handleConfirmRestock}
-        />
         <div className="flex justify-between items-center">
             <h1 className="text-2xl font-semibold">Manajemen Bahan Baku</h1>
             <Button onClick={() => {
@@ -428,6 +333,7 @@ export default function BahanBakuPage() {
         <Card>
             <CardHeader>
             <CardTitle>Daftar Bahan Baku</CardTitle>
+             <CardDescription>Gunakan kolom 'Restock' untuk mencatat pembelian ulang dengan cepat berdasarkan data pembelian terakhir.</CardDescription>
             </CardHeader>
             <CardContent>
             <Table>
@@ -437,6 +343,7 @@ export default function BahanBakuPage() {
                     <TableHead>Kategori</TableHead>
                     <TableHead>Detail Biaya</TableHead>
                     <TableHead>Harga Jual</TableHead>
+                    <TableHead>Restock</TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -447,7 +354,7 @@ export default function BahanBakuPage() {
                         <TableCell className="font-medium">{material.name}</TableCell>
                         <TableCell>{categoryLabels[material.category] || 'Utama'}</TableCell>
                         <TableCell>
-                        {formatCurrency(material.totalCost)} / {material.totalQuantity} {material.unit}
+                        {formatCurrency(material.totalCost)} / {material.totalQuantity.toLocaleString()} {material.unit}
                         </TableCell>
                         <TableCell>
                         {material.category === 'topping' 
@@ -455,10 +362,21 @@ export default function BahanBakuPage() {
                             : formatCurrency(material.costPerUnit)
                         }
                         </TableCell>
+                        <TableCell>
+                            <div className="flex gap-2 items-center">
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    className="w-16 h-8"
+                                    placeholder="x1"
+                                    value={restockQuantities[material.id] || ''}
+                                    onChange={(e) => handleRestockQuantityChange(material.id, e.target.value)}
+                                />
+                                <Button size="sm" variant="secondary" onClick={() => handleRestock(material)}>Restock</Button>
+                            </div>
+                        </TableCell>
                         <TableCell className="flex gap-2 justify-end">
-                            <Button variant="outline" size="icon" onClick={() => handleRestockClick(material)}>
-                                <CopyPlus className="h-4 w-4" />
-                            </Button>
                             <Button variant="outline" size="icon" onClick={() => handleEdit(material)}>
                                 <Edit className="h-4 w-4" />
                             </Button>
@@ -470,7 +388,7 @@ export default function BahanBakuPage() {
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                         Belum ada data bahan baku.
                     </TableCell>
                     </TableRow>
