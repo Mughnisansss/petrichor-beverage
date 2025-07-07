@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from "react";
@@ -20,9 +21,9 @@ import {
 } from "@/components/ui/sheet";
 
 const topNavItems = [
+  { href: "/", label: "Dasbor" },
   { href: "/order", label: "Order" },
   { href: "/kasir", label: "Kasir" },
-  { href: "/dompet", label: "Dompet" },
   { href: "/racik/minuman", label: "Produk" },
 ];
 
@@ -39,7 +40,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     if (href === '/') return currentPath === '/';
     if (href === '/racik/minuman') return currentPath.startsWith('/racik');
     if (href === '/kasir') return currentPath.startsWith('/kasir');
-    if (href === '/dompet') return currentPath.startsWith('/dompet');
     return currentPath.startsWith(href);
   };
 

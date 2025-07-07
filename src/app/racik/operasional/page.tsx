@@ -5,7 +5,7 @@ import { MainLayout } from "@/components/main-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Wallet } from "lucide-react";
+import { BarChart2 } from "lucide-react";
 
 export default function OperasionalPageMoved() {
   return (
@@ -14,16 +14,16 @@ export default function OperasionalPageMoved() {
         <Card className="w-full max-w-lg text-center">
            <CardHeader>
             <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit">
-              <Wallet className="h-8 w-8 text-primary" />
+              <BarChart2 className="h-8 w-8 text-primary" />
             </div>
             <CardTitle className="mt-4">Halaman Telah Dipindahkan</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-6">
-              Manajemen Biaya Operasional kini menjadi bagian dari menu 'Dompet' untuk pengelolaan keuangan yang terpusat.
+              Manajemen Biaya Operasional kini menjadi bagian dari Dasbor utama untuk pengelolaan keuangan yang terpusat.
             </p>
             <Button asChild>
-                <Link href="/dompet/operasional">Buka Biaya Operasional</Link>
+                <Link href="/">Buka Dasbor</Link>
             </Button>
           </CardContent>
         </Card>
