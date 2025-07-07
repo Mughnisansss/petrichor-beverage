@@ -22,6 +22,18 @@ const apiService = {
     if (!res.ok) throw new Error('Failed to fetch data from server');
     return res.json();
   },
+  register: async (details: {name: string, email: string, password: string}): Promise<User> => {
+      const res = await fetch('/api/user/register', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(details)
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Registration failed");
+      }
+      return res.json();
+  },
   login: async (email?: string, password?: string): Promise<User> => {
       const res = await fetch('/api/user/login', { 
         method: 'POST', 
@@ -111,13 +123,25 @@ const setLocalData = (data: DbData) => {
 
 const localStorageService = {
   getData: async (): Promise<DbData> => Promise.resolve(getLocalData()),
+  register: async (details: {name: string, email: string, password: string}): Promise<User> => {
+    const data = getLocalData();
+    data.username = details.email;
+    data.password = details.password;
+    const newUser: User = { name: details.name, email: details.email, avatar: `https://placehold.co/100x100.png?text=${details.name.charAt(0)}` };
+    data.user = newUser;
+    setLocalData(data);
+    return Promise.resolve(newUser);
+  },
   login: async (email?: string, password?: string): Promise<User> => {
     const data = getLocalData();
     if (email === data.username && password === data.password) {
       const dummyUser: User = { name: "Alex Doe", email: "alex.doe@example.com", avatar: "https://placehold.co/100x100.png" };
-      data.user = dummyUser;
+      data.user = data.user || dummyUser; // Use existing user data if available, otherwise default
+      if (email === "admin@example.com") {
+        data.user.name = "Alex Doe"
+      }
       setLocalData(data);
-      return Promise.resolve(dummyUser);
+      return Promise.resolve(data.user);
     } else {
       return Promise.reject(new Error("Email atau kata sandi salah."));
     }
@@ -329,6 +353,7 @@ interface AppContextType {
   addCashExpense: (expense: { description: string, amount: number }) => void;
   deleteCashExpense: (id: string) => void;
   fetchData: () => Promise<void>;
+  register: (details: {name: string, email: string, password: string}) => Promise<User>;
   login: (email?: string, password?: string) => Promise<User>;
   logout: () => Promise<void>;
   importData: (data: DbData) => Promise<{ ok: boolean, message: string }>;
@@ -547,7 +572,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       };
     };
     
-    // We don't wrap login/logout because they are the *source* of the fetchData call
+    // We don't wrap login/logout/register because they are the *source* of the fetchData call
     const login = async (email?: string, password?: string) => {
       const user = await currentService.login(email, password);
       await fetchData();
@@ -558,10 +583,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       await currentService.logout();
       await fetchData();
     }
+    
+    const register = async (details: {name: string, email: string, password: string}) => {
+        const user = await currentService.register(details);
+        await fetchData();
+        return user;
+    }
 
     return {
       login,
       logout,
+      register,
       addDrink: wrap(currentService.addDrink),
       updateDrink: wrap(currentService.updateDrink),
       deleteDrink: wrap(currentService.deleteDrink),
