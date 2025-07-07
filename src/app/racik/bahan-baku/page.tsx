@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -360,6 +359,7 @@ export default function BahanBakuPage() {
                 <TableRow>
                     <TableHead>Nama Bahan</TableHead>
                     <TableHead>Stok Saat Ini</TableHead>
+                    <TableHead>Total Biaya Stok</TableHead>
                     <TableHead>Harga Pokok (HPP)</TableHead>
                     <TableHead className="text-right w-[220px]">Aksi & Restock Cepat</TableHead>
                 </TableRow>
@@ -370,6 +370,7 @@ export default function BahanBakuPage() {
                     <TableRow key={material.id}>
                         <TableCell className="font-medium">{material.name}</TableCell>
                         <TableCell>{material.totalQuantity.toLocaleString()} {material.unit}</TableCell>
+                        <TableCell>{formatCurrency(material.totalCost)}</TableCell>
                         <TableCell>{formatCurrency(material.costPerUnit)} / {material.unit}</TableCell>
                         <TableCell>
                             <div className="flex gap-2 justify-end items-center">
