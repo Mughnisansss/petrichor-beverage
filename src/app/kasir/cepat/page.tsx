@@ -13,9 +13,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, cn } from "@/lib/utils";
-import { Plus, CupSoda, Utensils, Flame, Snowflake } from "lucide-react";
+import { Plus, CupSoda, Utensils } from "lucide-react";
 import type { Drink, Food, Sale, Ingredient, RawMaterial } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Helper Component: Quick Sell Customization Dialog
 function QuickSellDialog({
@@ -112,12 +113,12 @@ function QuickSellDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Kustomisasi: {product?.name || 'Produk'}</DialogTitle>
           <DialogDescription>Pilih ukuran dan tambahan untuk penjualan cepat.</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4 max-h-[65vh] overflow-y-auto pr-2">
+        <div className="space-y-4 py-4 pr-2">
             {packagingOptions.length > 0 && (
                 <div className="space-y-2">
                     <h4 className="font-semibold">Ukuran</h4>
@@ -181,8 +182,28 @@ export default function PenjualanCepatPage() {
     const [isCustomizeDialogOpen, setCustomizeDialogOpen] = useState(false);
     const [customizingProductInfo, setCustomizingProductInfo] = useState<{product: Drink | Food, type: 'drink' | 'food'} | null>(null);
 
-    const hotDrinks = useMemo(() => drinks.filter(d => d.temperature === 'hot'), [drinks]);
-    const coldDrinks = useMemo(() => drinks.filter(d => d.temperature === 'cold' || !d.temperature), [drinks]);
+    const [selectedDrinkSubCategory, setSelectedDrinkSubCategory] = useState('all');
+    const [selectedFoodSubCategory, setSelectedFoodSubCategory] = useState('all');
+
+    const drinkSubCategories = useMemo(() => {
+        const categories = new Set(drinks.map(d => d.subCategory).filter(Boolean) as string[]);
+        return ['all', ...Array.from(categories)];
+    }, [drinks]);
+
+    const foodSubCategories = useMemo(() => {
+        const categories = new Set(foods.map(f => f.subCategory).filter(Boolean) as string[]);
+        return ['all', ...Array.from(categories)];
+    }, [foods]);
+
+    const filteredDrinks = useMemo(() => {
+        if (selectedDrinkSubCategory === 'all') return drinks;
+        return drinks.filter(d => d.subCategory === selectedDrinkSubCategory);
+    }, [drinks, selectedDrinkSubCategory]);
+
+    const filteredFoods = useMemo(() => {
+        if (selectedFoodSubCategory === 'all') return foods;
+        return foods.filter(f => f.subCategory === selectedFoodSubCategory);
+    }, [foods, selectedFoodSubCategory]);
 
 
     async function handleQuickSell(product: Drink | Food, type: 'drink' | 'food') {
@@ -218,7 +239,7 @@ export default function PenjualanCepatPage() {
         if (products.length === 0) {
         return (
             <div className="text-center text-muted-foreground p-4 col-span-full">
-                Belum ada data {type === 'drink' ? 'minuman' : 'makanan'} untuk kategori ini.
+                Tidak ada produk yang cocok dengan filter ini.
             </div>
         )
         }
@@ -262,36 +283,46 @@ export default function PenjualanCepatPage() {
         <Card>
             <CardHeader>
                 <CardTitle>Kasir Penjualan Cepat</CardTitle>
-                <CardDescription>Klik tombol pada item untuk mencatat penjualan. Jika ada kustomisasi (ukuran/topping), dialog akan muncul.</CardDescription>
+                <CardDescription>Klik tombol pada item untuk mencatat penjualan. Gunakan filter untuk mencari produk.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div>
-                    <div className="flex items-center gap-2 mb-4">
-                        <Flame className="h-5 w-5 text-primary" />
-                        <h3 className="text-lg font-semibold">Minuman Panas</h3>
+                    <div className="flex items-center justify-between gap-2 mb-4">
+                        <div className="flex items-center gap-2">
+                            <CupSoda className="h-5 w-5 text-primary" />
+                            <h3 className="text-lg font-semibold">Minuman</h3>
+                        </div>
+                        <Select value={selectedDrinkSubCategory} onValueChange={setSelectedDrinkSubCategory}>
+                            <SelectTrigger className="w-auto sm:w-[180px]"><SelectValue placeholder="Filter..." /></SelectTrigger>
+                            <SelectContent>
+                                {drinkSubCategories.map(cat => (
+                                    <SelectItem key={cat} value={cat}>{cat === 'all' ? 'Semua Kategori' : cat}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {renderProductGrid(hotDrinks, 'drink')}
+                        {renderProductGrid(filteredDrinks, 'drink')}
                     </div>
                 </div>
                 <Separator />
                 <div>
-                    <div className="flex items-center gap-2 mb-4">
-                        <Snowflake className="h-5 w-5 text-primary" />
-                        <h3 className="text-lg font-semibold">Minuman Dingin</h3>
+                    <div className="flex items-center justify-between gap-2 mb-4">
+                        <div className="flex items-center gap-2">
+                            <Utensils className="h-5 w-5 text-primary" />
+                            <h3 className="text-lg font-semibold">Makanan</h3>
+                        </div>
+                         <Select value={selectedFoodSubCategory} onValueChange={setSelectedFoodSubCategory}>
+                            <SelectTrigger className="w-auto sm:w-[180px]"><SelectValue placeholder="Filter..." /></SelectTrigger>
+                            <SelectContent>
+                                {foodSubCategories.map(cat => (
+                                    <SelectItem key={cat} value={cat}>{cat === 'all' ? 'Semua Kategori' : cat}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {renderProductGrid(coldDrinks, 'drink')}
-                    </div>
-                </div>
-                <Separator />
-                <div>
-                    <div className="flex items-center gap-2 mb-4">
-                        <Utensils className="h-5 w-5 text-primary" />
-                        <h3 className="text-lg font-semibold">Makanan</h3>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {renderProductGrid(foods, 'food')}
+                        {renderProductGrid(filteredFoods, 'food')}
                     </div>
                 </div>
             </CardContent>

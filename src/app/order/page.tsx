@@ -7,7 +7,7 @@ import { useAppContext } from "@/context/AppContext";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, cn } from "@/lib/utils";
-import { CupSoda, Utensils, Plus, ShoppingCart, Trash2, Flame, Snowflake } from "lucide-react";
+import { CupSoda, Utensils, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { MainLayout } from "@/components/main-layout";
 import type { Drink, Food, RawMaterial, Ingredient, CartItem, PackagingInfo } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -132,12 +132,12 @@ function ProductCustomizationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-background border-primary font-body">
+      <DialogContent className="bg-background border-primary font-body max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-pacifico text-3xl text-primary">{product.name}</DialogTitle>
           <DialogDescription className="text-foreground/80">Pilih ukuran, tambahan, dan jumlah untuk pesanan Anda.</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4 max-h-[65vh] overflow-y-auto pr-2">
+        <div className="space-y-4 py-4 pr-2">
           
           {packagingOptions.length > 0 && (
             <div className="space-y-2">
@@ -361,9 +361,27 @@ export default function OrderPage() {
   const [newQueueNumber, setNewQueueNumber] = useState<number | null>(null);
   const { toast } = useToast();
 
-  const hotDrinks = useMemo(() => drinks.filter(d => d.temperature === 'hot'), [drinks]);
-  const coldDrinks = useMemo(() => drinks.filter(d => d.temperature === 'cold' || !d.temperature), [drinks]);
+  const groupedDrinks = useMemo(() => {
+    return drinks.reduce((acc, drink) => {
+        const category = drink.subCategory || 'Minuman Lainnya';
+        if (!acc[category]) {
+            acc[category] = [];
+        }
+        acc[category].push(drink);
+        return acc;
+    }, {} as Record<string, Drink[]>);
+  }, [drinks]);
 
+  const groupedFoods = useMemo(() => {
+      return foods.reduce((acc, food) => {
+          const category = food.subCategory || 'Makanan Lainnya';
+          if (!acc[category]) {
+              acc[category] = [];
+          }
+          acc[category].push(food);
+          return acc;
+      }, {} as Record<string, Food[]>);
+  }, [foods]);
 
   const handleOrderClick = (product: Drink | Food, type: 'drink' | 'food') => {
     setProductType(type);
@@ -473,45 +491,44 @@ export default function OrderPage() {
                 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
                     <div className="lg:col-span-2 space-y-20">
-                        {/* Hot Drinks Section */}
-                        {hotDrinks.length > 0 && (
-                            <div>
+                        {/* Drinks Sections */}
+                        {Object.entries(groupedDrinks).map(([category, products]) => (
+                            <div key={`drink-${category}`}>
                                 <div className="flex items-center gap-4 mb-8">
                                     <div className="bg-accent/80 p-3 rounded-full shadow-sm">
-                                        <Flame className="h-8 w-8 text-primary"/>
+                                        <CupSoda className="h-8 w-8 text-primary"/>
                                     </div>
-                                    <h2 className="font-pacifico text-5xl text-primary">Minuman Panas</h2>
+                                    <h2 className="font-pacifico text-5xl text-primary capitalize">{category}</h2>
                                     <div className="flex-grow h-1 bg-gradient-to-r from-accent/50 to-transparent rounded-full" />
                                 </div>
-                                {renderProductGrid(hotDrinks, 'drink')}
+                                {renderProductGrid(products, 'drink')}
                             </div>
-                        )}
+                        ))}
 
-                        {/* Cold Drinks Section */}
-                        {coldDrinks.length > 0 && (
-                            <div>
+                        {/* Foods Sections */}
+                        {Object.entries(groupedFoods).map(([category, products]) => (
+                            <div key={`food-${category}`}>
                                 <div className="flex items-center gap-4 mb-8">
-                                    <div className="bg-accent/80 p-3 rounded-full shadow-sm">
-                                        <Snowflake className="h-8 w-8 text-primary"/>
-                                    </div>
-                                    <h2 className="font-pacifico text-5xl text-primary">Minuman Dingin</h2>
+                                <div className="bg-accent/80 p-3 rounded-full shadow-sm">
+                                    <Utensils className="h-8 w-8 text-primary"/>
+                                </div>
+                                    <h2 className="font-pacifico text-5xl text-primary capitalize">{category}</h2>
                                     <div className="flex-grow h-1 bg-gradient-to-r from-accent/50 to-transparent rounded-full" />
                                 </div>
-                                {renderProductGrid(coldDrinks, 'drink')}
+                                {renderProductGrid(products, 'food')}
                             </div>
+                        ))}
+                        
+                        {/* Handle case where there are no products at all */}
+                        {drinks.length === 0 && foods.length === 0 && (
+                          <div>
+                            <h2 className="font-pacifico text-5xl text-primary mb-8">Menu</h2>
+                            <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-primary/20 rounded-lg text-center h-48 bg-card">
+                              <p className="text-foreground font-semibold">Menu Akan Segera Hadir!</p>
+                              <p className="text-sm text-muted-foreground mt-1">Nantikan produk-produk menarik dari kami.</p>
+                            </div>
+                          </div>
                         )}
-
-                        {/* Makanan Section */}
-                        <div>
-                            <div className="flex items-center gap-4 mb-8">
-                            <div className="bg-accent/80 p-3 rounded-full shadow-sm">
-                                <Utensils className="h-8 w-8 text-primary"/>
-                            </div>
-                                <h2 className="font-pacifico text-5xl text-primary">Makanan</h2>
-                                <div className="flex-grow h-1 bg-gradient-to-r from-accent/50 to-transparent rounded-full" />
-                            </div>
-                            {renderProductGrid(foods, 'food')}
-                        </div>
                     </div>
 
                     <div className="hidden lg:block lg:col-span-1 sticky top-24">

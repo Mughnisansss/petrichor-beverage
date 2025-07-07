@@ -164,25 +164,17 @@ const ProductForm = React.forwardRef<
         name: z.string().min(1, "Nama produk tidak boleh kosong"),
         imageUri: z.string().optional(),
         sellingPrice: z.coerce.number().min(0, "Harga jual dasar tidak boleh negatif."),
-        temperature: z.enum(['hot', 'cold']).optional(),
+        subCategory: z.string().optional(),
         ingredients: z.array(ingredientSchema).min(1, "Produk harus memiliki setidaknya 1 bahan isi."),
         availableToppings: z.array(z.string()).optional(),
         packagingOptions: z.array(packagingInfoSchema).optional(),
-    }).refine((data) => {
-        if (productType === 'minuman') {
-            return !!data.temperature;
-        }
-        return true;
-    }, {
-        message: "Jenis minuman (panas/dingin) harus dipilih.",
-        path: ["temperature"],
     });
 
     type ProductFormValues = z.infer<typeof productSchema>;
 
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),
-        defaultValues: { name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined, availableToppings: [], packagingOptions: [] },
+        defaultValues: { name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined, subCategory: "", availableToppings: [], packagingOptions: [] },
     });
 
     const { fields, append, remove } = useFieldArray({ control: form.control, name: "ingredients" });
@@ -215,7 +207,7 @@ const ProductForm = React.forwardRef<
             onFinished();
             setEditingProduct(null);
             setPreview(null);
-            form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined, availableToppings: [], packagingOptions: [] });
+            form.reset({ name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined, subCategory: "", availableToppings: [], packagingOptions: [] });
         } catch (error) {
             toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
         }
@@ -227,7 +219,7 @@ const ProductForm = React.forwardRef<
             setPreview(product.imageUri || null);
             form.reset({
                 ...product,
-                temperature: (product as Drink).temperature,
+                subCategory: product.subCategory || "",
                 availableToppings: product.availableToppings || [],
                 packagingOptions: product.packagingOptions || [],
             });
@@ -269,29 +261,14 @@ const ProductForm = React.forwardRef<
                     <FormField control={form.control} name="name" render={({ field }) => (
                         <FormItem><FormLabel>Nama {productTypeName}</FormLabel><FormControl><Input {...field} placeholder={`cth: ${productType === 'minuman' ? 'Es Kopi Susu' : 'Nasi Goreng'}`} /></FormControl><FormMessage /></FormItem>
                     )}/>
-                     {productType === 'minuman' && (
-                        <FormField
-                        control={form.control}
-                        name="temperature"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Jenis Minuman</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih jenis (panas/dingin)..." />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    <SelectItem value="cold">Dingin</SelectItem>
-                                    <SelectItem value="hot">Panas</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                    <FormField control={form.control} name="subCategory" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Sub-Kategori (Opsional)</FormLabel>
+                            <FormControl><Input {...field} placeholder="cth: Panas, Dingin, Jus, Gorengan..." /></FormControl>
+                            <FormDescription>Beri sub-kategori agar mudah dikelompokkan di menu.</FormDescription>
                             <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                    )}
+                        </FormItem>
+                    )}/>
                     <FormField control={form.control} name="sellingPrice" render={({ field }) => (
                         <FormItem><FormLabel>Harga Jual Dasar</FormLabel><FormControl><Input type="number" {...field} placeholder={`cth: 15000`} /></FormControl><FormDescription>Harga untuk ukuran terkecil/default.</FormDescription><FormMessage /></FormItem>
                     )}/>
@@ -546,9 +523,9 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
                                       />
                                       <div>
                                         {product.name}
-                                        {productType === 'minuman' && (product as Drink).temperature && (
+                                        {product.subCategory && (
                                             <Badge variant="outline" className="ml-2 capitalize">
-                                            {(product as Drink).temperature}
+                                            {product.subCategory}
                                             </Badge>
                                         )}
                                       </div>

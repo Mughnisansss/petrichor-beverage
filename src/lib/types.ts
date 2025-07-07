@@ -47,7 +47,7 @@ export interface Drink {
   id:string;
   name:string;
   imageUri?: string;
-  temperature?: 'hot' | 'cold';
+  subCategory?: string;
   ingredients: Ingredient[]; // Contents
   costPrice: number; // Cost of contents ONLY
   sellingPrice: number; // BASE selling price
@@ -59,6 +59,7 @@ export interface Food {
   id: string;
   name: string;
   imageUri?: string;
+  subCategory?: string;
   ingredients: Ingredient[]; // Contents
   costPrice: number; // Cost of contents ONLY
   sellingPrice: number; // BASE selling price

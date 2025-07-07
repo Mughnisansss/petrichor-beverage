@@ -419,8 +419,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (typeof initialCapital === 'number') setInitialCapital(initialCapital);
       if (Array.isArray(cashExpenses)) setCashExpenses(cashExpenses);
 
+      // --- Data Migrations ---
+      if (restOfDbData.drinks && Array.isArray(restOfDbData.drinks)) {
+        restOfDbData.drinks = restOfDbData.drinks.map((drink: any) => {
+          // Migration from `temperature` to `subCategory`
+          if (drink.temperature && !drink.subCategory) {
+            drink.subCategory = drink.temperature === 'hot' ? 'Panas' : 'Dingin';
+            delete drink.temperature;
+          }
+          return drink;
+        });
+      }
+
       if (restOfDbData.sales && Array.isArray(restOfDbData.sales)) {
         restOfDbData.sales = restOfDbData.sales.map((sale: any) => {
+          // Migration from `drinkId` to `productId`
           if (sale.drinkId && typeof sale.productId === 'undefined') {
             const { drinkId, ...rest } = sale;
             return { ...rest, productId: drinkId, productType: 'drink' };
