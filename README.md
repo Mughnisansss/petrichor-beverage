@@ -40,41 +40,111 @@ Petrichor adalah aplikasi web lengkap yang dibuat dengan Next.js, dirancang untu
     ```
     Aplikasi akan tersedia di [http://localhost:9002](http://localhost:9002).
 
-## Deployment
+## Menuju Produksi: Implementasi Multi-Pengguna
 
-### Prasyarat Penting untuk Produksi
+**PERINGATAN PENTING:** Sistem akun dan penyimpanan data saat ini adalah **SIMULASI PENGGUNA TUNGGAL** dan **TIDAK AMAN** untuk digunakan di lingkungan produksi. Sebelum aplikasi ini dapat digunakan oleh pengguna nyata atau di-deploy secara online, Anda **HARUS** melakukan dua perubahan mendasar: mengganti sistem autentikasi dan database.
 
-Aplikasi ini menggunakan sistem penyimpanan data dan autentikasi yang **hanya cocok untuk pengembangan** dan **tidak aman untuk produksi.** Sebelum mendeploy untuk penggunaan nyata, Anda **harus** mengganti logika berikut:
+### Konsep Masalah
 
-1.  **Database Persisten (Wajib):**
-    *   **Masalah:** Mode "Server" (`db.json`) dan "Lokal" (Local Storage) tidak persisten di lingkungan hosting modern (Vercel, Firebase App Hosting). Data akan hilang setelah setiap deployment atau restart server.
-    *   **Solusi:** Ganti logika di `src/lib/db.ts` dan `src/context/AppContext.tsx` untuk terhubung ke database cloud seperti **Firebase Firestore** (direkomendasikan) atau database SQL (Postgres, MySQL).
+1.  **Penyimpanan Data Tidak Persisten**: Mode "Server" (`db.json`) dan "Lokal" (Local Storage) bersifat sementara di platform hosting modern (seperti Vercel atau Firebase App Hosting). **Data akan hilang** setiap kali server di-restart atau di-deploy ulang.
+2.  **Sistem Akun Tidak Aman**: Sistem login saat ini hanya **mensimulasikan satu akun tunggal**.
+    - **Satu Kunci untuk Semua**: Hanya ada satu pasang email dan kata sandi yang dikenali.
+    - **Data Tertimpa**: Mendaftarkan "akun" baru akan **menimpa** kredensial login sebelumnya, bukan membuat akun terpisah.
+    - **Tidak Ada Privasi Data**: Semua data (produk, penjualan) bersifat global. Tidak ada pemisahan data antar pengguna.
 
-2.  **Sistem Autentikasi Nyata (Wajib):**
-    *   **Masalah:** Sistem login saat ini adalah **simulasi satu akun tunggal**. Ini berarti:
-        *   **Hanya Satu Akun:** Aplikasi hanya mengenali satu pasang email dan kata sandi pada satu waktu.
-        *   **Data Tertimpa:** Mendaftarkan "akun" baru akan **menimpa** kredensial login sebelumnya. Ini tidak membuat akun terpisah, melainkan mengubah kunci akses ke seluruh data.
-        *   **Tidak Aman:** Kata sandi disimpan dalam teks biasa dan tidak ada mekanisme keamanan yang sebenarnya.
-    *   **Solusi:** Implementasikan penyedia autentikasi pihak ketiga yang aman seperti **Firebase Authentication** atau **Clerk**. Ini akan menangani pendaftaran pengguna, login, keamanan sesi, dan yang terpenting, memungkinkan Anda untuk mengaitkan data dengan pengguna tertentu (`userId`).
+### Panduan Implementasi Sistem Multi-Pengguna (Contoh dengan Firebase)
 
-### Panduan Implementasi Autentikasi (Contoh dengan Firebase)
+Berikut adalah panduan langkah demi langkah untuk mengimplementasikan sistem multi-pengguna yang aman menggunakan **Firebase Authentication** dan **Cloud Firestore**.
 
-1.  **Buat Proyek Firebase:** Buka [Firebase Console](https://console.firebase.google.com/), buat proyek baru, dan aktifkan **Authentication** (dengan penyedia Google) dan **Firestore**.
-2.  **Install SDK Firebase:**
+#### Langkah 1: Siapkan Proyek Firebase
+1.  Buka [Firebase Console](https://console.firebase.google.com/).
+2.  Buat proyek baru.
+3.  Di dalam proyek Anda, aktifkan dua layanan:
+    - **Authentication**: Buka tab "Authentication", klik "Get Started", dan aktifkan penyedia login yang Anda inginkan (misalnya, **Google** dan **Email/Password**).
+    - **Firestore Database**: Buka tab "Firestore Database", klik "Create database", mulai dalam mode produksi (production mode), dan pilih lokasi server.
+
+#### Langkah 2: Install dan Konfigurasi Firebase SDK
+1.  Install Firebase SDK di proyek Anda:
     ```bash
     npm install firebase
     ```
-3.  **Konfigurasi Firebase:** Buat file konfigurasi di proyek Anda (misalnya, `src/lib/firebase.ts`) dengan kredensial dari proyek Firebase Anda.
-4.  **Ganti Logika Login/Logout:**
-    *   Di `src/context/AppContext.tsx`, ganti panggilan ke `apiService.login` dan `apiService.logout` dengan fungsi dari SDK Firebase, seperti `signInWithPopup(auth, provider)` dan `signOut(auth)`.
-    *   Hapus endpoint API di `/api/user/` yang tidak lagi diperlukan.
-5.  **Ikat Data ke Pengguna:**
-    *   Saat menyimpan data (misalnya, resep baru di `db.json` atau Firestore), tambahkan field `userId` yang berisi ID unik dari pengguna yang sedang login (`user.uid` dari Firebase).
-    *   Saat mengambil data, filter berdasarkan `userId` tersebut. Ini memastikan pengguna hanya dapat melihat dan mengelola data mereka sendiri.
+2.  Buat file konfigurasi Firebase di `src/lib/firebase.ts`:
+    ```typescript
+    // src/lib/firebase.ts
+    import { initializeApp } from "firebase/app";
+    import { getAuth } from "firebase/auth";
+    import { getFirestore } from "firebase/firestore";
 
-### Opsi Deployment
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
--   **Vercel (Direkomendasikan):** Hubungkan repositori Git Anda ke Vercel. Ia akan secara otomatis mendeteksi proyek Next.js.
--   **Firebase App Hosting:** Gunakan Firebase CLI untuk deploy. `firebase init apphosting` dan `firebase apphosting:backends:deploy`.
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-Ingatlah untuk mengatur *Environment Variables* di platform hosting Anda untuk kredensial database dan Firebase.
+    export { auth, db };
+    ```
+    *Ganti `YOUR_...` dengan kredensial dari pengaturan proyek Firebase Anda.*
+
+#### Langkah 3: Ganti Logika Autentikasi
+Modifikasi `src/context/AppContext.tsx` untuk menggunakan Firebase, bukan API simulasi.
+
+1.  **Impor Firebase**:
+    ```typescript
+    // Di bagian atas AppContext.tsx
+    import { auth } from '@/lib/firebase'; // Impor auth dari konfigurasi Anda
+    import { 
+      onAuthStateChanged, 
+      signInWithEmailAndPassword, 
+      createUserWithEmailAndPassword, 
+      signOut 
+    } from "firebase/auth";
+    ```
+2.  **Ganti Fungsi `login`, `register`, `logout`**:
+    - Ganti fungsi-fungsi tersebut dengan yang menggunakan Firebase SDK.
+    - Gunakan `onAuthStateChanged` untuk memantau status login pengguna secara real-time. Ini akan secara otomatis memperbarui `user` state saat pengguna login atau logout.
+
+#### Langkah 4: Ikat Data ke Pengguna (Data Scoping)
+Ini adalah langkah **paling krusial** untuk sistem multi-pengguna.
+
+1.  **Perbarui Tipe Data**: Tambahkan field `userId` opsional ke semua tipe data utama di `src/lib/types.ts` (misalnya `Drink`, `Food`, `Sale`, `RawMaterial`).
+    ```typescript
+    export interface Drink {
+      id: string;
+      userId?: string; // Tambahkan ini
+      // ... field lainnya
+    }
+    ```
+2.  **Simpan Data dengan `userId`**: Saat menyimpan data baru (misalnya, menambah produk), selalu sertakan ID pengguna yang sedang login.
+    ```typescript
+    // Contoh saat menambah produk
+    const user = auth.currentUser;
+    if (user) {
+      const productData = {
+        // ... data produk
+        userId: user.uid, // Simpan ID pengguna
+      };
+      // Simpan productData ke Firestore
+    }
+    ```
+3.  **Ambil Data Berdasarkan `userId`**: Saat mengambil data dari Firestore, gunakan query `where` untuk hanya mengambil data yang cocok dengan `userId` pengguna yang sedang login.
+    ```typescript
+    // Contoh saat mengambil daftar produk
+    import { collection, query, where, getDocs } from "firebase/firestore";
+    
+    const user = auth.currentUser;
+    if (user) {
+      const q = query(collection(db, "drinks"), where("userId", "==", user.uid));
+      const querySnapshot = await getDocs(q);
+      const userDrinks = querySnapshot.docs.map(doc => doc.data());
+      // Set state dengan userDrinks
+    }
+    ```
+
+Setelah langkah-langkah ini selesai, aplikasi Anda akan memiliki fondasi yang kuat untuk mendukung banyak pengguna dengan data yang aman dan terpisah. Anda kemudian dapat men-deploy-nya ke platform seperti **Vercel** atau **Firebase App Hosting**.
