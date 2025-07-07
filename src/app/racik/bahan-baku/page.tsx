@@ -318,7 +318,7 @@ export default function BahanBakuPage() {
         <Card>
             <CardHeader>
             <CardTitle>Daftar Bahan Baku</CardTitle>
-             <CardDescription>Gunakan kolom 'Tambah Stok' untuk menambah jumlah stok yang ada tanpa mengubah HPP.</CardDescription>
+             <CardDescription>Gunakan kolom 'Tambah Stok' untuk menambah jumlah. Cukup isi jumlahnya lalu tekan Enter untuk menyimpan.</CardDescription>
             </CardHeader>
             <CardContent>
             <Table>
@@ -355,7 +355,6 @@ export default function BahanBakuPage() {
                                       }
                                     }}
                                 />
-                                <Button size="sm" variant="secondary" onClick={() => handleAddStock(material)}>Tambah</Button>
                             </div>
                         </TableCell>
                         <TableCell className="flex gap-2 justify-end">
