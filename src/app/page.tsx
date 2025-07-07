@@ -617,7 +617,7 @@ export default function DashboardPage() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Coins className="h-6 w-6 text-primary" /> Manajemen Keuangan</CardTitle>
-                <CardDescription>Kelola arus kas harian dan catat biaya operasional bisnis Anda di sini.</CardDescription>
+                <CardDescription>Kelola semua arus kas dan biaya bisnis. Gunakan 'Kas Harian' untuk pengeluaran tunai kecil (parkir, es batu) dan 'Biaya Operasional' untuk semua biaya besar lainnya (gaji, sewa, listrik).</CardDescription>
             </CardHeader>
             <CardContent>
                  <Tabs defaultValue="kas_harian">
