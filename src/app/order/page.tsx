@@ -136,7 +136,7 @@ function ProductCustomizationDialog({
           <DialogTitle className="font-pacifico text-3xl text-primary">{product.name}</DialogTitle>
           <DialogDescription className="text-foreground/80">Pilih ukuran, tambahan, dan jumlah untuk pesanan Anda.</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
+        <div className="space-y-4 py-4 max-h-[65vh] overflow-y-auto pr-2">
           
           {packagingOptions.length > 0 && (
             <div className="space-y-2">

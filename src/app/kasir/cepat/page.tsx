@@ -116,7 +116,7 @@ function QuickSellDialog({
           <DialogTitle>Kustomisasi: {product?.name || 'Produk'}</DialogTitle>
           <DialogDescription>Pilih ukuran dan tambahan untuk penjualan cepat.</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
+        <div className="space-y-4 py-4 max-h-[65vh] overflow-y-auto pr-2">
             {packagingOptions.length > 0 && (
                 <div className="space-y-2">
                     <h4 className="font-semibold">Ukuran</h4>
