@@ -26,6 +26,11 @@ const nextConfig: NextConfig = {
         destination: '/kasir/orderan',
         permanent: true,
       },
+      {
+        source: '/pengaturan',
+        destination: '/pengaturan/profil',
+        permanent: true,
+      },
     ]
   },
 };
