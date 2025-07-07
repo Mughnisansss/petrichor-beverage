@@ -88,6 +88,8 @@ export interface OperationalCost {
 
 export interface DbData {
   user: User | null;
+  username?: string;
+  password?: string;
   appName: string;
   logoImageUri: string | null;
   marqueeText: string;

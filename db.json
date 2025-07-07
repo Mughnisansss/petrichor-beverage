@@ -1,6 +1,8 @@
 
 {
   "user": null,
+  "username": "admin@example.com",
+  "password": "password",
   "appName": "Petrichor",
   "logoImageUri": null,
   "marqueeText": "Selamat Datang di {appName}! Nikmati Kopi Terbaik di Kota!",

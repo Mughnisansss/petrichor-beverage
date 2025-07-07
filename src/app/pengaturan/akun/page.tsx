@@ -1,116 +1,118 @@
 "use client";
 
 import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Facebook, LogOut } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { LogOut, AlertTriangle, KeyRound } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/context/AppContext";
-import type { User } from "@/lib/types";
 
-// Inline SVG for Google Icon
-const GoogleIcon = () => (
-  <svg role="img" viewBox="0 0 24 24" className="mr-2 h-4 w-4">
-    <path
-      fill="currentColor"
-      d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.02-2.62 1.9-4.72 1.9-3.57 0-6.49-2.95-6.49-6.5s2.92-6.5 6.49-6.5c1.99 0 3.39.77 4.38 1.7l2.5-2.5C18.16 3.01 15.65 2 12.48 2c-5.49 0-9.92 4.45-9.92 9.9s4.43 9.9 9.92 9.9c5.38 0 9.53-3.64 9.53-9.67 0-.65-.05-1.3-.15-1.92H12.48z"
-    />
-  </svg>
-);
+const loginSchema = z.object({
+  email: z.string().email("Format email tidak valid"),
+  password: z.string().min(1, "Kata sandi tidak boleh kosong"),
+});
 
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function AkunPengaturanPage() {
     const { user, login, logout, isLoading } = useAppContext();
     const { toast } = useToast();
 
-    const handleLogin = async () => {
-        try {
-            await login();
-            toast({
-                title: "Login Berhasil (Simulasi)",
-                description: "Anda sekarang terhubung dengan akun Google Anda.",
-            });
-        } catch (error) {
-             toast({
-                title: "Login Gagal",
-                description: (error as Error).message,
-                variant: "destructive"
-            });
-        }
-    };
+    const form = useForm<LoginFormValues>({
+        resolver: zodResolver(loginSchema),
+        defaultValues: { email: "", password: "" },
+    });
 
     const handleLogout = async () => {
         try {
             await logout();
-            toast({
-                title: "Logout Berhasil",
-                description: "Koneksi akun Anda telah diputus.",
-            });
+            toast({ title: "Logout Berhasil", description: "Anda telah keluar dari akun." });
         } catch(error) {
-            toast({
-                title: "Logout Gagal",
-                description: (error as Error).message,
-                variant: "destructive"
-            });
+            toast({ title: "Logout Gagal", description: (error as Error).message, variant: "destructive" });
         }
     };
+
+    async function onSubmit(data: LoginFormValues) {
+        try {
+            await login(data.email, data.password);
+            toast({ title: "Login Berhasil", description: "Selamat datang kembali!" });
+            form.reset();
+        } catch (error) {
+             toast({ title: "Login Gagal", description: (error as Error).message, variant: "destructive" });
+        }
+    }
 
     return (
         <Card>
             <CardHeader>
                 <CardTitle>Akun & Autentikasi</CardTitle>
                 <CardDescription>
-                Hubungkan akun Anda untuk sinkronisasi data antar perangkat di masa depan.
+                Kelola sesi login Anda di sini. Login memungkinkan data Anda tersimpan secara persisten.
                 </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
                 {user ? (
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="flex items-center gap-4">
-                             <Avatar>
-                                <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person avatar"/>
-                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold">{user.name}</p>
-                                <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <div className="space-y-4">
+                        <h3 className="font-semibold">Informasi Pengguna</h3>
+                        <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div className="flex items-center gap-4">
+                                <Avatar>
+                                    <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person avatar"/>
+                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-semibold">{user.name}</p>
+                                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                                </div>
                             </div>
+                            <Button variant="ghost" onClick={handleLogout} disabled={isLoading}>
+                                <LogOut className="mr-2 h-4 w-4" /> Logout
+                            </Button>
                         </div>
-                        <Button variant="ghost" onClick={handleLogout} disabled={isLoading}>
-                            <LogOut className="mr-2 h-4 w-4" /> Logout
-                        </Button>
                     </div>
                 ) : (
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <Button variant="outline" className="w-full justify-center" onClick={handleLogin} disabled={isLoading}>
-                            <GoogleIcon />
-                            Login dengan Google
-                        </Button>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    {/* The div is necessary for the tooltip to work on a disabled button */}
-                                    <div className="w-full">
-                                        <Button variant="outline" className="w-full justify-center" disabled>
-                                            <Facebook className="mr-2 h-4 w-4" />
-                                            Login dengan Facebook
-                                        </Button>
-                                    </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Segera Hadir</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
+                    <div>
+                         <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                <FormField control={form.control} name="email" render={({ field }) => (
+                                    <FormItem><FormLabel>Email</FormLabel><FormControl><Input {...field} type="email" placeholder="admin@example.com" /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                 <FormField control={form.control} name="password" render={({ field }) => (
+                                    <FormItem><FormLabel>Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <Button type="submit" disabled={isLoading}>{isLoading ? "Memproses..." : "Login"}</Button>
+                            </form>
+                        </Form>
+                         <Alert className="mt-6">
+                            <KeyRound className="h-4 w-4" />
+                            <AlertTitle>Kredensial Demo</AlertTitle>
+                            <AlertDescription>
+                                Gunakan kredensial berikut untuk mencoba fitur login:
+                                <ul className="list-disc pl-5 mt-2">
+                                    <li><strong>Email:</strong> admin@example.com</li>
+                                    <li><strong>Password:</strong> password</li>
+                                </ul>
+                            </AlertDescription>
+                        </Alert>
                     </div>
                 )}
             </CardContent>
              <CardFooter>
-                <p className="text-xs text-muted-foreground">
-                    Saat ini, fitur login hanya berupa simulasi. Fungsionalitas penuh akan ditambahkan pada pembaruan mendatang.
-                </p>
+                <Alert variant="destructive" className="w-full">
+                    <AlertTriangle className="h-4 w-4"/>
+                    <AlertTitle>Peringatan Keamanan</AlertTitle>
+                    <AlertDescription>
+                        Sistem login ini adalah **simulasi untuk pengembangan** dan tidak aman. Jangan gunakan kata sandi asli.
+                    </AlertDescription>
+                </Alert>
              </CardFooter>
         </Card>
     );

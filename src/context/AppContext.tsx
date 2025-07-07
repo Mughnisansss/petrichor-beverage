@@ -18,12 +18,22 @@ type StorageMode = 'local' | 'server';
 // --- API Service (for server/db.json) ---
 const apiService = {
   getData: async (): Promise<DbData> => {
-    // This needs to fetch the whole db.json content
-    const res = await fetch('/api/get-all-data'); // We need a new endpoint for this
+    const res = await fetch('/api/get-all-data');
     if (!res.ok) throw new Error('Failed to fetch data from server');
     return res.json();
   },
-  login: async (): Promise<User> => (await fetch('/api/user/login', { method: 'POST' })).json(),
+  login: async (email?: string, password?: string): Promise<User> => {
+      const res = await fetch('/api/user/login', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Login failed");
+      }
+      return res.json();
+  },
   logout: async (): Promise<void> => { await fetch('/api/user/logout', { method: 'POST' }); },
   importData: async (data: DbData): Promise<{ ok: boolean, message: string }> => {
     const res = await fetch('/api/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
@@ -73,7 +83,7 @@ const LOCAL_STORAGE_KEY = 'petrichor_data';
 
 const getLocalData = (): DbData => {
   if (typeof window === 'undefined') {
-    return { user: null, appName: 'Petrichor', logoImageUri: null, marqueeText: 'Welcome!', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
+    return { user: null, username: "admin@example.com", password: "password", appName: 'Petrichor', logoImageUri: null, marqueeText: 'Welcome!', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
   }
   const data = window.localStorage.getItem(LOCAL_STORAGE_KEY);
   try {
@@ -81,6 +91,8 @@ const getLocalData = (): DbData => {
     
     // --- Data migrations and defaults ---
     parsedData.user = parsedData.user || null;
+    parsedData.username = parsedData.username || "admin@example.com";
+    parsedData.password = parsedData.password || "password";
     parsedData.operationalCosts = (parsedData.operationalCosts || []).map((cost: any) => ({ ...cost, recurrence: cost.recurrence || 'sekali' }));
     parsedData.rawMaterials = (parsedData.rawMaterials || []).map((m: any) => ({ ...m, category: m.category || 'main' }));
     parsedData.drinks = parsedData.drinks || [];
@@ -89,7 +101,7 @@ const getLocalData = (): DbData => {
     
     return parsedData as DbData;
   } catch {
-    return { user: null, appName: 'Petrichor', logoImageUri: null, marqueeText: 'Welcome!', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
+    return { user: null, username: "admin@example.com", password: "password", appName: 'Petrichor', logoImageUri: null, marqueeText: 'Welcome!', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
   }
 };
 
@@ -99,12 +111,16 @@ const setLocalData = (data: DbData) => {
 
 const localStorageService = {
   getData: async (): Promise<DbData> => Promise.resolve(getLocalData()),
-  login: async (): Promise<User> => {
+  login: async (email?: string, password?: string): Promise<User> => {
     const data = getLocalData();
-    const dummyUser: User = { name: "Alex Doe", email: "alex.doe@example.com", avatar: "https://placehold.co/100x100.png" };
-    data.user = dummyUser;
-    setLocalData(data);
-    return Promise.resolve(dummyUser);
+    if (email === data.username && password === data.password) {
+      const dummyUser: User = { name: "Alex Doe", email: "alex.doe@example.com", avatar: "https://placehold.co/100x100.png" };
+      data.user = dummyUser;
+      setLocalData(data);
+      return Promise.resolve(dummyUser);
+    } else {
+      return Promise.reject(new Error("Email atau kata sandi salah."));
+    }
   },
   logout: async (): Promise<void> => {
     const data = getLocalData();
@@ -313,7 +329,7 @@ interface AppContextType {
   addCashExpense: (expense: { description: string, amount: number }) => void;
   deleteCashExpense: (id: string) => void;
   fetchData: () => Promise<void>;
-  login: () => Promise<User>;
+  login: (email?: string, password?: string) => Promise<User>;
   logout: () => Promise<void>;
   importData: (data: DbData) => Promise<{ ok: boolean, message: string }>;
   addDrink: (drink: Omit<Drink, 'id'>) => Promise<Drink>;
@@ -352,15 +368,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useLocalStorage<CartItem[]>('petrichor_customer_cart', []);
   const [orderQueue, setOrderQueue] = useLocalStorage<QueuedOrder[]>('petrichor_order_queue', []);
   const [lastQueueNumber, setLastQueueNumber] = useLocalStorage<number>('petrichor_last_queue_number', 0);
-  const [dbData, setDbData] = useState<Omit<DbData, 'appName' | 'logoImageUri' | 'marqueeText' | 'initialCapital' | 'cashExpenses'>>({ user: null, drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
+  const [dbData, setDbData] = useState<Omit<DbData, 'appName' | 'logoImageUri' | 'marqueeText' | 'initialCapital' | 'cashExpenses' | 'username' | 'password'>>({ user: null, drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
   const [isLoading, setIsLoading] = useState(true);
   const [initialCapital, setInitialCapital] = useLocalStorage<number>('petrichor_initial_capital', 0);
   const [cashExpenses, setCashExpenses] = useLocalStorage<CashExpense[]>('petrichor_cash_expenses', []);
 
   const currentService = useMemo(() => {
-    // A single endpoint to get all data is needed for server mode to be efficient
-    const serverService = { ...apiService, getData: async () => (await fetch('/api/get-all-data')).json() };
-    return storageMode === 'local' ? localStorageService : serverService;
+    return storageMode === 'local' ? localStorageService : apiService;
   }, [storageMode]);
 
   const fetchData = useCallback(async () => {
@@ -368,16 +382,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await currentService.getData();
       
-      const { appName, logoImageUri, marqueeText, initialCapital, cashExpenses, user, ...restOfDbData } = data;
+      const { appName, logoImageUri, marqueeText, initialCapital, cashExpenses, user, username, password, ...restOfDbData } = data;
 
-      // Update LocalStorage-backed settings from the fetched data
       if (appName) setAppName(appName);
       if (logoImageUri !== undefined) setLogoImageUri(logoImageUri);
       if (marqueeText) setMarqueeText(marqueeText);
       if (typeof initialCapital === 'number') setInitialCapital(initialCapital);
       if (Array.isArray(cashExpenses)) setCashExpenses(cashExpenses);
 
-      // Data migration and setting defaults for the rest of the data
       if (restOfDbData.sales && Array.isArray(restOfDbData.sales)) {
         restOfDbData.sales = restOfDbData.sales.map((sale: any) => {
           if (sale.drinkId && typeof sale.productId === 'undefined') {
@@ -513,7 +525,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [orderQueue, currentService, setOrderQueue, fetchData]);
 
   const importData = useCallback(async (data: any): Promise<{ ok: boolean, message: string }> => {
-    const { user, appName, logoImageUri, marqueeText, initialCapital, cashExpenses, ...dbDataToImport } = data;
+    const { user, username, password, appName, logoImageUri, marqueeText, initialCapital, cashExpenses, ...dbDataToImport } = data;
     const result = await currentService.importData(dbDataToImport);
     if (result.ok) {
       if (appName) setAppName(appName);
@@ -534,27 +546,39 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return result;
       };
     };
+    
+    // We don't wrap login/logout because they are the *source* of the fetchData call
+    const login = async (email?: string, password?: string) => {
+      const user = await currentService.login(email, password);
+      await fetchData();
+      return user;
+    }
+
+    const logout = async () => {
+      await currentService.logout();
+      await fetchData();
+    }
 
     return {
-      login: wrap(currentService.login),
-      logout: wrap(currentService.logout),
-      addDrink: wrap(apiService.addDrink),
-      updateDrink: wrap(apiService.updateDrink),
-      deleteDrink: wrap(apiService.deleteDrink),
-      addFood: wrap(apiService.addFood),
-      updateFood: wrap(apiService.updateFood),
-      deleteFood: wrap(apiService.deleteFood),
-      addSale: wrap(apiService.addSale),
-      deleteSale: wrap(apiService.deleteSale),
-      batchAddSales: wrap(apiService.batchAddSales),
-      addOperationalCost: wrap(apiService.addOperationalCost),
-      updateOperationalCost: wrap(apiService.updateOperationalCost),
-      deleteOperationalCost: wrap(apiService.deleteOperationalCost),
-      addRawMaterial: wrap(apiService.addRawMaterial),
-      updateRawMaterial: wrap(apiService.updateRawMaterial),
-      deleteRawMaterial: wrap(apiService.deleteRawMaterial),
-      importRawMaterialsFromCsv: wrap(apiService.importRawMaterialsFromCsv),
-      importOperationalCostsFromCsv: wrap(apiService.importOperationalCostsFromCsv),
+      login,
+      logout,
+      addDrink: wrap(currentService.addDrink),
+      updateDrink: wrap(currentService.updateDrink),
+      deleteDrink: wrap(currentService.deleteDrink),
+      addFood: wrap(currentService.addFood),
+      updateFood: wrap(currentService.updateFood),
+      deleteFood: wrap(currentService.deleteFood),
+      addSale: wrap(currentService.addSale),
+      deleteSale: wrap(currentService.deleteSale),
+      batchAddSales: wrap(currentService.batchAddSales),
+      addOperationalCost: wrap(currentService.addOperationalCost),
+      updateOperationalCost: wrap(currentService.updateOperationalCost),
+      deleteOperationalCost: wrap(currentService.deleteOperationalCost),
+      addRawMaterial: wrap(currentService.addRawMaterial),
+      updateRawMaterial: wrap(currentService.updateRawMaterial),
+      deleteRawMaterial: wrap(currentService.deleteRawMaterial),
+      importRawMaterialsFromCsv: wrap(currentService.importRawMaterialsFromCsv),
+      importOperationalCostsFromCsv: wrap(currentService.importOperationalCostsFromCsv),
     }
   }, [currentService, fetchData]);
 
@@ -562,14 +586,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const newExpense: CashExpense = { ...expense, id: nanoid(), date: new Date().toISOString() };
     const updatedExpenses = [...cashExpenses, newExpense].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setCashExpenses(updatedExpenses);
-    
-    // Also save to backend if in server mode
-    if (storageMode === 'server') {
-       // This needs a dedicated endpoint, or we can bundle it with other updates.
-       // For now, local change is sufficient for UI, but it won't persist in db.json without an API call.
-       // Let's assume for now settings are saved on the settings page.
-    }
-  }, [cashExpenses, setCashExpenses, storageMode]);
+  }, [cashExpenses, setCashExpenses]);
 
   const deleteCashExpense = useCallback((id: string) => {
     setCashExpenses(prev => prev.filter(exp => exp.id !== id));
