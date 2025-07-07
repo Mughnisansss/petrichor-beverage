@@ -23,6 +23,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const registerSchema = z.object({
+  storeName: z.string().min(2, "Nama toko harus memiliki setidaknya 2 karakter"),
   name: z.string().min(2, "Nama harus memiliki setidaknya 2 karakter"),
   email: z.string().email("Format email tidak valid"),
   password: z.string().min(6, "Kata sandi minimal 6 karakter"),
@@ -47,7 +48,7 @@ export default function AkunPengaturanPage() {
 
     const registerForm = useForm<RegisterFormValues>({
         resolver: zodResolver(registerSchema),
-        defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+        defaultValues: { storeName: "", name: "", email: "", password: "", confirmPassword: "" },
     });
 
     const handleLogout = async () => {
@@ -71,7 +72,7 @@ export default function AkunPengaturanPage() {
 
     async function onRegisterSubmit(data: RegisterFormValues) {
         try {
-            await register({ name: data.name, email: data.email, password: data.password });
+            await register({ storeName: data.storeName, name: data.name, email: data.email, password: data.password });
             toast({ title: "Registrasi Berhasil", description: "Akun Anda telah dibuat dan Anda berhasil login." });
             setRegisterOpen(false);
             registerForm.reset();
@@ -136,6 +137,7 @@ export default function AkunPengaturanPage() {
                                         </DialogHeader>
                                         <Form {...registerForm}>
                                             <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                                                <FormField control={registerForm.control} name="storeName" render={({ field }) => (<FormItem><FormLabel>Nama Toko</FormLabel><FormControl><Input {...field} placeholder="Kedai Kopi Senja" /></FormControl><FormMessage /></FormItem>)} />
                                                 <FormField control={registerForm.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nama Lengkap</FormLabel><FormControl><Input {...field} placeholder="John Doe" /></FormControl><FormMessage /></FormItem>)} />
                                                 <FormField control={registerForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} placeholder="anda@email.com" /></FormControl><FormMessage /></FormItem>)} />
                                                 <FormField control={registerForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>)} />

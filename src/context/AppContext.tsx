@@ -22,7 +22,7 @@ const apiService = {
     if (!res.ok) throw new Error('Failed to fetch data from server');
     return res.json();
   },
-  register: async (details: {name: string, email: string, password: string}): Promise<User> => {
+  register: async (details: {storeName: string, name: string, email: string, password: string}): Promise<User> => {
       const res = await fetch('/api/user/register', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
@@ -123,10 +123,11 @@ const setLocalData = (data: DbData) => {
 
 const localStorageService = {
   getData: async (): Promise<DbData> => Promise.resolve(getLocalData()),
-  register: async (details: {name: string, email: string, password: string}): Promise<User> => {
+  register: async (details: {storeName: string, name: string, email: string, password: string}): Promise<User> => {
     const data = getLocalData();
     data.username = details.email;
     data.password = details.password;
+    data.appName = details.storeName;
     const newUser: User = { name: details.name, email: details.email, avatar: `https://placehold.co/100x100.png?text=${details.name.charAt(0)}` };
     data.user = newUser;
     setLocalData(data);
@@ -353,7 +354,7 @@ interface AppContextType {
   addCashExpense: (expense: { description: string, amount: number }) => void;
   deleteCashExpense: (id: string) => void;
   fetchData: () => Promise<void>;
-  register: (details: {name: string, email: string, password: string}) => Promise<User>;
+  register: (details: {storeName: string, name: string, email: string, password: string}) => Promise<User>;
   login: (email?: string, password?: string) => Promise<User>;
   logout: () => Promise<void>;
   importData: (data: DbData) => Promise<{ ok: boolean, message: string }>;
@@ -584,7 +585,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       await fetchData();
     }
     
-    const register = async (details: {name: string, email: string, password: string}) => {
+    const register = async (details: {storeName: string, name: string, email: string, password: string}) => {
         const user = await currentService.register(details);
         await fetchData();
         return user;

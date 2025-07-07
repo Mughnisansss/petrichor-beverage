@@ -3,12 +3,13 @@ import { readDb, writeDb } from '@/lib/db';
 import type { User } from '@/lib/types';
 
 export async function POST(request: Request) {
-  const { name, email, password } = await request.json();
+  const { storeName, name, email, password } = await request.json();
   const data = await readDb();
 
   // Overwrite dummy credentials with the new ones
   data.username = email;
   data.password = password;
+  data.appName = storeName;
 
   // Create a new user object for the session
   const newUser: User = {
