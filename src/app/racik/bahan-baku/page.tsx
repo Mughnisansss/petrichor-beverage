@@ -338,31 +338,33 @@ export default function BahanBakuPage() {
                 <DialogHeader>
                     <DialogTitle>Edit Detail Bahan Baku</DialogTitle>
                 </DialogHeader>
-                <Form {...detailsForm}>
-                    <form onSubmit={detailsForm.handleSubmit(onDetailsSubmit)} className="space-y-4">
-                        <FormField control={detailsForm.control} name="name" render={({ field }) => (
-                            <FormItem><FormLabel>Nama Bahan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )}/>
-                        <FormField control={detailsForm.control} name="unit" render={({ field }) => (
-                            <FormItem><FormLabel>Satuan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )}/>
-                        <FormField control={detailsForm.control} name="category" render={({ field }) => (
-                            <FormItem><FormLabel>Kategori</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="main">Bahan Utama</SelectItem><SelectItem value="topping">Topping / Tambahan</SelectItem><SelectItem value="packaging">Kemasan / Packaging</SelectItem></SelectContent></Select><FormMessage /></FormItem>
-                        )}/>
-                        <Separator/>
-                        <h4 className="text-md font-medium">Sumber Pembelian (Opsional)</h4>
-                         <FormField control={detailsForm.control} name="storeName" render={({ field }) => (
-                            <FormItem><FormLabel>Nama Toko</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )}/>
-                         <FormField control={detailsForm.control} name="storeAddress" render={({ field }) => (
-                            <FormItem><FormLabel>Alamat Toko</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )}/>
-                         <FormField control={detailsForm.control} name="purchaseLink" render={({ field }) => (
-                            <FormItem><FormLabel>Link Pembelian</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )}/>
-                        <Button type="submit">Simpan Perubahan</Button>
-                    </form>
-                </Form>
+                <div className="max-h-[65vh] overflow-y-auto pr-4">
+                    <Form {...detailsForm}>
+                        <form onSubmit={detailsForm.handleSubmit(onDetailsSubmit)} className="space-y-4">
+                            <FormField control={detailsForm.control} name="name" render={({ field }) => (
+                                <FormItem><FormLabel>Nama Bahan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )}/>
+                            <FormField control={detailsForm.control} name="unit" render={({ field }) => (
+                                <FormItem><FormLabel>Satuan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )}/>
+                            <FormField control={detailsForm.control} name="category" render={({ field }) => (
+                                <FormItem><FormLabel>Kategori</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="main">Bahan Utama</SelectItem><SelectItem value="topping">Topping / Tambahan</SelectItem><SelectItem value="packaging">Kemasan / Packaging</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                            )}/>
+                            <Separator/>
+                            <h4 className="text-md font-medium">Sumber Pembelian (Opsional)</h4>
+                             <FormField control={detailsForm.control} name="storeName" render={({ field }) => (
+                                <FormItem><FormLabel>Nama Toko</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )}/>
+                             <FormField control={detailsForm.control} name="storeAddress" render={({ field }) => (
+                                <FormItem><FormLabel>Alamat Toko</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )}/>
+                             <FormField control={detailsForm.control} name="purchaseLink" render={({ field }) => (
+                                <FormItem><FormLabel>Link Pembelian</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )}/>
+                            <Button type="submit">Simpan Perubahan</Button>
+                        </form>
+                    </Form>
+                </div>
             </DialogContent>
         </Dialog>
 
