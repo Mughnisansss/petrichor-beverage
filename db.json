@@ -647,7 +647,8 @@
       "totalCost": 200000,
       "costPerUnit": 200,
       "category": "main",
-      "sellingPrice": 200
+      "sellingPrice": 200,
+      "lowStockThreshold": 250
     },
     {
       "id": "rm002",
@@ -667,7 +668,8 @@
       "totalCost": 18000,
       "costPerUnit": 18,
       "category": "main",
-      "sellingPrice": 18
+      "sellingPrice": 18,
+      "lowStockThreshold": 500
     },
     {
       "id": "rm004",

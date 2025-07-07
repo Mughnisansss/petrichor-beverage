@@ -21,6 +21,8 @@ export interface RawMaterial {
     storeAddress?: string;
     purchaseLink?: string;
   }
+  
+  lowStockThreshold?: number; // Optional threshold for low stock warning
 }
 
 export interface Ingredient {

@@ -9,18 +9,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
 import type { RawMaterial } from "@/lib/types";
-import { PlusCircle, Edit, Trash2, PackagePlus, Store, LinkIcon } from "lucide-react";
+import { PlusCircle, Edit, Trash2, PackagePlus, Store, LinkIcon, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const purchaseSchema = z.object({
   name: z.string().min(1, "Nama bahan tidak boleh kosong"),
@@ -33,6 +34,7 @@ const purchaseSchema = z.object({
   storeName: z.string().optional(),
   storeAddress: z.string().optional(),
   purchaseLink: z.string().url({ message: "Link tidak valid." }).or(z.literal('')).optional(),
+  lowStockThreshold: z.coerce.number().min(0, "Batas stok tidak boleh negatif").optional(),
 });
 
 type PurchaseFormValues = z.infer<typeof purchaseSchema>;
@@ -47,6 +49,7 @@ const defaultFormValues: PurchaseFormValues = {
   storeName: "",
   storeAddress: "",
   purchaseLink: "",
+  lowStockThreshold: 0,
 };
 
 // Schema for editing details only
@@ -58,6 +61,7 @@ const detailsSchema = z.object({
   storeName: z.string().optional(),
   storeAddress: z.string().optional(),
   purchaseLink: z.string().url({ message: "Link tidak valid." }).or(z.literal('')).optional(),
+  lowStockThreshold: z.coerce.number().min(0, "Batas stok tidak boleh negatif").optional(),
 });
 type DetailsFormValues = z.infer<typeof detailsSchema>;
 
@@ -116,46 +120,49 @@ export default function BahanBakuPage() {
           finalSellingPrice = newPurchaseHpp;
       }
       
-      const { storeName, storeAddress, purchaseLink, ...restValues } = values;
-      const purchaseSource = (storeName || storeAddress || purchaseLink)
-        ? { storeName, storeAddress, purchaseLink }
+      const purchaseSource = (values.storeName || values.storeAddress || values.purchaseLink)
+        ? { storeName: values.storeName, storeAddress: values.storeAddress, purchaseLink: values.purchaseLink }
         : undefined;
 
       if (editingMaterial) {
         // --- RESTOCK LOGIC (Weighted Average) ---
-        const newTotalQuantity = (editingMaterial.totalQuantity || 0) + restValues.purchaseQuantity;
-        const newTotalCost = (editingMaterial.totalCost || 0) + restValues.purchaseCost;
+        const newTotalQuantity = (editingMaterial.totalQuantity || 0) + values.purchaseQuantity;
+        const newTotalCost = (editingMaterial.totalCost || 0) + values.purchaseCost;
         const newWeightedAverageCost = newTotalQuantity > 0 ? newTotalCost / newTotalQuantity : 0;
 
-        const materialData = {
+        const materialUpdatePayload = {
           ...editingMaterial,
-          name: restValues.name,
-          unit: restValues.unit,
-          category: restValues.category,
+          name: values.name,
+          unit: values.unit,
+          category: values.category,
           totalQuantity: newTotalQuantity,
           totalCost: newTotalCost,
           costPerUnit: newWeightedAverageCost,
-          lastPurchaseQuantity: restValues.purchaseQuantity,
-          lastPurchaseCost: restValues.purchaseCost,
+          lastPurchaseQuantity: values.purchaseQuantity,
+          lastPurchaseCost: values.purchaseCost,
           sellingPrice: finalSellingPrice,
-          purchaseSource, // Overwrite with new source info
+          purchaseSource,
+          lowStockThreshold: values.lowStockThreshold,
         };
-        const { id, ...updateData } = materialData;
+        const { id, ...updateData } = materialUpdatePayload;
         await updateRawMaterial(id, updateData);
         toast({ title: "Sukses", description: "Bahan baku diperbarui dan stok ditambahkan." });
       } else {
         // --- ADD NEW MATERIAL LOGIC ---
-        const materialData = {
-          ...restValues,
+        const newMaterialPayload: Omit<RawMaterial, 'id'> = {
+          name: values.name,
+          unit: values.unit,
+          category: values.category,
+          totalQuantity: values.purchaseQuantity,
+          totalCost: values.purchaseCost,
           costPerUnit: newPurchaseHpp,
-          totalQuantity: restValues.purchaseQuantity,
-          totalCost: restValues.purchaseCost,
-          lastPurchaseQuantity: restValues.purchaseQuantity,
-          lastPurchaseCost: restValues.purchaseCost,
+          lastPurchaseQuantity: values.purchaseQuantity,
+          lastPurchaseCost: values.purchaseCost,
           sellingPrice: finalSellingPrice,
           purchaseSource,
+          lowStockThreshold: values.lowStockThreshold,
         };
-        await addRawMaterial(materialData);
+        await addRawMaterial(newMaterialPayload);
         toast({ title: "Sukses", description: "Bahan baku berhasil ditambahkan." });
       }
       setFormOpen(false);
@@ -207,6 +214,7 @@ export default function BahanBakuPage() {
       storeName: material.purchaseSource?.storeName || "",
       storeAddress: material.purchaseSource?.storeAddress || "",
       purchaseLink: material.purchaseSource?.purchaseLink || "",
+      lowStockThreshold: material.lowStockThreshold || 0,
     });
     setFormOpen(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -221,6 +229,7 @@ export default function BahanBakuPage() {
         storeName: material.purchaseSource?.storeName || '',
         storeAddress: material.purchaseSource?.storeAddress || '',
         purchaseLink: material.purchaseSource?.purchaseLink || '',
+        lowStockThreshold: material.lowStockThreshold || 0,
     });
     setEditDialogOpen(true);
   };
@@ -313,11 +322,11 @@ export default function BahanBakuPage() {
                           <CollapsibleTrigger asChild>
                             <Button type="button" variant="link" className="p-0 text-sm text-muted-foreground">
                               <PlusCircle className="mr-2 h-4 w-4" />
-                              Tambahkan Detail Sumber Pembelian (Opsional)
+                              Tambahkan Detail Lanjutan (Opsional)
                             </Button>
                           </CollapsibleTrigger>
                           <CollapsibleContent className="space-y-4 pt-4 animate-in fade-in-0">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <FormField control={form.control} name="storeName" render={({ field }) => (
                                     <FormItem><FormLabel>Nama Toko</FormLabel><FormControl><Input {...field} placeholder="cth: Toko Bahan Kue Jaya" /></FormControl><FormMessage /></FormItem>
                                 )}/>
@@ -328,6 +337,14 @@ export default function BahanBakuPage() {
                              <FormField control={form.control} name="purchaseLink" render={({ field }) => (
                                 <FormItem><FormLabel>Link Pembelian (Marketplace)</FormLabel><FormControl><Input {...field} placeholder="cth: https://tokopedia.com/..." /></FormControl><FormMessage /></FormItem>
                             )}/>
+                             <FormField control={form.control} name="lowStockThreshold" render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Batas Stok Minimum</FormLabel>
+                                  <FormControl><Input type="number" {...field} placeholder="cth: 100" /></FormControl>
+                                  <FormDescription>Aplikasi akan memberi tanda jika stok di bawah batas ini.</FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}/>
                           </CollapsibleContent>
                         </Collapsible>
                         
@@ -358,6 +375,14 @@ export default function BahanBakuPage() {
                             <FormField control={detailsForm.control} name="category" render={({ field }) => (
                                 <FormItem><FormLabel>Kategori</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="main">Bahan Utama</SelectItem><SelectItem value="topping">Topping / Tambahan</SelectItem><SelectItem value="packaging">Kemasan / Packaging</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                             )}/>
+                             <FormField control={detailsForm.control} name="lowStockThreshold" render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Batas Stok Minimum</FormLabel>
+                                  <FormControl><Input type="number" {...field} placeholder="cth: 100" /></FormControl>
+                                  <FormDescription>Aplikasi akan memberi tanda jika stok di bawah batas ini.</FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}/>
                             <Separator/>
                             <h4 className="text-md font-medium">Sumber Pembelian (Opsional)</h4>
                              <FormField control={detailsForm.control} name="storeName" render={({ field }) => (
@@ -416,6 +441,18 @@ export default function BahanBakuPage() {
                     <TableRow key={material.id}>
                         <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
+                              {material.lowStockThreshold != null && material.totalQuantity <= material.lowStockThreshold && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Stok menipis! Sisa: {material.totalQuantity}{material.unit}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
                               {material.name}
                               {material.purchaseSource && (material.purchaseSource.storeName || material.purchaseSource.storeAddress || material.purchaseSource.purchaseLink) && (
                                 <Popover>
@@ -497,5 +534,3 @@ export default function BahanBakuPage() {
     </div>
   );
 }
-
-    
