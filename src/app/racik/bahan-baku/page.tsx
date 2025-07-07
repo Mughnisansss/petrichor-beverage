@@ -32,12 +32,6 @@ const materialSchema = z.object({
 
 type MaterialFormValues = z.infer<typeof materialSchema>;
 
-const categoryLabels: Record<RawMaterial['category'], string> = {
-  main: 'Utama',
-  packaging: 'Kemasan',
-  topping: 'Topping'
-};
-
 const defaultFormValues: MaterialFormValues = { 
   name: "", 
   unit: "", 
@@ -53,7 +47,7 @@ export default function BahanBakuPage() {
   const { rawMaterials, addRawMaterial, updateRawMaterial, deleteRawMaterial } = useAppContext();
   const [isFormVisible, setFormVisible] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
-  const [restockQuantities, setRestockQuantities] = useState<Record<string, number>>({});
+  const [addStockQuantities, setAddStockQuantities] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
   const form = useForm<MaterialFormValues>({
@@ -138,42 +132,33 @@ export default function BahanBakuPage() {
     }
   };
 
-  const handleRestockQuantityChange = (materialId: string, value: string) => {
-    const quantity = parseInt(value, 10);
-    setRestockQuantities(prev => ({
+  const handleStockQuantityChange = (materialId: string, value: string) => {
+    setAddStockQuantities(prev => ({
         ...prev,
-        [materialId]: isNaN(quantity) || quantity < 1 ? 1 : quantity,
+        [materialId]: value,
     }));
   };
 
-  const handleRestock = async (material: RawMaterial) => {
+  const handleAddStock = async (material: RawMaterial) => {
+    const quantityToAddStr = addStockQuantities[material.id];
+    const quantityToAdd = parseFloat(quantityToAddStr);
+
+    if (!quantityToAddStr || isNaN(quantityToAdd) || quantityToAdd <= 0) {
+      toast({ title: "Jumlah Tidak Valid", description: "Jumlah stok yang ditambahkan harus berupa angka lebih dari 0.", variant: "destructive"});
+      return;
+    }
+
     try {
-        const multiplier = restockQuantities[material.id] || 1;
-        if (multiplier <= 0) {
-          toast({ title: "Jumlah Tidak Valid", description: "Pengali restock harus lebih dari 0.", variant: "destructive"});
-          return;
-        }
-
-        const newTotalQuantity = material.totalQuantity * multiplier;
-        const newTotalCost = material.totalCost * multiplier;
-        const newCostPerUnit = newTotalQuantity > 0 ? newTotalCost / newTotalQuantity : 0;
-        
-        const payload: Omit<RawMaterial, 'id'> = {
-            name: material.name,
-            unit: material.unit,
-            category: material.category,
-            totalQuantity: newTotalQuantity,
-            totalCost: newTotalCost,
-            costPerUnit: newCostPerUnit,
-            sellingPrice: material.sellingPrice
+        const payload = {
+            ...material, // Start with all existing data, including cost details
+            totalQuantity: material.totalQuantity + quantityToAdd // Only update the quantity
         };
+        const { id, ...updateData } = payload;
         
-        if (material.category !== 'topping') {
-            payload.sellingPrice = newCostPerUnit;
-        }
+        await updateRawMaterial(material.id, updateData);
 
-        await updateRawMaterial(material.id, payload);
-        toast({ title: "Sukses", description: `Stok & HPP untuk ${material.name} berhasil diperbarui.` });
+        toast({ title: "Sukses", description: `Stok untuk ${material.name} berhasil ditambahkan.` });
+        setAddStockQuantities(prev => ({...prev, [material.id]: ''})); // Clear input after success
     } catch (error) {
         toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
     }
@@ -200,7 +185,7 @@ export default function BahanBakuPage() {
                 <CardHeader>
                 <CardTitle>{editingMaterial ? "Edit Bahan Baku" : "Tambah Bahan Baku"}</CardTitle>
                 <CardDescription>
-                    Masukkan data sesuai pembelian terakhir Anda. Harga per satuan akan dihitung otomatis.
+                    Gunakan form ini untuk menambah bahan baru atau mengedit HPP. Untuk menambah stok, gunakan kolom 'Tambah Stok' di tabel bawah.
                 </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -333,17 +318,16 @@ export default function BahanBakuPage() {
         <Card>
             <CardHeader>
             <CardTitle>Daftar Bahan Baku</CardTitle>
-             <CardDescription>Gunakan kolom 'Restock' untuk mencatat pembelian ulang dengan cepat berdasarkan data pembelian terakhir.</CardDescription>
+             <CardDescription>Gunakan kolom 'Tambah Stok' untuk menambah jumlah stok yang ada tanpa mengubah HPP.</CardDescription>
             </CardHeader>
             <CardContent>
             <Table>
                 <TableHeader>
                 <TableRow>
                     <TableHead>Nama Bahan</TableHead>
-                    <TableHead>Kategori</TableHead>
-                    <TableHead>Detail Biaya</TableHead>
-                    <TableHead>Harga Jual</TableHead>
-                    <TableHead>Restock</TableHead>
+                    <TableHead>Stok Saat Ini</TableHead>
+                    <TableHead>Harga Pokok (HPP)</TableHead>
+                    <TableHead>Tambah Stok</TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -352,28 +336,26 @@ export default function BahanBakuPage() {
                     rawMaterials.map(material => (
                     <TableRow key={material.id}>
                         <TableCell className="font-medium">{material.name}</TableCell>
-                        <TableCell>{categoryLabels[material.category] || 'Utama'}</TableCell>
-                        <TableCell>
-                        {formatCurrency(material.totalCost)} / {material.totalQuantity.toLocaleString()} {material.unit}
-                        </TableCell>
-                        <TableCell>
-                        {material.category === 'topping' 
-                            ? formatCurrency(material.sellingPrice || 0) 
-                            : formatCurrency(material.costPerUnit)
-                        }
-                        </TableCell>
+                        <TableCell>{material.totalQuantity.toLocaleString()} {material.unit}</TableCell>
+                        <TableCell>{formatCurrency(material.costPerUnit)} / {material.unit}</TableCell>
                         <TableCell>
                             <div className="flex gap-2 items-center">
                                 <Input
                                     type="number"
-                                    min="1"
-                                    step="1"
-                                    className="w-16 h-8"
-                                    placeholder="x1"
-                                    value={restockQuantities[material.id] || ''}
-                                    onChange={(e) => handleRestockQuantityChange(material.id, e.target.value)}
+                                    min="0"
+                                    step="any"
+                                    className="w-24 h-9"
+                                    placeholder="Jumlah"
+                                    value={addStockQuantities[material.id] || ''}
+                                    onChange={(e) => handleStockQuantityChange(material.id, e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleAddStock(material);
+                                      }
+                                    }}
                                 />
-                                <Button size="sm" variant="secondary" onClick={() => handleRestock(material)}>Restock</Button>
+                                <Button size="sm" variant="secondary" onClick={() => handleAddStock(material)}>Tambah</Button>
                             </div>
                         </TableCell>
                         <TableCell className="flex gap-2 justify-end">
@@ -388,7 +370,7 @@ export default function BahanBakuPage() {
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={5} className="h-24 text-center">
                         Belum ada data bahan baku.
                     </TableCell>
                     </TableRow>

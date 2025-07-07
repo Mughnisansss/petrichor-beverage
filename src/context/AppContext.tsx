@@ -124,9 +124,17 @@ const localStorageService = {
     const data = getLocalData();
     const index = data.rawMaterials.findIndex(m => m.id === id);
     if (index === -1) throw new Error("Material not found");
-    const updatedMaterial = { ...data.rawMaterials[index], ...materialUpdate };
+
+    const oldCostPerUnit = data.rawMaterials[index].costPerUnit;
+    
+    const updatedMaterial = { ...data.rawMaterials[index], ...materialUpdate, id };
     data.rawMaterials[index] = updatedMaterial;
-    recalculateDependentProductCosts(data, id);
+
+    // Only recalculate product costs if the HPP of the material has changed.
+    if (updatedMaterial.costPerUnit !== oldCostPerUnit) {
+      recalculateDependentProductCosts(data, id);
+    }
+    
     setLocalData(data);
     return Promise.resolve(updatedMaterial);
   },

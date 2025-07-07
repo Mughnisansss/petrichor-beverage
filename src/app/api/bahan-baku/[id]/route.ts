@@ -17,12 +17,17 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ message: 'Raw material not found' }, { status: 404 });
   }
 
+  const oldCostPerUnit = data.rawMaterials[materialIndex].costPerUnit;
+
   // Update the material
   const updatedMaterial: RawMaterial = { ...data.rawMaterials[materialIndex], ...updatedMaterialData, id };
   data.rawMaterials[materialIndex] = updatedMaterial;
 
-  // Use centralized logic to update all dependent product costs
-  recalculateDependentProductCosts(data, id);
+  // Only recalculate product costs if the HPP of the material has changed.
+  // This prevents recalculation when only stock quantity is updated.
+  if (updatedMaterial.costPerUnit !== oldCostPerUnit) {
+    recalculateDependentProductCosts(data, id);
+  }
 
   await writeDb(data);
   return NextResponse.json(updatedMaterial);
