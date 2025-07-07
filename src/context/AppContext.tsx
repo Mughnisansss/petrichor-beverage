@@ -12,6 +12,8 @@ import {
   hasFoodAssociatedSales,
   recalculateDependentProductCosts 
 } from '@/lib/data-logic';
+import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { auth } from '@/lib/firebase';
 
 type StorageMode = 'local' | 'server';
 
@@ -356,6 +358,7 @@ interface AppContextType {
   fetchData: () => Promise<void>;
   register: (details: {storeName: string, name: string, email: string, password: string}) => Promise<User>;
   login: (email?: string, password?: string) => Promise<User>;
+  loginWithGoogle: () => Promise<User>;
   logout: () => Promise<void>;
   importData: (data: DbData) => Promise<{ ok: boolean, message: string }>;
   addDrink: (drink: Omit<Drink, 'id'>) => Promise<Drink>;
@@ -573,7 +576,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       };
     };
     
-    // We don't wrap login/logout/register because they are the *source* of the fetchData call
     const login = async (email?: string, password?: string) => {
       const user = await currentService.login(email, password);
       await fetchData();
@@ -581,6 +583,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     const logout = async () => {
+      if (auth.currentUser) {
+        await signOut(auth);
+      }
       await currentService.logout();
       await fetchData();
     }
@@ -591,10 +596,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return user;
     }
 
+    const loginWithGoogle = async (): Promise<User> => {
+        const provider = new GoogleAuthProvider();
+        try {
+            const result = await signInWithPopup(auth, provider);
+            const firebaseUser = result.user;
+            const appUser: User = {
+                name: firebaseUser.displayName || 'Pengguna Google',
+                email: firebaseUser.email || 'Tidak ada email',
+                avatar: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${firebaseUser.displayName?.charAt(0) || 'G'}`,
+            };
+    
+            // Overwrite the current simulated user with the Google user's details.
+            // This is consistent with the single-user simulation.
+            await register({
+                storeName: appName,
+                name: appUser.name,
+                email: appUser.email,
+                password: nanoid(), // dummy password as it's not used
+            });
+            return appUser;
+        } catch (error) {
+            console.error("Google Sign-In Error:", error);
+            throw new Error("Gagal login dengan Google.");
+        }
+    };
+
     return {
       login,
       logout,
       register,
+      loginWithGoogle,
       addDrink: wrap(currentService.addDrink),
       updateDrink: wrap(currentService.updateDrink),
       deleteDrink: wrap(currentService.deleteDrink),
@@ -613,7 +645,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       importRawMaterialsFromCsv: wrap(currentService.importRawMaterialsFromCsv),
       importOperationalCostsFromCsv: wrap(currentService.importOperationalCostsFromCsv),
     }
-  }, [currentService, fetchData]);
+  }, [currentService, fetchData, appName]);
 
   const addCashExpense = useCallback((expense: { description: string, amount: number }) => {
     const newExpense: CashExpense = { ...expense, id: nanoid(), date: new Date().toISOString() };
