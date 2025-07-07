@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Facebook, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { useAppContext } from "@/context/AppContext";
+import type { User } from "@/lib/types";
 
 // Inline SVG for Google Icon
 const GoogleIcon = () => (
@@ -18,35 +20,41 @@ const GoogleIcon = () => (
   </svg>
 );
 
-interface DummyUser {
-  name: string;
-  email: string;
-  avatar: string;
-}
 
 export default function AkunPengaturanPage() {
-    const [user, setUser] = useState<DummyUser | null>(null);
+    const { user, login, logout, isLoading } = useAppContext();
     const { toast } = useToast();
 
-    const handleLogin = () => {
-        // This is a dummy login. In a real app, you would use an OAuth flow.
-        setUser({
-            name: "Alex Doe",
-            email: "alex.doe@example.com",
-            avatar: "https://placehold.co/100x100.png"
-        });
-        toast({
-            title: "Login Berhasil (Simulasi)",
-            description: "Anda sekarang terhubung dengan akun Google Anda.",
-        });
+    const handleLogin = async () => {
+        try {
+            await login();
+            toast({
+                title: "Login Berhasil (Simulasi)",
+                description: "Anda sekarang terhubung dengan akun Google Anda.",
+            });
+        } catch (error) {
+             toast({
+                title: "Login Gagal",
+                description: (error as Error).message,
+                variant: "destructive"
+            });
+        }
     };
 
-    const handleLogout = () => {
-        setUser(null);
-        toast({
-            title: "Logout Berhasil",
-            description: "Koneksi akun Anda telah diputus.",
-        });
+    const handleLogout = async () => {
+        try {
+            await logout();
+            toast({
+                title: "Logout Berhasil",
+                description: "Koneksi akun Anda telah diputus.",
+            });
+        } catch(error) {
+            toast({
+                title: "Logout Gagal",
+                description: (error as Error).message,
+                variant: "destructive"
+            });
+        }
     };
 
     return (
@@ -70,13 +78,13 @@ export default function AkunPengaturanPage() {
                                 <p className="text-sm text-muted-foreground">{user.email}</p>
                             </div>
                         </div>
-                        <Button variant="ghost" onClick={handleLogout}>
+                        <Button variant="ghost" onClick={handleLogout} disabled={isLoading}>
                             <LogOut className="mr-2 h-4 w-4" /> Logout
                         </Button>
                     </div>
                 ) : (
                     <div className="flex flex-col sm:flex-row gap-4">
-                        <Button variant="outline" className="w-full justify-center" onClick={handleLogin}>
+                        <Button variant="outline" className="w-full justify-center" onClick={handleLogin} disabled={isLoading}>
                             <GoogleIcon />
                             Login dengan Google
                         </Button>

@@ -1,5 +1,6 @@
 
 {
+  "user": null,
   "appName": "Petrichor",
   "logoImageUri": null,
   "marqueeText": "Selamat Datang di {appName}! Nikmati Kopi Terbaik di Kota!",

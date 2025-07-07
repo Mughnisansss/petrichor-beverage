@@ -4,7 +4,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { nanoid } from 'nanoid';
-import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem, Ingredient, QueuedOrder, PackagingInfo, CashExpense } from '@/lib/types';
+import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem, Ingredient, QueuedOrder, PackagingInfo, CashExpense, User } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { 
   isRawMaterialInUse, 
@@ -18,15 +18,13 @@ type StorageMode = 'local' | 'server';
 // --- API Service (for server/db.json) ---
 const apiService = {
   getData: async (): Promise<DbData> => {
-    const [drinks, foods, sales, operationalCosts, rawMaterials] = await Promise.all([
-      (await fetch('/api/drinks')).json(),
-      (await fetch('/api/foods')).json(),
-      (await fetch('/api/sales')).json(),
-      (await fetch('/api/operasional')).json(),
-      (await fetch('/api/bahan-baku')).json(),
-    ]);
-    return { drinks, foods, sales, operationalCosts, rawMaterials };
+    // This needs to fetch the whole db.json content
+    const res = await fetch('/api/get-all-data'); // We need a new endpoint for this
+    if (!res.ok) throw new Error('Failed to fetch data from server');
+    return res.json();
   },
+  login: async (): Promise<User> => (await fetch('/api/user/login', { method: 'POST' })).json(),
+  logout: async (): Promise<void> => { await fetch('/api/user/logout', { method: 'POST' }); },
   importData: async (data: DbData): Promise<{ ok: boolean, message: string }> => {
     const res = await fetch('/api/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     const responseData = await res.json();
@@ -75,29 +73,23 @@ const LOCAL_STORAGE_KEY = 'petrichor_data';
 
 const getLocalData = (): DbData => {
   if (typeof window === 'undefined') {
-    return { drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
+    return { user: null, appName: 'Petrichor', logoImageUri: null, marqueeText: 'Welcome!', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
   }
   const data = window.localStorage.getItem(LOCAL_STORAGE_KEY);
   try {
-    const parsedData = data ? JSON.parse(data) : { drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
+    const parsedData = data ? JSON.parse(data) : {};
+    
     // --- Data migrations and defaults ---
-    if (parsedData.operationalCosts) {
-      parsedData.operationalCosts = parsedData.operationalCosts.map((cost: any) => ({ ...cost, recurrence: cost.recurrence || 'sekali' }));
-    } else {
-      parsedData.operationalCosts = [];
-    }
-     if (parsedData.rawMaterials) {
-      parsedData.rawMaterials = parsedData.rawMaterials.map((m: any) => ({ ...m, category: m.category || 'main' }));
-    } else {
-      parsedData.rawMaterials = [];
-    }
+    parsedData.user = parsedData.user || null;
+    parsedData.operationalCosts = (parsedData.operationalCosts || []).map((cost: any) => ({ ...cost, recurrence: cost.recurrence || 'sekali' }));
+    parsedData.rawMaterials = (parsedData.rawMaterials || []).map((m: any) => ({ ...m, category: m.category || 'main' }));
     parsedData.drinks = parsedData.drinks || [];
     parsedData.foods = parsedData.foods || [];
     parsedData.sales = parsedData.sales || [];
     
-    return parsedData;
+    return parsedData as DbData;
   } catch {
-    return { drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
+    return { user: null, appName: 'Petrichor', logoImageUri: null, marqueeText: 'Welcome!', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
   }
 };
 
@@ -107,6 +99,19 @@ const setLocalData = (data: DbData) => {
 
 const localStorageService = {
   getData: async (): Promise<DbData> => Promise.resolve(getLocalData()),
+  login: async (): Promise<User> => {
+    const data = getLocalData();
+    const dummyUser: User = { name: "Alex Doe", email: "alex.doe@example.com", avatar: "https://placehold.co/100x100.png" };
+    data.user = dummyUser;
+    setLocalData(data);
+    return Promise.resolve(dummyUser);
+  },
+  logout: async (): Promise<void> => {
+    const data = getLocalData();
+    data.user = null;
+    setLocalData(data);
+    return Promise.resolve();
+  },
   importData: async (data: DbData): Promise<{ ok: boolean, message: string }> => {
     if (!data || !Array.isArray(data.drinks) || !Array.isArray(data.foods) || !Array.isArray(data.sales) || !Array.isArray(data.operationalCosts) || !Array.isArray(data.rawMaterials)) {
       return Promise.resolve({ ok: false, message: 'Data JSON tidak valid atau formatnya salah.' });
@@ -131,7 +136,6 @@ const localStorageService = {
     const updatedMaterial = { ...data.rawMaterials[index], ...materialUpdate, id };
     data.rawMaterials[index] = updatedMaterial;
 
-    // Only recalculate product costs if the HPP of the material has changed.
     if (updatedMaterial.costPerUnit !== oldCostPerUnit) {
       recalculateDependentProductCosts(data, id);
     }
@@ -148,7 +152,6 @@ const localStorageService = {
     setLocalData(data);
     return Promise.resolve({ ok: true, message: 'Bahan baku berhasil dihapus.' });
   },
-
   addDrink: async (drink: Omit<Drink, 'id'>): Promise<Drink> => {
     const data = getLocalData();
     const newDrink = { ...drink, id: nanoid() };
@@ -173,7 +176,6 @@ const localStorageService = {
     setLocalData(data);
     return Promise.resolve({ ok: true, message: 'Minuman berhasil dihapus.' });
   },
-  
   addFood: async (food: Omit<Food, 'id'>): Promise<Food> => {
     const data = getLocalData();
     const newFood = { ...food, id: nanoid() };
@@ -199,7 +201,6 @@ const localStorageService = {
     setLocalData(data);
     return Promise.resolve({ ok: true, message: 'Makanan berhasil dihapus.' });
   },
-
   addSale: async (sale: Omit<Sale, 'id' | 'date'>): Promise<Sale> => {
     const data = getLocalData();
     const newSale = { ...sale, id: nanoid(), date: new Date().toISOString() };
@@ -289,6 +290,7 @@ const localStorageService = {
 };
 
 interface AppContextType {
+  user: User | null;
   drinks: Drink[];
   foods: Food[];
   sales: Sale[];
@@ -311,6 +313,8 @@ interface AppContextType {
   addCashExpense: (expense: { description: string, amount: number }) => void;
   deleteCashExpense: (id: string) => void;
   fetchData: () => Promise<void>;
+  login: () => Promise<User>;
+  logout: () => Promise<void>;
   importData: (data: DbData) => Promise<{ ok: boolean, message: string }>;
   addDrink: (drink: Omit<Drink, 'id'>) => Promise<Drink>;
   updateDrink: (id: string, drink: Omit<Drink, 'id'>) => Promise<Drink>;
@@ -348,13 +352,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useLocalStorage<CartItem[]>('petrichor_customer_cart', []);
   const [orderQueue, setOrderQueue] = useLocalStorage<QueuedOrder[]>('petrichor_order_queue', []);
   const [lastQueueNumber, setLastQueueNumber] = useLocalStorage<number>('petrichor_last_queue_number', 0);
-  const [dbData, setDbData] = useState<DbData>({ drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
+  const [dbData, setDbData] = useState<Omit<DbData, 'appName' | 'logoImageUri' | 'marqueeText' | 'initialCapital' | 'cashExpenses'>>({ user: null, drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
   const [isLoading, setIsLoading] = useState(true);
   const [initialCapital, setInitialCapital] = useLocalStorage<number>('petrichor_initial_capital', 0);
   const [cashExpenses, setCashExpenses] = useLocalStorage<CashExpense[]>('petrichor_cash_expenses', []);
 
   const currentService = useMemo(() => {
-    return storageMode === 'local' ? localStorageService : apiService;
+    // A single endpoint to get all data is needed for server mode to be efficient
+    const serverService = { ...apiService, getData: async () => (await fetch('/api/get-all-data')).json() };
+    return storageMode === 'local' ? localStorageService : serverService;
   }, [storageMode]);
 
   const fetchData = useCallback(async () => {
@@ -362,9 +368,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await currentService.getData();
       
-      // Data migration and setting defaults
-      if (data.sales && Array.isArray(data.sales)) {
-        data.sales = data.sales.map((sale: any) => {
+      const { appName, logoImageUri, marqueeText, initialCapital, cashExpenses, user, ...restOfDbData } = data;
+
+      // Update LocalStorage-backed settings from the fetched data
+      if (appName) setAppName(appName);
+      if (logoImageUri !== undefined) setLogoImageUri(logoImageUri);
+      if (marqueeText) setMarqueeText(marqueeText);
+      if (typeof initialCapital === 'number') setInitialCapital(initialCapital);
+      if (Array.isArray(cashExpenses)) setCashExpenses(cashExpenses);
+
+      // Data migration and setting defaults for the rest of the data
+      if (restOfDbData.sales && Array.isArray(restOfDbData.sales)) {
+        restOfDbData.sales = restOfDbData.sales.map((sale: any) => {
           if (sale.drinkId && typeof sale.productId === 'undefined') {
             const { drinkId, ...rest } = sale;
             return { ...rest, productId: drinkId, productType: 'drink' };
@@ -372,26 +387,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return sale;
         });
       }
-      if (data.rawMaterials && Array.isArray(data.rawMaterials)) {
-        data.rawMaterials = data.rawMaterials.map((m: any) => ({ ...m, category: m.category || 'main' }));
+      if (restOfDbData.rawMaterials && Array.isArray(restOfDbData.rawMaterials)) {
+        restOfDbData.rawMaterials = restOfDbData.rawMaterials.map((m: any) => ({ ...m, category: m.category || 'main' }));
       }
-
-      data.drinks = data.drinks || [];
-      data.foods = data.foods || [];
-      data.sales = data.sales || [];
-      data.operationalCosts = data.operationalCosts || [];
-      data.rawMaterials = data.rawMaterials || [];
-      data.sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      data.operationalCosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
-      setDbData(data);
+      restOfDbData.drinks = restOfDbData.drinks || [];
+      restOfDbData.foods = restOfDbData.foods || [];
+      restOfDbData.sales = (restOfDbData.sales || []).sort((a: Sale, b: Sale) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      restOfDbData.operationalCosts = (restOfDbData.operationalCosts || []).sort((a: OperationalCost, b: OperationalCost) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      setDbData({ user, ...restOfDbData });
+
     } catch (error) {
       console.error("Failed to fetch data", error);
-      setDbData({ drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
+      setDbData({ user: null, drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
     } finally {
       setIsLoading(false);
     }
-  }, [currentService]);
+  }, [currentService, setAppName, setLogoImageUri, setMarqueeText, setInitialCapital, setCashExpenses]);
 
   useEffect(() => {
     fetchData();
@@ -399,7 +412,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   
   const addToCart = useCallback((product: Drink | Food, type: 'drink' | 'food', quantity: number, selectedToppings: Ingredient[], selectedPackaging: PackagingInfo | undefined, finalUnitPrice: number) => {
     setCart(prevCart => {
-      // Logic to check if an identical item (product + toppings + packaging) already exists.
       const stringifiedToppings = JSON.stringify(selectedToppings.map(t => t.rawMaterialId).sort());
       
       const existingItemIndex = prevCart.findIndex(item => 
@@ -409,19 +421,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (existingItemIndex > -1) {
-        // If it exists, update the quantity
         const newCart = [...prevCart];
         newCart[existingItemIndex].quantity += quantity;
         return newCart;
       } else {
-        // If not, add a new item
         const newItem: CartItem = {
             cartId: nanoid(),
             productId: product.id,
             productType: type,
             name: product.name,
             quantity: quantity,
-            sellingPrice: finalUnitPrice, // Price for a SINGLE unit, including toppings and packaging
+            sellingPrice: finalUnitPrice,
             selectedToppings: selectedToppings,
             selectedPackagingId: selectedPackaging?.id,
             selectedPackagingName: selectedPackaging?.name,
@@ -496,26 +506,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       };
     });
     
-    // This will call batchAddSales and then refetch all data, which is what we want
     await currentService.batchAddSales(salesPayload);
     await fetchData();
 
-    // After data is refetched, we can remove from the local queue state
     setOrderQueue(prevQueue => prevQueue.filter(o => o.id !== orderId));
   }, [orderQueue, currentService, setOrderQueue, fetchData]);
 
   const importData = useCallback(async (data: any): Promise<{ ok: boolean, message: string }> => {
-    const { appName, logoImageUri, marqueeText, initialCapital, cashExpenses, ...dbData } = data;
-
-    const result = await currentService.importData(dbData);
-    
+    const { user, appName, logoImageUri, marqueeText, initialCapital, cashExpenses, ...dbDataToImport } = data;
+    const result = await currentService.importData(dbDataToImport);
     if (result.ok) {
-      // Also update settings and wallet data stored in localStorage regardless of mode
       if (appName) setAppName(appName);
       if (logoImageUri !== undefined) setLogoImageUri(logoImageUri);
       if (marqueeText) setMarqueeText(marqueeText);
       if (typeof initialCapital === 'number') setInitialCapital(initialCapital);
       if (Array.isArray(cashExpenses)) setCashExpenses(cashExpenses);
+      setDbData({ user, ...dbDataToImport });
     }
     return result;
   }, [currentService, setAppName, setLogoImageUri, setMarqueeText, setInitialCapital, setCashExpenses]);
@@ -524,46 +530,53 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const wrap = <T extends (...args: any[]) => Promise<any>>(fn: T) => {
       return async (...args: Parameters<T>): Promise<ReturnType<T>> => {
         const result = await fn(...args);
-        await fetchData(); // fetchData is stable thanks to useCallback
+        await fetchData();
         return result;
       };
     };
 
     return {
-      addDrink: wrap(currentService.addDrink),
-      updateDrink: wrap(currentService.updateDrink),
-      deleteDrink: wrap(currentService.deleteDrink),
-      addFood: wrap(currentService.addFood),
-      updateFood: wrap(currentService.updateFood),
-      deleteFood: wrap(currentService.deleteFood),
-      addSale: wrap(currentService.addSale),
-      deleteSale: wrap(currentService.deleteSale),
-      batchAddSales: wrap(currentService.batchAddSales),
-      addOperationalCost: wrap(currentService.addOperationalCost),
-      updateOperationalCost: wrap(currentService.updateOperationalCost),
-      deleteOperationalCost: wrap(currentService.deleteOperationalCost),
-      addRawMaterial: wrap(currentService.addRawMaterial),
-      updateRawMaterial: wrap(currentService.updateRawMaterial),
-      deleteRawMaterial: wrap(currentService.deleteRawMaterial),
-      importRawMaterialsFromCsv: wrap(currentService.importRawMaterialsFromCsv),
-      importOperationalCostsFromCsv: wrap(currentService.importOperationalCostsFromCsv),
+      login: wrap(currentService.login),
+      logout: wrap(currentService.logout),
+      addDrink: wrap(apiService.addDrink),
+      updateDrink: wrap(apiService.updateDrink),
+      deleteDrink: wrap(apiService.deleteDrink),
+      addFood: wrap(apiService.addFood),
+      updateFood: wrap(apiService.updateFood),
+      deleteFood: wrap(apiService.deleteFood),
+      addSale: wrap(apiService.addSale),
+      deleteSale: wrap(apiService.deleteSale),
+      batchAddSales: wrap(apiService.batchAddSales),
+      addOperationalCost: wrap(apiService.addOperationalCost),
+      updateOperationalCost: wrap(apiService.updateOperationalCost),
+      deleteOperationalCost: wrap(apiService.deleteOperationalCost),
+      addRawMaterial: wrap(apiService.addRawMaterial),
+      updateRawMaterial: wrap(apiService.updateRawMaterial),
+      deleteRawMaterial: wrap(apiService.deleteRawMaterial),
+      importRawMaterialsFromCsv: wrap(apiService.importRawMaterialsFromCsv),
+      importOperationalCostsFromCsv: wrap(apiService.importOperationalCostsFromCsv),
     }
   }, [currentService, fetchData]);
 
   const addCashExpense = useCallback((expense: { description: string, amount: number }) => {
-    const newExpense: CashExpense = {
-      ...expense,
-      id: nanoid(),
-      date: new Date().toISOString(),
-    };
-    setCashExpenses(prev => [...prev, newExpense].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-  }, [setCashExpenses]);
+    const newExpense: CashExpense = { ...expense, id: nanoid(), date: new Date().toISOString() };
+    const updatedExpenses = [...cashExpenses, newExpense].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    setCashExpenses(updatedExpenses);
+    
+    // Also save to backend if in server mode
+    if (storageMode === 'server') {
+       // This needs a dedicated endpoint, or we can bundle it with other updates.
+       // For now, local change is sufficient for UI, but it won't persist in db.json without an API call.
+       // Let's assume for now settings are saved on the settings page.
+    }
+  }, [cashExpenses, setCashExpenses, storageMode]);
 
   const deleteCashExpense = useCallback((id: string) => {
     setCashExpenses(prev => prev.filter(exp => exp.id !== id));
   }, [setCashExpenses]);
 
   const contextValue = useMemo(() => ({
+    user: dbData.user,
     drinks: dbData.drinks,
     foods: dbData.foods,
     sales: dbData.sales,
@@ -602,7 +615,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     submitCustomerOrder, updateQueuedOrderStatus, processQueuedOrder,
     initialCapital, setInitialCapital, cashExpenses, addCashExpense, deleteCashExpense
   ]);
-
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 }

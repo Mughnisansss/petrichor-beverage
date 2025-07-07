@@ -1,5 +1,11 @@
 
 
+export interface User {
+  name: string;
+  email: string;
+  avatar: string;
+}
+
 export interface RawMaterial {
   id: string;
   name: string;
@@ -81,6 +87,12 @@ export interface OperationalCost {
 }
 
 export interface DbData {
+  user: User | null;
+  appName: string;
+  logoImageUri: string | null;
+  marqueeText: string;
+  initialCapital: number;
+  cashExpenses: CashExpense[];
   drinks: Drink[];
   foods: Food[];
   sales: Sale[];
