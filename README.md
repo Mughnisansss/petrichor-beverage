@@ -42,23 +42,36 @@ Petrichor adalah aplikasi web lengkap yang dibuat dengan Next.js, dirancang untu
 
 ## Deployment
 
-### Prasyarat Penting: Database
+### Prasyarat Penting untuk Produksi
 
-Aplikasi ini menggunakan file `db.json` (mode "Server") dan Local Storage (mode "Lokal") untuk menyimpan data saat pengembangan. **Kedua mode ini tidak cocok untuk produksi.** Sebagian besar platform hosting (seperti Vercel, Netlify, Firebase App Hosting) memiliki sistem file yang sementara (*ephemeral*), yang berarti setiap data yang disimpan ke `db.json` akan hilang setelah setiap deployment atau restart server. Data di Local Storage terbatas pada satu browser di satu perangkat.
+Aplikasi ini menggunakan sistem penyimpanan data dan autentikasi yang **hanya cocok untuk pengembangan** dan **tidak aman untuk produksi.** Sebelum mendeploy untuk penggunaan nyata, Anda **harus** mengganti logika berikut:
 
-Sebelum mendeploy untuk penggunaan nyata, Anda **harus** mengganti logika di `src/context/AppContext.tsx` dan `src/app/api/` untuk terhubung ke database persisten seperti:
-*   **Firebase Firestore** (Direkomendasikan untuk skalabilitas dan fitur real-time)
-*   Database SQL (seperti Postgres atau MySQL) yang dihosting di cloud.
+1.  **Database Persisten (Wajib):**
+    *   **Masalah:** Mode "Server" (`db.json`) dan "Lokal" (Local Storage) tidak persisten di lingkungan hosting modern (Vercel, Firebase App Hosting). Data akan hilang setelah setiap deployment atau restart server.
+    *   **Solusi:** Ganti logika di `src/lib/db.ts` dan `src/context/AppContext.tsx` untuk terhubung ke database cloud seperti **Firebase Firestore** (direkomendasikan) atau database SQL (Postgres, MySQL).
 
-### Opsi 1: Deploy ke Vercel (Direkomendasikan)
+2.  **Sistem Autentikasi Nyata (Wajib):**
+    *   **Masalah:** Sistem login saat ini adalah **simulasi**. Tidak ada keamanan, tidak ada manajemen pengguna, dan hanya mendukung satu "pengguna" dummy.
+    *   **Solusi:** Implementasikan penyedia autentikasi pihak ketiga yang aman seperti **Firebase Authentication** atau **Clerk**. Ini akan menangani pendaftaran pengguna, login, dan keamanan sesi.
 
-1.  **Push Kode ke Repositori Git**: Pastikan kode Anda ada di GitHub, GitLab, atau Bitbucket.
-2.  **Impor Proyek ke Vercel**: Hubungkan repositori Git Anda ke Vercel. Vercel akan secara otomatis mendeteksi bahwa ini adalah proyek Next.js dan mengonfigurasi pengaturan build.
-3.  **Konfigurasi Environment Variables**: Jika Anda sudah beralih ke database, tambahkan kredensial dan konfigurasi yang diperlukan di pengaturan "Environment Variables" proyek Vercel Anda.
-4.  **Deploy**: Klik tombol "Deploy". Vercel akan membangun dan mendeploy aplikasi Anda.
+### Panduan Implementasi Autentikasi (Contoh dengan Firebase)
 
-### Opsi 2: Deploy ke Firebase App Hosting
+1.  **Buat Proyek Firebase:** Buka [Firebase Console](https://console.firebase.google.com/), buat proyek baru, dan aktifkan **Authentication** (dengan penyedia Google) dan **Firestore**.
+2.  **Install SDK Firebase:**
+    ```bash
+    npm install firebase
+    ```
+3.  **Konfigurasi Firebase:** Buat file konfigurasi di proyek Anda (misalnya, `src/lib/firebase.ts`) dengan kredensial dari proyek Firebase Anda.
+4.  **Ganti Logika Login/Logout:**
+    *   Di `src/context/AppContext.tsx`, ganti panggilan ke `apiService.login` dan `apiService.logout` dengan fungsi dari SDK Firebase, seperti `signInWithPopup(auth, provider)` dan `signOut(auth)`.
+    *   Hapus endpoint API di `/api/user/` yang tidak lagi diperlukan.
+5.  **Ikat Data ke Pengguna:**
+    *   Saat menyimpan data (misalnya, resep baru di `db.json` atau Firestore), tambahkan field `userId` yang berisi ID unik dari pengguna yang sedang login (`user.uid` dari Firebase).
+    *   Saat mengambil data, filter berdasarkan `userId` tersebut. Ini memastikan pengguna hanya dapat melihat dan mengelola data mereka sendiri.
 
-1.  **Install Firebase CLI**: `npm install -g firebase-tools`
-2.  **Login & Inisialisasi**: Jalankan `firebase login`, lalu `firebase init apphosting` di direktori proyek Anda.
-3.  **Deploy**: Jalankan `firebase apphosting:backends:deploy`. Ingat, peringatan mengenai `db.json` juga berlaku di sini.
+### Opsi Deployment
+
+-   **Vercel (Direkomendasikan):** Hubungkan repositori Git Anda ke Vercel. Ia akan secara otomatis mendeteksi proyek Next.js.
+-   **Firebase App Hosting:** Gunakan Firebase CLI untuk deploy. `firebase init apphosting` dan `firebase apphosting:backends:deploy`.
+
+Ingatlah untuk mengatur *Environment Variables* di platform hosting Anda untuk kredensial database dan Firebase.
