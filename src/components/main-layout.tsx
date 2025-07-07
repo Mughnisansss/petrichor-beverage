@@ -161,17 +161,26 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             </div>
           </>
         ) : (
-           <div className="flex-1 overflow-hidden flex items-center h-10 rounded-md bg-primary/10 text-primary">
-             <div className="relative flex overflow-x-hidden">
-                <div className="animate-marquee whitespace-nowrap">
-                  <span className="mx-4 text-sm font-medium">{displayText}</span>
-                  <span className="mx-4 text-sm font-medium">{displayText}</span>
+          <div className="w-full flex items-center justify-between gap-4">
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-lg font-semibold md:text-base text-primary"
+            >
+              <Logo />
+              <span className="sr-only">{appName}</span>
+            </Link>
+            <div className="flex-1 overflow-hidden flex items-center h-10 rounded-md bg-primary/10 text-primary">
+              <div className="relative flex overflow-x-hidden">
+                  <div className="animate-marquee whitespace-nowrap">
+                    <span className="mx-4 text-sm font-medium">{displayText}</span>
+                    <span className="mx-4 text-sm font-medium">{displayText}</span>
+                  </div>
+                  <div className="absolute top-0 animate-marquee2 whitespace-nowrap">
+                    <span className="mx-4 text-sm font-medium">{displayText}</span>
+                    <span className="mx-4 text-sm font-medium">{displayText}</span>
+                  </div>
                 </div>
-                <div className="absolute top-0 animate-marquee2 whitespace-nowrap">
-                   <span className="mx-4 text-sm font-medium">{displayText}</span>
-                   <span className="mx-4 text-sm font-medium">{displayText}</span>
-                </div>
-              </div>
+            </div>
           </div>
         )}
       </header>
