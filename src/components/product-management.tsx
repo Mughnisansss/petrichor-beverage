@@ -21,6 +21,7 @@ import { formatCurrency, cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 
 // --- Schemas ---
 const ingredientSchema = z.object({
@@ -34,19 +35,6 @@ const packagingInfoSchema = z.object({
   additionalPrice: z.coerce.number().min(0, "Harga tambahan tidak boleh negatif.").default(0),
   ingredients: z.array(ingredientSchema).min(1, "Kemasan harus memiliki setidaknya 1 bahan."),
 });
-
-const productSchema = z.object({
-  name: z.string().min(1, "Nama produk tidak boleh kosong"),
-  imageUri: z.string().optional(),
-  sellingPrice: z.coerce.number().min(0, "Harga jual dasar tidak boleh negatif."),
-  ingredients: z.array(ingredientSchema).min(1, "Produk harus memiliki setidaknya 1 bahan isi."),
-  availableToppings: z.array(z.string()).optional(),
-  packagingOptions: z.array(packagingInfoSchema).optional(),
-});
-
-type ProductFormValues = z.infer<typeof productSchema>;
-type Product = Drink | Food;
-
 
 // --- Helper Components ---
 const PriceSuggestionCalculator = ({ costPrice }: { costPrice: number }) => {
@@ -160,6 +148,8 @@ interface ProductFormProps {
   onFinished: () => void;
 }
 
+type Product = Drink | Food;
+
 const ProductForm = React.forwardRef<
     { handleEdit: (product: Product) => void },
     ProductFormProps
@@ -170,6 +160,26 @@ const ProductForm = React.forwardRef<
 
     const productTypeName = productType === 'minuman' ? 'Minuman' : 'Makanan';
     
+    const productSchema = z.object({
+        name: z.string().min(1, "Nama produk tidak boleh kosong"),
+        imageUri: z.string().optional(),
+        sellingPrice: z.coerce.number().min(0, "Harga jual dasar tidak boleh negatif."),
+        temperature: z.enum(['hot', 'cold']).optional(),
+        ingredients: z.array(ingredientSchema).min(1, "Produk harus memiliki setidaknya 1 bahan isi."),
+        availableToppings: z.array(z.string()).optional(),
+        packagingOptions: z.array(packagingInfoSchema).optional(),
+    }).refine((data) => {
+        if (productType === 'minuman') {
+            return !!data.temperature;
+        }
+        return true;
+    }, {
+        message: "Jenis minuman (panas/dingin) harus dipilih.",
+        path: ["temperature"],
+    });
+
+    type ProductFormValues = z.infer<typeof productSchema>;
+
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),
         defaultValues: { name: "", sellingPrice: 0, ingredients: [{ rawMaterialId: "", quantity: 1 }], imageUri: undefined, availableToppings: [], packagingOptions: [] },
@@ -217,6 +227,7 @@ const ProductForm = React.forwardRef<
             setPreview(product.imageUri || null);
             form.reset({
                 ...product,
+                temperature: (product as Drink).temperature,
                 availableToppings: product.availableToppings || [],
                 packagingOptions: product.packagingOptions || [],
             });
@@ -258,6 +269,29 @@ const ProductForm = React.forwardRef<
                     <FormField control={form.control} name="name" render={({ field }) => (
                         <FormItem><FormLabel>Nama {productTypeName}</FormLabel><FormControl><Input {...field} placeholder={`cth: ${productType === 'minuman' ? 'Es Kopi Susu' : 'Nasi Goreng'}`} /></FormControl><FormMessage /></FormItem>
                     )}/>
+                     {productType === 'minuman' && (
+                        <FormField
+                        control={form.control}
+                        name="temperature"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Jenis Minuman</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Pilih jenis (panas/dingin)..." />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    <SelectItem value="cold">Dingin</SelectItem>
+                                    <SelectItem value="hot">Panas</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    )}
                     <FormField control={form.control} name="sellingPrice" render={({ field }) => (
                         <FormItem><FormLabel>Harga Jual Dasar</FormLabel><FormControl><Input type="number" {...field} placeholder={`cth: 15000`} /></FormControl><FormDescription>Harga untuk ukuran terkecil/default.</FormDescription><FormMessage /></FormItem>
                     )}/>
@@ -510,7 +544,14 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
                                         className="rounded-md object-cover h-10 w-10"
                                         data-ai-hint={productType === 'minuman' ? "drink beverage" : "food meal"}
                                       />
-                                      {product.name}
+                                      <div>
+                                        {product.name}
+                                        {productType === 'minuman' && (product as Drink).temperature && (
+                                            <Badge variant="outline" className="ml-2 capitalize">
+                                            {(product as Drink).temperature}
+                                            </Badge>
+                                        )}
+                                      </div>
                                     </TableCell>
                                     <TableCell>{formatCurrency(product.costPrice)}</TableCell>
                                     <TableCell>{formatCurrency(product.sellingPrice)}</TableCell>

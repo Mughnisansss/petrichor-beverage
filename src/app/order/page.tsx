@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
@@ -6,7 +7,7 @@ import { useAppContext } from "@/context/AppContext";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, cn } from "@/lib/utils";
-import { CupSoda, Utensils, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { CupSoda, Utensils, Plus, ShoppingCart, Trash2, Flame, Snowflake } from "lucide-react";
 import { MainLayout } from "@/components/main-layout";
 import type { Drink, Food, RawMaterial, Ingredient, CartItem, PackagingInfo } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -360,6 +361,10 @@ export default function OrderPage() {
   const [newQueueNumber, setNewQueueNumber] = useState<number | null>(null);
   const { toast } = useToast();
 
+  const hotDrinks = useMemo(() => drinks.filter(d => d.temperature === 'hot'), [drinks]);
+  const coldDrinks = useMemo(() => drinks.filter(d => d.temperature === 'cold' || !d.temperature), [drinks]);
+
+
   const handleOrderClick = (product: Drink | Food, type: 'drink' | 'food') => {
     setProductType(type);
     setCustomizingProduct(product);
@@ -468,17 +473,33 @@ export default function OrderPage() {
                 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
                     <div className="lg:col-span-2 space-y-20">
-                        {/* Minuman Section */}
-                        <div>
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="bg-accent/80 p-3 rounded-full shadow-sm">
-                                    <CupSoda className="h-8 w-8 text-primary"/>
+                        {/* Hot Drinks Section */}
+                        {hotDrinks.length > 0 && (
+                            <div>
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="bg-accent/80 p-3 rounded-full shadow-sm">
+                                        <Flame className="h-8 w-8 text-primary"/>
+                                    </div>
+                                    <h2 className="font-pacifico text-5xl text-primary">Minuman Panas</h2>
+                                    <div className="flex-grow h-1 bg-gradient-to-r from-accent/50 to-transparent rounded-full" />
                                 </div>
-                                <h2 className="font-pacifico text-5xl text-primary">Minuman</h2>
-                                <div className="flex-grow h-1 bg-gradient-to-r from-accent/50 to-transparent rounded-full" />
+                                {renderProductGrid(hotDrinks, 'drink')}
                             </div>
-                            {renderProductGrid(drinks, 'drink')}
-                        </div>
+                        )}
+
+                        {/* Cold Drinks Section */}
+                        {coldDrinks.length > 0 && (
+                            <div>
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="bg-accent/80 p-3 rounded-full shadow-sm">
+                                        <Snowflake className="h-8 w-8 text-primary"/>
+                                    </div>
+                                    <h2 className="font-pacifico text-5xl text-primary">Minuman Dingin</h2>
+                                    <div className="flex-grow h-1 bg-gradient-to-r from-accent/50 to-transparent rounded-full" />
+                                </div>
+                                {renderProductGrid(coldDrinks, 'drink')}
+                            </div>
+                        )}
 
                         {/* Makanan Section */}
                         <div>

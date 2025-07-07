@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
@@ -12,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, cn } from "@/lib/utils";
-import { Plus, CupSoda, Utensils } from "lucide-react";
+import { Plus, CupSoda, Utensils, Flame, Snowflake } from "lucide-react";
 import type { Drink, Food, Sale, Ingredient, RawMaterial } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 
@@ -180,6 +181,10 @@ export default function PenjualanCepatPage() {
     const [isCustomizeDialogOpen, setCustomizeDialogOpen] = useState(false);
     const [customizingProductInfo, setCustomizingProductInfo] = useState<{product: Drink | Food, type: 'drink' | 'food'} | null>(null);
 
+    const hotDrinks = useMemo(() => drinks.filter(d => d.temperature === 'hot'), [drinks]);
+    const coldDrinks = useMemo(() => drinks.filter(d => d.temperature === 'cold' || !d.temperature), [drinks]);
+
+
     async function handleQuickSell(product: Drink | Food, type: 'drink' | 'food') {
         const hasToppings = product.availableToppings && product.availableToppings.length > 0;
         const hasPackaging = product.packagingOptions && product.packagingOptions.length > 0;
@@ -213,7 +218,7 @@ export default function PenjualanCepatPage() {
         if (products.length === 0) {
         return (
             <div className="text-center text-muted-foreground p-4 col-span-full">
-                Belum ada data {type === 'drink' ? 'minuman' : 'makanan'}. Silakan tambahkan di halaman 'Produk'.
+                Belum ada data {type === 'drink' ? 'minuman' : 'makanan'} untuk kategori ini.
             </div>
         )
         }
@@ -262,11 +267,21 @@ export default function PenjualanCepatPage() {
             <CardContent className="space-y-6">
                 <div>
                     <div className="flex items-center gap-2 mb-4">
-                        <CupSoda className="h-5 w-5 text-primary" />
-                        <h3 className="text-lg font-semibold">Minuman</h3>
+                        <Flame className="h-5 w-5 text-primary" />
+                        <h3 className="text-lg font-semibold">Minuman Panas</h3>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {renderProductGrid(drinks, 'drink')}
+                        {renderProductGrid(hotDrinks, 'drink')}
+                    </div>
+                </div>
+                <Separator />
+                <div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <Snowflake className="h-5 w-5 text-primary" />
+                        <h3 className="text-lg font-semibold">Minuman Dingin</h3>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {renderProductGrid(coldDrinks, 'drink')}
                     </div>
                 </div>
                 <Separator />

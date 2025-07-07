@@ -47,6 +47,7 @@ export interface Drink {
   id:string;
   name:string;
   imageUri?: string;
+  temperature?: 'hot' | 'cold';
   ingredients: Ingredient[]; // Contents
   costPrice: number; // Cost of contents ONLY
   sellingPrice: number; // BASE selling price
