@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { readDb, writeDb } from '@/lib/db';
@@ -16,16 +17,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Input tidak valid' }, { status: 400 });
     }
     
-    const materialsToAdd: RawMaterial[] = newMaterials.map(mat => ({
-      id: nanoid(),
-      name: mat.name || 'Tanpa Nama',
-      unit: mat.unit || 'pcs',
-      totalQuantity: Number(mat.totalQuantity) || 0,
-      totalCost: Number(mat.totalCost) || 0,
-      costPerUnit: (Number(mat.totalCost) || 0) / (Number(mat.totalQuantity) || 1),
-      category: mat.category || 'main',
-      sellingPrice: mat.sellingPrice || ((Number(mat.totalCost) || 0) / (Number(mat.totalQuantity) || 1)),
-    }));
+    const materialsToAdd: RawMaterial[] = newMaterials.map(mat => {
+      const purchaseQuantity = Number(mat.totalQuantity) || 0;
+      const purchaseCost = Number(mat.totalCost) || 0;
+      const costPerUnit = purchaseQuantity > 0 ? purchaseCost / purchaseQuantity : 0;
+      return {
+          id: nanoid(),
+          name: mat.name || 'Tanpa Nama',
+          unit: mat.unit || 'pcs',
+          totalQuantity: purchaseQuantity,
+          totalCost: purchaseCost,
+          costPerUnit: costPerUnit,
+          lastPurchaseQuantity: purchaseQuantity,
+          lastPurchaseCost: purchaseCost,
+          category: mat.category || 'main',
+          sellingPrice: mat.sellingPrice || costPerUnit,
+        }
+    });
 
     data.rawMaterials.push(...materialsToAdd);
     

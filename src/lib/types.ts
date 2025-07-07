@@ -4,9 +4,14 @@ export interface RawMaterial {
   id: string;
   name: string;
   unit: string; // e.g., gram, ml, pcs
-  totalQuantity: number;
-  totalCost: number;
-  costPerUnit: number; // Stored for calculation: totalCost / totalQuantity
+  totalQuantity: number; // The current total stock
+  totalCost: number; // The total cost of the current stock (for weighted average calculation)
+  costPerUnit: number; // The weighted average cost: totalCost / totalQuantity
+  
+  // Fields to remember the last purchase unit for quick restock
+  lastPurchaseQuantity?: number; 
+  lastPurchaseCost?: number;
+
   category: 'main' | 'packaging' | 'topping';
   sellingPrice?: number; // Optional selling price, mainly for toppings
 }

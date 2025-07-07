@@ -47,7 +47,7 @@ export default function BahanBakuPage() {
   const { rawMaterials, addRawMaterial, updateRawMaterial, deleteRawMaterial } = useAppContext();
   const [isFormVisible, setFormVisible] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
-  const [addStockQuantities, setAddStockQuantities] = useState<Record<string, string>>({});
+  const [restockMultipliers, setRestockMultipliers] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
   const form = useForm<MaterialFormValues>({
@@ -69,19 +69,44 @@ export default function BahanBakuPage() {
 
   async function onSubmit(values: MaterialFormValues) {
     try {
-      const costPerUnitValue = values.totalCost / values.totalQuantity;
+      const purchaseQuantity = values.totalQuantity;
+      const purchaseCost = values.totalCost;
       
       let finalSellingPrice = values.sellingPrice;
       if (values.category === 'main' || values.category === 'packaging') {
-          finalSellingPrice = costPerUnitValue;
+          finalSellingPrice = purchaseCost / purchaseQuantity;
       }
 
-      const materialData = { ...values, costPerUnit: costPerUnitValue, sellingPrice: finalSellingPrice };
-
       if (editingMaterial) {
-        await updateRawMaterial(editingMaterial.id, materialData);
-        toast({ title: "Sukses", description: "Bahan baku berhasil diperbarui." });
+        // When editing, we ADD the new purchase to the existing stock and update HPP.
+        const newTotalQuantity = (editingMaterial.totalQuantity || 0) + purchaseQuantity;
+        const newTotalCost = (editingMaterial.totalCost || 0) + purchaseCost;
+        const newWeightedAverageCost = newTotalQuantity > 0 ? newTotalCost / newTotalQuantity : 0;
+
+        const materialData = {
+          ...editingMaterial,
+          ...values, // Update name, unit, category
+          totalQuantity: newTotalQuantity,
+          totalCost: newTotalCost,
+          costPerUnit: newWeightedAverageCost,
+          lastPurchaseQuantity: purchaseQuantity,
+          lastPurchaseCost: purchaseCost,
+          sellingPrice: finalSellingPrice,
+        };
+        const { id, ...updateData } = materialData;
+        await updateRawMaterial(id, updateData);
+        toast({ title: "Sukses", description: "Bahan baku diperbarui dan stok ditambahkan." });
       } else {
+        // When adding, the first purchase defines everything.
+        const materialData = {
+          ...values,
+          costPerUnit: purchaseCost / purchaseQuantity,
+          totalQuantity: purchaseQuantity,
+          totalCost: purchaseCost,
+          lastPurchaseQuantity: purchaseQuantity,
+          lastPurchaseCost: purchaseCost,
+          sellingPrice: finalSellingPrice,
+        };
         await addRawMaterial(materialData);
         toast({ title: "Sukses", description: "Bahan baku berhasil ditambahkan." });
       }
@@ -98,8 +123,8 @@ export default function BahanBakuPage() {
     form.reset({
       name: material.name,
       unit: material.unit,
-      totalQuantity: material.totalQuantity,
-      totalCost: material.totalCost,
+      totalQuantity: material.lastPurchaseQuantity || 1, // Use last purchase as default
+      totalCost: material.lastPurchaseCost || material.costPerUnit,
       category: material.category || 'main',
       sellingPrice: material.sellingPrice || 0,
     });
@@ -132,37 +157,46 @@ export default function BahanBakuPage() {
     }
   };
 
-  const handleStockQuantityChange = (materialId: string, value: string) => {
-    setAddStockQuantities(prev => ({
-        ...prev,
-        [materialId]: value,
-    }));
-  };
+  const handleRestock = async (material: RawMaterial) => {
+    const multiplierStr = restockMultipliers[material.id] || "1";
+    const multiplier = parseInt(multiplierStr, 10);
 
-  const handleAddStock = async (material: RawMaterial) => {
-    const quantityToAddStr = addStockQuantities[material.id];
-    const quantityToAdd = parseFloat(quantityToAddStr);
-
-    if (!quantityToAddStr || isNaN(quantityToAdd) || quantityToAdd <= 0) {
-      toast({ title: "Jumlah Tidak Valid", description: "Jumlah stok yang ditambahkan harus berupa angka lebih dari 0.", variant: "destructive"});
-      return;
+    if (isNaN(multiplier) || multiplier <= 0) {
+        toast({ title: "Error", description: "Pengali tidak valid.", variant: "destructive" });
+        return;
     }
 
-    try {
+    const baseQuantity = material.lastPurchaseQuantity;
+    const baseCost = material.lastPurchaseCost;
+
+    if (baseQuantity === undefined || baseCost === undefined) {
+        toast({ title: "Data Pembelian Terakhir Tidak Ada", description: `Silakan "Edit" bahan baku ini terlebih dahulu untuk mendefinisikan unit pembelian terakhir.`, variant: "destructive" });
+        return;
+    }
+     try {
+        const quantityToAdd = baseQuantity * multiplier;
+        const costToAdd = baseCost * multiplier;
+
+        const newTotalQuantity = material.totalQuantity + quantityToAdd;
+        const newTotalCost = material.totalCost + costToAdd;
+        const newCostPerUnit = newTotalCost / newTotalQuantity;
+
         const payload = {
-            ...material, // Start with all existing data, including cost details
-            totalQuantity: material.totalQuantity + quantityToAdd // Only update the quantity
+            ...material,
+            totalQuantity: newTotalQuantity,
+            totalCost: newTotalCost,
+            costPerUnit: newCostPerUnit,
         };
         const { id, ...updateData } = payload;
         
-        await updateRawMaterial(material.id, updateData);
+        await updateRawMaterial(id, updateData);
 
-        toast({ title: "Sukses", description: `Stok untuk ${material.name} berhasil ditambahkan.` });
-        setAddStockQuantities(prev => ({...prev, [material.id]: ''})); // Clear input after success
+        toast({ title: "Sukses", description: `Stok ${material.name} berhasil di-restock (x${multiplier}).` });
+        setRestockMultipliers(prev => ({ ...prev, [id]: "1" })); // Reset multiplier
     } catch (error) {
         toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
     }
-  };
+  }
   
   return (
     <div className="flex flex-col gap-8">
@@ -183,9 +217,9 @@ export default function BahanBakuPage() {
         {isFormVisible && (
             <Card>
                 <CardHeader>
-                <CardTitle>{editingMaterial ? "Edit Bahan Baku" : "Tambah Bahan Baku"}</CardTitle>
+                <CardTitle>{editingMaterial ? "Edit & Tambah Stok" : "Tambah Bahan Baku Baru"}</CardTitle>
                 <CardDescription>
-                    Gunakan form ini untuk menambah bahan baru atau mengedit HPP. Untuk menambah stok, gunakan kolom 'Tambah Stok' di tabel bawah.
+                    {editingMaterial ? "Isi detail pembelian baru untuk menambah stok dan memperbarui HPP." : "Gunakan form ini untuk menambah bahan baku baru."}
                 </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -258,7 +292,7 @@ export default function BahanBakuPage() {
                             name="totalQuantity"
                             render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Jumlah Beli</FormLabel>
+                                <FormLabel>Jumlah Pembelian</FormLabel>
                                 <FormControl><Input type="number" step="any" {...field} placeholder="cth: 1000" /></FormControl>
                                 <FormDescription>Jumlah dalam satuan resep di atas.</FormDescription>
                                 <FormMessage />
@@ -272,7 +306,7 @@ export default function BahanBakuPage() {
                             <FormItem>
                                 <FormLabel>Total Biaya (Rp)</FormLabel>
                                 <FormControl><Input type="number" {...field} placeholder="cth: 200000" /></FormControl>
-                                <FormDescription>Total harga pembelian.</FormDescription>
+                                <FormDescription>Total harga pembelian unit ini.</FormDescription>
                                 <FormMessage />
                             </FormItem>
                             )}
@@ -304,9 +338,9 @@ export default function BahanBakuPage() {
                         </div>
                         
                         <div className="flex items-center gap-2 pt-4">
-                            <Button type="submit">{editingMaterial ? "Simpan Perubahan" : "Tambah"}</Button>
+                            <Button type="submit">{editingMaterial ? "Simpan & Tambah Stok" : "Tambah Bahan Baru"}</Button>
                             {editingMaterial && (
-                            <Button variant="ghost" type="button" onClick={handleCancel}>Batal Edit</Button>
+                            <Button variant="ghost" type="button" onClick={handleCancel}>Batal</Button>
                             )}
                         </div>
                     </form>
@@ -318,7 +352,7 @@ export default function BahanBakuPage() {
         <Card>
             <CardHeader>
             <CardTitle>Daftar Bahan Baku</CardTitle>
-             <CardDescription>Gunakan kolom 'Tambah Stok' untuk menambah jumlah. Cukup isi jumlahnya lalu tekan Enter untuk menyimpan.</CardDescription>
+             <CardDescription>Gunakan kontrol 'x1' di paling kanan untuk restock cepat berdasarkan unit pembelian terakhir, lalu tekan Enter.</CardDescription>
             </CardHeader>
             <CardContent>
             <Table>
@@ -327,8 +361,7 @@ export default function BahanBakuPage() {
                     <TableHead>Nama Bahan</TableHead>
                     <TableHead>Stok Saat Ini</TableHead>
                     <TableHead>Harga Pokok (HPP)</TableHead>
-                    <TableHead>Tambah Stok</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
+                    <TableHead className="text-right w-[220px]">Aksi & Restock Cepat</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -339,31 +372,31 @@ export default function BahanBakuPage() {
                         <TableCell>{material.totalQuantity.toLocaleString()} {material.unit}</TableCell>
                         <TableCell>{formatCurrency(material.costPerUnit)} / {material.unit}</TableCell>
                         <TableCell>
-                            <div className="flex gap-2 items-center">
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    step="any"
-                                    className="w-24 h-9"
-                                    placeholder="Jumlah"
-                                    value={addStockQuantities[material.id] || ''}
-                                    onChange={(e) => handleStockQuantityChange(material.id, e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleAddStock(material);
-                                      }
-                                    }}
-                                />
+                            <div className="flex gap-2 justify-end items-center">
+                                <Button variant="outline" size="icon" onClick={() => handleEdit(material)}>
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="destructive" size="icon" onClick={() => handleDelete(material.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                                <div className="flex items-center gap-1 border rounded-md pl-2 bg-background">
+                                    <span className="text-sm text-muted-foreground">x</span>
+                                    <Input
+                                        type="number"
+                                        min="1"
+                                        step="1"
+                                        className="w-16 h-9 border-0 shadow-none focus-visible:ring-0 px-1"
+                                        value={restockMultipliers[material.id] || '1'}
+                                        onChange={(e) => setRestockMultipliers(prev => ({...prev, [material.id]: e.target.value}))}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleRestock(material);
+                                            }
+                                        }}
+                                    />
+                                </div>
                             </div>
-                        </TableCell>
-                        <TableCell className="flex gap-2 justify-end">
-                            <Button variant="outline" size="icon" onClick={() => handleEdit(material)}>
-                                <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="destructive" size="icon" onClick={() => handleDelete(material.id)}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
                         </TableCell>
                     </TableRow>
                     ))
