@@ -51,8 +51,11 @@ Aplikasi ini menggunakan sistem penyimpanan data dan autentikasi yang **hanya co
     *   **Solusi:** Ganti logika di `src/lib/db.ts` dan `src/context/AppContext.tsx` untuk terhubung ke database cloud seperti **Firebase Firestore** (direkomendasikan) atau database SQL (Postgres, MySQL).
 
 2.  **Sistem Autentikasi Nyata (Wajib):**
-    *   **Masalah:** Sistem login saat ini adalah **simulasi**. Tidak ada keamanan, tidak ada manajemen pengguna, dan hanya mendukung satu "pengguna" dummy.
-    *   **Solusi:** Implementasikan penyedia autentikasi pihak ketiga yang aman seperti **Firebase Authentication** atau **Clerk**. Ini akan menangani pendaftaran pengguna, login, dan keamanan sesi.
+    *   **Masalah:** Sistem login saat ini adalah **simulasi satu akun tunggal**. Ini berarti:
+        *   **Hanya Satu Akun:** Aplikasi hanya mengenali satu pasang email dan kata sandi pada satu waktu.
+        *   **Data Tertimpa:** Mendaftarkan "akun" baru akan **menimpa** kredensial login sebelumnya. Ini tidak membuat akun terpisah, melainkan mengubah kunci akses ke seluruh data.
+        *   **Tidak Aman:** Kata sandi disimpan dalam teks biasa dan tidak ada mekanisme keamanan yang sebenarnya.
+    *   **Solusi:** Implementasikan penyedia autentikasi pihak ketiga yang aman seperti **Firebase Authentication** atau **Clerk**. Ini akan menangani pendaftaran pengguna, login, keamanan sesi, dan yang terpenting, memungkinkan Anda untuk mengaitkan data dengan pengguna tertentu (`userId`).
 
 ### Panduan Implementasi Autentikasi (Contoh dengan Firebase)
 

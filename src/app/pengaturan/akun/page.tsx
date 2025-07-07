@@ -169,9 +169,9 @@ export default function AkunPengaturanPage() {
              <CardFooter>
                 <Alert variant="destructive" className="w-full">
                     <AlertTriangle className="h-4 w-4"/>
-                    <AlertTitle>Peringatan Keamanan</AlertTitle>
+                    <AlertTitle>Peringatan: Sistem Akun Simulasi</AlertTitle>
                     <AlertDescription>
-                        Sistem login ini adalah **simulasi untuk pengembangan** dan tidak aman. Jangan gunakan kata sandi asli.
+                        Sistem ini mensimulasikan **satu akun tunggal**. Mendaftarkan akun baru akan **menimpa** kredensial login yang ada. Ini dirancang untuk pengembangan dan **tidak aman untuk penggunaan produksi**. Jangan gunakan kata sandi asli.
                     </AlertDescription>
                 </Alert>
              </CardFooter>
