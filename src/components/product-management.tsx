@@ -151,7 +151,7 @@ interface ProductFormProps {
 type Product = Drink | Food;
 
 const ProductForm = React.forwardRef<
-    { handleEdit: (product: Product) => void },
+    { handleEdit: (product: Product) => void; handleNew: (subCategory?: string) => void; },
     ProductFormProps
 >(({ productType, rawMaterials, addProduct, updateProduct, onFinished }, ref) => {
     const { toast } = useToast();
@@ -222,6 +222,19 @@ const ProductForm = React.forwardRef<
                 subCategory: product.subCategory || "",
                 availableToppings: product.availableToppings || [],
                 packagingOptions: product.packagingOptions || [],
+            });
+        },
+        handleNew: (subCategory?: string) => {
+            setEditingProduct(null);
+            setPreview(null);
+            form.reset({ 
+                name: "", 
+                sellingPrice: 0, 
+                ingredients: [{ rawMaterialId: "", quantity: 1 }], 
+                imageUri: undefined, 
+                subCategory: subCategory || "", 
+                availableToppings: [], 
+                packagingOptions: [] 
             });
         }
     }));
@@ -445,7 +458,7 @@ interface ProductManagerProps {
 export function ProductManager({ productType, products, rawMaterials, addProduct, updateProduct, deleteProduct }: ProductManagerProps) {
     const { toast } = useToast();
     const [isFormVisible, setFormVisible] = useState(false);
-    const formRef = useRef<{ handleEdit: (product: Product) => void }>(null);
+    const formRef = useRef<{ handleEdit: (product: Product) => void; handleNew: (subCategory?: string) => void; }>(null);
     const [categoryFilter, setCategoryFilter] = useState('all');
 
     const productTypeName = productType === 'minuman' ? 'Minuman' : 'Makanan';
@@ -480,12 +493,25 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
             formRef.current?.handleEdit(product);
         }, 50);
     }
+
+    const handleToggleForm = () => {
+        if (isFormVisible) {
+            setFormVisible(false);
+        } else {
+            setFormVisible(true);
+            setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                const subCategory = categoryFilter !== 'all' ? categoryFilter : '';
+                formRef.current?.handleNew(subCategory);
+            }, 50);
+        }
+    };
     
     return (
         <div className="flex flex-col gap-8">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-semibold">Manajemen {productTypeName}</h1>
-                <Button onClick={() => setFormVisible(!isFormVisible)}>
+                <Button onClick={handleToggleForm}>
                     <PlusCircle className="mr-2 h-4 w-4" /> {isFormVisible ? "Tutup Form" : `Tambah ${productTypeName}`}
                 </Button>
             </div>
