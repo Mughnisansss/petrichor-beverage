@@ -135,16 +135,18 @@ export default function AkunPengaturanPage() {
                                                 Daftarkan akun baru untuk menyimpan data Anda.
                                             </DialogDescription>
                                         </DialogHeader>
-                                        <Form {...registerForm}>
-                                            <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                                                <FormField control={registerForm.control} name="storeName" render={({ field }) => (<FormItem><FormLabel>Nama Toko</FormLabel><FormControl><Input {...field} placeholder="Kedai Kopi Senja" /></FormControl><FormMessage /></FormItem>)} />
-                                                <FormField control={registerForm.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nama Lengkap</FormLabel><FormControl><Input {...field} placeholder="John Doe" /></FormControl><FormMessage /></FormItem>)} />
-                                                <FormField control={registerForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} placeholder="anda@email.com" /></FormControl><FormMessage /></FormItem>)} />
-                                                <FormField control={registerForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>)} />
-                                                <FormField control={registerForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Konfirmasi Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>)} />
-                                                <Button type="submit" disabled={isLoading} className="w-full">{isLoading ? "Mendaftarkan..." : "Buat Akun"}</Button>
-                                            </form>
-                                        </Form>
+                                        <div className="max-h-[65vh] overflow-y-auto pr-4">
+                                            <Form {...registerForm}>
+                                                <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                                                    <FormField control={registerForm.control} name="storeName" render={({ field }) => (<FormItem><FormLabel>Nama Toko</FormLabel><FormControl><Input {...field} placeholder="Kedai Kopi Senja" /></FormControl><FormMessage /></FormItem>)} />
+                                                    <FormField control={registerForm.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nama Lengkap</FormLabel><FormControl><Input {...field} placeholder="John Doe" /></FormControl><FormMessage /></FormItem>)} />
+                                                    <FormField control={registerForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} placeholder="anda@email.com" /></FormControl><FormMessage /></FormItem>)} />
+                                                    <FormField control={registerForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>)} />
+                                                    <FormField control={registerForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Konfirmasi Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>)} />
+                                                    <Button type="submit" disabled={isLoading} className="w-full">{isLoading ? "Mendaftarkan..." : "Buat Akun"}</Button>
+                                                </form>
+                                            </Form>
+                                        </div>
                                     </DialogContent>
                                    </Dialog>
                                 </div>
