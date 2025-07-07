@@ -57,7 +57,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
            <SheetHeader className="border-b pb-4">
             <SheetTitle className="sr-only">Menu Navigasi</SheetTitle>
             <Link
-              href="/"
+              href="/dashboard"
               className="flex items-center gap-2 text-lg font-semibold"
             >
               <Logo />
@@ -108,7 +108,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           <>
             <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
               <Link
-                href="/"
+                href="/dashboard"
                 className="flex items-center gap-2 text-lg font-semibold md:text-base"
               >
                 <Logo />
@@ -163,7 +163,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         ) : (
           <div className="w-full flex items-center justify-between gap-4">
             <Link
-              href="/"
+              href="/dashboard"
               className="flex items-center gap-2 text-lg font-semibold md:text-base text-primary"
             >
               <Logo />
