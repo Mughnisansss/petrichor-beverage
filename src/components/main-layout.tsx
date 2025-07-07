@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/sheet";
 
 const topNavItems = [
-  { href: "/", label: "Dasbor" },
   { href: "/order", label: "Order" },
   { href: "/kasir", label: "Kasir" },
   { href: "/racik/minuman", label: "Produk" },
@@ -37,7 +36,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const displayText = useMemo(() => marqueeText.replace(/{appName}/g, appName), [marqueeText, appName]);
 
   const isActive = (href: string, currentPath: string) => {
-    if (href === '/') return currentPath === '/';
     if (href === '/racik/minuman') return currentPath.startsWith('/racik');
     if (href === '/kasir') return currentPath.startsWith('/kasir');
     return currentPath.startsWith(href);
