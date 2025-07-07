@@ -18,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 const materialSchema = z.object({
   name: z.string().min(1, "Nama bahan tidak boleh kosong"),
@@ -51,7 +53,7 @@ export default function BahanBakuPage() {
   const { toast } = useToast();
 
   const totalInventoryValue = useMemo(() => {
-    return rawMaterials.reduce((sum, material) => sum + (material.totalCost || 0), 0);
+    return rawMaterials.reduce((sum, material) => sum + (material.costPerUnit * material.totalQuantity || 0), 0);
   }, [rawMaterials]);
 
   const form = useForm<MaterialFormValues>({
@@ -183,7 +185,7 @@ export default function BahanBakuPage() {
 
         const newTotalQuantity = material.totalQuantity + quantityToAdd;
         const newTotalCost = material.totalCost + costToAdd;
-        const newCostPerUnit = newTotalCost / newTotalQuantity;
+        const newCostPerUnit = newTotalQuantity > 0 ? newTotalCost / newTotalQuantity : 0;
 
         const payload = {
             ...material,
@@ -362,7 +364,7 @@ export default function BahanBakuPage() {
         <Card>
             <CardHeader>
             <CardTitle>Daftar Bahan Baku</CardTitle>
-             <CardDescription>Gunakan kontrol 'x1' di paling kanan untuk restock cepat berdasarkan unit pembelian terakhir, lalu tekan Enter.</CardDescription>
+             <CardDescription>Kelola semua bahan baku Anda. Gunakan "Restock Cepat" untuk pembelian berulang atau "Edit" untuk mencatat pembelian dengan harga/jumlah baru.</CardDescription>
             </CardHeader>
             <CardContent>
             <Table>
@@ -370,9 +372,10 @@ export default function BahanBakuPage() {
                 <TableRow>
                     <TableHead>Nama Bahan</TableHead>
                     <TableHead>Stok Saat Ini</TableHead>
-                    <TableHead>Total Biaya Stok</TableHead>
-                    <TableHead>Harga Pokok (HPP)</TableHead>
-                    <TableHead className="text-right w-[220px]">Aksi & Restock Cepat</TableHead>
+                    <TableHead>HPP</TableHead>
+                    <TableHead>Unit Pembelian Terakhir</TableHead>
+                    <TableHead className="w-[180px]">Restock Cepat</TableHead>
+                    <TableHead className="text-right w-[100px]">Aksi</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -380,41 +383,60 @@ export default function BahanBakuPage() {
                     rawMaterials.map(material => (
                     <TableRow key={material.id}>
                         <TableCell className="font-medium">{material.name}</TableCell>
-                        <TableCell>{material.totalQuantity.toLocaleString()} {material.unit}</TableCell>
-                        <TableCell>{formatCurrency(material.totalCost)}</TableCell>
-                        <TableCell>{formatCurrency(material.costPerUnit)} / {material.unit}</TableCell>
                         <TableCell>
-                            <div className="flex gap-2 justify-end items-center">
-                                <Button variant="outline" size="icon" onClick={() => handleEdit(material)}>
-                                    <Edit className="h-4 w-4" />
-                                </Button>
+                            <div className="font-semibold">{material.totalQuantity.toLocaleString()}</div>
+                            <div className="text-xs text-muted-foreground">{material.unit}</div>
+                        </TableCell>
+                        <TableCell>{formatCurrency(material.costPerUnit)} / {material.unit}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                            {(material.lastPurchaseQuantity && material.lastPurchaseCost) ? 
+                                `${material.lastPurchaseQuantity.toLocaleString()} ${material.unit} @ ${formatCurrency(material.lastPurchaseCost)}` 
+                                : "N/A"}
+                        </TableCell>
+                        <TableCell>
+                            <div className="flex items-center gap-1">
+                                <span className="text-sm text-muted-foreground">x</span>
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    className="w-16 h-9 px-2"
+                                    value={restockMultipliers[material.id] || '1'}
+                                    onChange={(e) => setRestockMultipliers(prev => ({...prev, [material.id]: e.target.value}))}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleRestock(material);
+                                        }
+                                    }}
+                                />
+                                <Button size="sm" onClick={() => handleRestock(material)}>Restock</Button>
+                            </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                           <div className="flex gap-2 justify-end">
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="outline" size="icon" onClick={() => handleEdit(material)}>
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Edit Nama & Catat Pembelian Baru</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                                 <Button variant="destructive" size="icon" onClick={() => handleDelete(material.id)}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
-                                <div className="flex items-center gap-1 border rounded-md pl-2 bg-background">
-                                    <span className="text-sm text-muted-foreground">x</span>
-                                    <Input
-                                        type="number"
-                                        min="1"
-                                        step="1"
-                                        className="w-16 h-9 border-0 shadow-none focus-visible:ring-0 px-1"
-                                        value={restockMultipliers[material.id] || '1'}
-                                        onChange={(e) => setRestockMultipliers(prev => ({...prev, [material.id]: e.target.value}))}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                handleRestock(material);
-                                            }
-                                        }}
-                                    />
-                                </div>
                             </div>
                         </TableCell>
                     </TableRow>
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                         Belum ada data bahan baku.
                     </TableCell>
                     </TableRow>
