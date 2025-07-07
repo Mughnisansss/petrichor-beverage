@@ -9,16 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
 import type { RawMaterial } from "@/lib/types";
-import { PlusCircle, Edit, Trash2, PackagePlus } from "lucide-react";
+import { PlusCircle, Edit, Trash2, PackagePlus, Store, LinkIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const purchaseSchema = z.object({
   name: z.string().min(1, "Nama bahan tidak boleh kosong"),
@@ -27,6 +29,10 @@ const purchaseSchema = z.object({
   purchaseQuantity: z.coerce.number().min(0.001, "Jumlah pembelian harus lebih dari 0"),
   purchaseCost: z.coerce.number().min(0, "Total biaya tidak boleh negatif"),
   sellingPrice: z.coerce.number().min(0, "Harga jual tidak boleh negatif").optional(),
+  // Professional feature fields
+  storeName: z.string().optional(),
+  storeAddress: z.string().optional(),
+  purchaseLink: z.string().url({ message: "Link tidak valid." }).or(z.literal('')).optional(),
 });
 
 type PurchaseFormValues = z.infer<typeof purchaseSchema>;
@@ -37,7 +43,10 @@ const defaultFormValues: PurchaseFormValues = {
   purchaseQuantity: 1, 
   purchaseCost: 0, 
   category: 'main', 
-  sellingPrice: 0 
+  sellingPrice: 0,
+  storeName: "",
+  storeAddress: "",
+  purchaseLink: "",
 };
 
 // Schema for editing details only
@@ -45,6 +54,10 @@ const detailsSchema = z.object({
   name: z.string().min(1, "Nama tidak boleh kosong."),
   unit: z.string().min(1, "Satuan tidak boleh kosong."),
   category: z.enum(['main', 'packaging', 'topping']),
+  // Professional feature fields
+  storeName: z.string().optional(),
+  storeAddress: z.string().optional(),
+  purchaseLink: z.string().url({ message: "Link tidak valid." }).or(z.literal('')).optional(),
 });
 type DetailsFormValues = z.infer<typeof detailsSchema>;
 
@@ -94,24 +107,30 @@ export default function BahanBakuPage() {
       if (values.category === 'main' || values.category === 'packaging') {
           finalSellingPrice = newPurchaseHpp;
       }
+      
+      const { storeName, storeAddress, purchaseLink, ...restValues } = values;
+      const purchaseSource = (storeName || storeAddress || purchaseLink)
+        ? { storeName, storeAddress, purchaseLink }
+        : undefined;
 
       if (editingMaterial) {
         // --- RESTOCK LOGIC (Weighted Average) ---
-        const newTotalQuantity = (editingMaterial.totalQuantity || 0) + values.purchaseQuantity;
-        const newTotalCost = (editingMaterial.totalCost || 0) + values.purchaseCost;
+        const newTotalQuantity = (editingMaterial.totalQuantity || 0) + restValues.purchaseQuantity;
+        const newTotalCost = (editingMaterial.totalCost || 0) + restValues.purchaseCost;
         const newWeightedAverageCost = newTotalQuantity > 0 ? newTotalCost / newTotalQuantity : 0;
 
         const materialData = {
           ...editingMaterial,
-          name: values.name,
-          unit: values.unit,
-          category: values.category,
+          name: restValues.name,
+          unit: restValues.unit,
+          category: restValues.category,
           totalQuantity: newTotalQuantity,
           totalCost: newTotalCost,
           costPerUnit: newWeightedAverageCost,
-          lastPurchaseQuantity: values.purchaseQuantity,
-          lastPurchaseCost: values.purchaseCost,
+          lastPurchaseQuantity: restValues.purchaseQuantity,
+          lastPurchaseCost: restValues.purchaseCost,
           sellingPrice: finalSellingPrice,
+          purchaseSource, // Overwrite with new source info
         };
         const { id, ...updateData } = materialData;
         await updateRawMaterial(id, updateData);
@@ -119,13 +138,14 @@ export default function BahanBakuPage() {
       } else {
         // --- ADD NEW MATERIAL LOGIC ---
         const materialData = {
-          ...values,
+          ...restValues,
           costPerUnit: newPurchaseHpp,
-          totalQuantity: values.purchaseQuantity,
-          totalCost: values.purchaseCost,
-          lastPurchaseQuantity: values.purchaseQuantity,
-          lastPurchaseCost: values.purchaseCost,
+          totalQuantity: restValues.purchaseQuantity,
+          totalCost: restValues.purchaseCost,
+          lastPurchaseQuantity: restValues.purchaseQuantity,
+          lastPurchaseCost: restValues.purchaseCost,
           sellingPrice: finalSellingPrice,
+          purchaseSource,
         };
         await addRawMaterial(materialData);
         toast({ title: "Sukses", description: "Bahan baku berhasil ditambahkan." });
@@ -140,12 +160,16 @@ export default function BahanBakuPage() {
   async function onDetailsSubmit(values: DetailsFormValues) {
     if (!editingDetailsMaterial) return;
     try {
+      const { storeName, storeAddress, purchaseLink, ...restValues } = values;
+      const purchaseSource = (storeName || storeAddress || purchaseLink)
+        ? { storeName, storeAddress, purchaseLink }
+        : undefined;
+      
       // Combine old financial data with new detail data
       const payload = {
           ...editingDetailsMaterial,
-          name: values.name,
-          unit: values.unit,
-          category: values.category,
+          ...restValues,
+          purchaseSource,
       };
       const { id, ...updateData } = payload;
       await updateRawMaterial(id, updateData);
@@ -172,6 +196,9 @@ export default function BahanBakuPage() {
       purchaseQuantity: material.lastPurchaseQuantity || 1,
       purchaseCost: material.lastPurchaseCost || material.costPerUnit,
       sellingPrice: material.sellingPrice || 0,
+      storeName: material.purchaseSource?.storeName || "",
+      storeAddress: material.purchaseSource?.storeAddress || "",
+      purchaseLink: material.purchaseSource?.purchaseLink || "",
     });
     setFormOpen(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -183,6 +210,9 @@ export default function BahanBakuPage() {
         name: material.name,
         unit: material.unit,
         category: material.category,
+        storeName: material.purchaseSource?.storeName || '',
+        storeAddress: material.purchaseSource?.storeAddress || '',
+        purchaseLink: material.purchaseSource?.purchaseLink || '',
     });
     setEditDialogOpen(true);
   };
@@ -270,6 +300,28 @@ export default function BahanBakuPage() {
                                 )}/>
                             )}
                         </div>
+
+                        <Collapsible>
+                          <CollapsibleTrigger asChild>
+                            <Button type="button" variant="link" className="p-0 text-sm text-muted-foreground">
+                              <PlusCircle className="mr-2 h-4 w-4" />
+                              Tambahkan Detail Sumber Pembelian (Opsional)
+                            </Button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="space-y-4 pt-4 animate-in fade-in-0">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <FormField control={form.control} name="storeName" render={({ field }) => (
+                                    <FormItem><FormLabel>Nama Toko</FormLabel><FormControl><Input {...field} placeholder="cth: Toko Bahan Kue Jaya" /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <FormField control={form.control} name="storeAddress" render={({ field }) => (
+                                    <FormItem><FormLabel>Alamat Toko</FormLabel><FormControl><Input {...field} placeholder="cth: Jl. Raya No. 123" /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                            </div>
+                             <FormField control={form.control} name="purchaseLink" render={({ field }) => (
+                                <FormItem><FormLabel>Link Pembelian (Marketplace)</FormLabel><FormControl><Input {...field} placeholder="cth: https://tokopedia.com/..." /></FormControl><FormMessage /></FormItem>
+                            )}/>
+                          </CollapsibleContent>
+                        </Collapsible>
                         
                         <div className="flex items-center gap-2 pt-4">
                             <Button type="submit">{editingMaterial ? "Simpan & Restock" : "Tambah Bahan Baru"}</Button>
@@ -297,6 +349,17 @@ export default function BahanBakuPage() {
                         <FormField control={detailsForm.control} name="category" render={({ field }) => (
                             <FormItem><FormLabel>Kategori</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="main">Bahan Utama</SelectItem><SelectItem value="topping">Topping / Tambahan</SelectItem><SelectItem value="packaging">Kemasan / Packaging</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                         )}/>
+                        <Separator/>
+                        <h4 className="text-md font-medium">Sumber Pembelian (Opsional)</h4>
+                         <FormField control={detailsForm.control} name="storeName" render={({ field }) => (
+                            <FormItem><FormLabel>Nama Toko</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                         <FormField control={detailsForm.control} name="storeAddress" render={({ field }) => (
+                            <FormItem><FormLabel>Alamat Toko</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                         <FormField control={detailsForm.control} name="purchaseLink" render={({ field }) => (
+                            <FormItem><FormLabel>Link Pembelian</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
                         <Button type="submit">Simpan Perubahan</Button>
                     </form>
                 </Form>
@@ -307,7 +370,7 @@ export default function BahanBakuPage() {
         <Card>
             <CardHeader>
                 <CardTitle>Daftar Inventaris Bahan Baku</CardTitle>
-                <CardDescription>Klik "Restock" untuk menambah stok, atau "Edit" untuk mengubah detail nama/kategori.</CardDescription>
+                <CardDescription>Klik "Restock" untuk menambah stok, atau "Edit" untuk mengubah detail nama/kategori/sumber.</CardDescription>
             </CardHeader>
             <CardContent>
             <Table>
@@ -324,7 +387,53 @@ export default function BahanBakuPage() {
                 {rawMaterials.length > 0 ? (
                     rawMaterials.map(material => (
                     <TableRow key={material.id}>
-                        <TableCell className="font-medium">{material.name} <span className="text-muted-foreground text-xs">({material.category})</span></TableCell>
+                        <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              {material.name}
+                              {material.purchaseSource && (material.purchaseSource.storeName || material.purchaseSource.storeAddress || material.purchaseSource.purchaseLink) && (
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                                      <Store className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-80">
+                                    <div className="grid gap-4">
+                                      <div className="space-y-2">
+                                        <h4 className="font-medium leading-none">Sumber Pembelian</h4>
+                                        <p className="text-sm text-muted-foreground">
+                                          Info lokasi/link pembelian bahan ini.
+                                        </p>
+                                      </div>
+                                      <div className="grid gap-2 text-sm">
+                                        {material.purchaseSource.storeName && (
+                                          <div className="grid grid-cols-3 items-center gap-4">
+                                            <span className="text-muted-foreground">Toko</span>
+                                            <span className="col-span-2 font-semibold">{material.purchaseSource.storeName}</span>
+                                          </div>
+                                        )}
+                                        {material.purchaseSource.storeAddress && (
+                                          <div className="grid grid-cols-3 items-center gap-4">
+                                            <span className="text-muted-foreground">Alamat</span>
+                                            <span className="col-span-2">{material.purchaseSource.storeAddress}</span>
+                                          </div>
+                                        )}
+                                        {material.purchaseSource.purchaseLink && (
+                                          <div className="grid grid-cols-3 items-center gap-4">
+                                            <span className="text-muted-foreground">Link</span>
+                                            <a href={material.purchaseSource.purchaseLink} target="_blank" rel="noopener noreferrer" className="col-span-2 text-primary hover:underline truncate flex items-center gap-1">
+                                              <LinkIcon className="h-3 w-3" /> Kunjungi Link
+                                            </a>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              )}
+                            </div>
+                            <span className="text-muted-foreground text-xs font-normal">({material.category})</span>
+                        </TableCell>
                         <TableCell>
                             <div className="font-semibold">{material.totalQuantity.toLocaleString()}</div>
                             <div className="text-xs text-muted-foreground">{material.unit}</div>
@@ -361,5 +470,3 @@ export default function BahanBakuPage() {
     </div>
   );
 }
-
-    

@@ -14,6 +14,13 @@ export interface RawMaterial {
 
   category: 'main' | 'packaging' | 'topping';
   sellingPrice?: number; // Optional selling price, mainly for toppings
+
+  // Professional feature: track purchase source
+  purchaseSource?: {
+    storeName?: string;
+    storeAddress?: string;
+    purchaseLink?: string;
+  }
 }
 
 export interface Ingredient {
