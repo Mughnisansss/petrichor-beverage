@@ -68,11 +68,19 @@ export default function BahanBakuPage() {
   const [isEditDialogOpen, setEditDialogOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
   const [editingDetailsMaterial, setEditingDetailsMaterial] = useState<RawMaterial | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const { toast } = useToast();
 
   const totalInventoryValue = useMemo(() => {
     return rawMaterials.reduce((sum, material) => sum + (material.totalCost || 0), 0);
   }, [rawMaterials]);
+
+  const filteredMaterials = useMemo(() => {
+    if (categoryFilter === 'all') {
+      return rawMaterials;
+    }
+    return rawMaterials.filter(m => m.category === categoryFilter);
+  }, [rawMaterials, categoryFilter]);
 
   // Form for new/restock
   const form = useForm<PurchaseFormValues>({
@@ -371,8 +379,25 @@ export default function BahanBakuPage() {
 
         <Card>
             <CardHeader>
-                <CardTitle>Daftar Inventaris Bahan Baku</CardTitle>
-                <CardDescription>Klik "Restock" untuk menambah stok, atau "Edit" untuk mengubah detail nama/kategori/sumber.</CardDescription>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>Daftar Inventaris Bahan Baku</CardTitle>
+                        <CardDescription>Klik "Restock" untuk menambah stok, atau "Edit" untuk mengubah detail nama/kategori/sumber.</CardDescription>
+                    </div>
+                    <div className="w-full max-w-[200px]">
+                        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Filter kategori..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Semua Kategori</SelectItem>
+                                <SelectItem value="main">Bahan Utama</SelectItem>
+                                <SelectItem value="topping">Topping / Tambahan</SelectItem>
+                                <SelectItem value="packaging">Kemasan / Packaging</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent>
             <Table>
@@ -386,8 +411,8 @@ export default function BahanBakuPage() {
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {rawMaterials.length > 0 ? (
-                    rawMaterials.map(material => (
+                {filteredMaterials.length > 0 ? (
+                    filteredMaterials.map(material => (
                     <TableRow key={material.id}>
                         <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
@@ -461,7 +486,7 @@ export default function BahanBakuPage() {
                 ) : (
                     <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">
-                        Belum ada data bahan baku. Klik "Tambah Bahan Baku" untuk memulai.
+                        Belum ada data bahan baku untuk kategori ini.
                     </TableCell>
                     </TableRow>
                 )}
@@ -472,3 +497,5 @@ export default function BahanBakuPage() {
     </div>
   );
 }
+
+    
