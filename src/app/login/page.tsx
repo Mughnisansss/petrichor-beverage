@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
+import { ArrowLeft } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -45,6 +46,12 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full">
               Sign In
+            </Button>
+            <Button variant="outline" className="w-full" asChild>
+              <Link href="/">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+              </Link>
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
