@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // --- Schemas ---
 const ingredientSchema = z.object({
@@ -460,6 +461,8 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
     const [isFormVisible, setFormVisible] = useState(false);
     const formRef = useRef<{ handleEdit: (product: Product) => void; handleNew: (subCategory?: string) => void; }>(null);
     const [categoryFilter, setCategoryFilter] = useState('all');
+    const [isAddCategoryOpen, setAddCategoryOpen] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState("");
 
     const productTypeName = productType === 'minuman' ? 'Minuman' : 'Makanan';
 
@@ -474,6 +477,23 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
         }
         return products.filter(p => p.subCategory === categoryFilter);
     }, [products, categoryFilter]);
+    
+    const handleAddNewCategory = () => {
+        if (!newCategoryName.trim()) {
+            toast({ title: "Nama kategori tidak boleh kosong", variant: "destructive" });
+            return;
+        }
+        setCategoryFilter(newCategoryName);
+        if (formRef.current) {
+            formRef.current.handleNew(newCategoryName);
+            setFormVisible(true);
+            setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 50);
+        }
+        setAddCategoryOpen(false);
+        setNewCategoryName("");
+    };
 
     const handleDelete = async (id: string) => {
         if (!window.confirm(`Apakah Anda yakin ingin menghapus ${productType} ini? Riwayat penjualan tidak akan terhapus.`)) return;
@@ -509,6 +529,29 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
     
     return (
         <div className="flex flex-col gap-8">
+            <Dialog open={isAddCategoryOpen} onOpenChange={setAddCategoryOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Tambah Kategori Baru</DialogTitle>
+                        <DialogDescription>Masukkan nama untuk sub-kategori baru. Ini akan otomatis terpakai saat Anda membuat produk baru.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-2 py-4">
+                        <Label htmlFor="new-category-name">Nama Kategori</Label>
+                        <Input
+                            id="new-category-name"
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            placeholder="cth: Jus, Kopi Spesial, Pastry"
+                            onKeyDown={(e) => e.key === 'Enter' && handleAddNewCategory()}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setAddCategoryOpen(false)}>Batal</Button>
+                        <Button onClick={handleAddNewCategory}>Tambah & Lanjutkan</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-semibold">Manajemen {productTypeName}</h1>
                 <Button onClick={handleToggleForm}>
@@ -543,7 +586,13 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
                             <CardDescription>Lihat dan kelola semua {productType} yang terdaftar.</CardDescription>
                         </div>
                         <div className="w-full max-w-[200px]">
-                            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                            <Select value={categoryFilter} onValueChange={(value) => {
+                                if (value === 'add_new_category_trigger') {
+                                    setAddCategoryOpen(true);
+                                } else {
+                                    setCategoryFilter(value);
+                                }
+                            }}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Filter kategori..." />
                                 </SelectTrigger>
@@ -551,6 +600,13 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
                                     {subCategories.map(cat => (
                                         <SelectItem key={cat} value={cat}>{cat === 'all' ? 'Semua Kategori' : cat}</SelectItem>
                                     ))}
+                                    <SelectSeparator />
+                                     <SelectItem value="add_new_category_trigger" className="text-primary focus:text-primary">
+                                        <div className="flex items-center gap-2">
+                                            <PlusCircle className="h-4 w-4" />
+                                            <span>Tambah Kategori Baru...</span>
+                                        </div>
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
