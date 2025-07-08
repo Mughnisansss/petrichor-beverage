@@ -8,7 +8,7 @@ import * as z from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { LogOut, AlertTriangle, KeyRound, UserPlus } from "lucide-react";
+import { LogOut, AlertTriangle, KeyRound, UserPlus, Crown, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -47,7 +47,7 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 
 export default function AkunPengaturanPage() {
-    const { user, login, logout, register, isLoading, loginWithGoogle } = useAppContext();
+    const { user, login, logout, register, isLoading, loginWithGoogle, upgradeToPremium } = useAppContext();
     const { toast } = useToast();
     const [isRegisterOpen, setRegisterOpen] = useState(false);
 
@@ -79,6 +79,15 @@ export default function AkunPengaturanPage() {
         }
     };
 
+    const handleUpgrade = async () => {
+        try {
+            await upgradeToPremium();
+            toast({ title: "Upgrade Berhasil!", description: "Selamat! Anda kini adalah pengguna premium." });
+        } catch(error) {
+             toast({ title: "Upgrade Gagal", description: (error as Error).message, variant: "destructive" });
+        }
+    }
+
     async function onLoginSubmit(data: LoginFormValues) {
         try {
             await login(data.email, data.password);
@@ -101,117 +110,156 @@ export default function AkunPengaturanPage() {
     }
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Akun & Autentikasi</CardTitle>
-                <CardDescription>
-                Kelola sesi login Anda di sini. Login memungkinkan data Anda tersimpan secara persisten.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                {user ? (
-                    <div className="space-y-4">
-                        <h3 className="font-semibold">Informasi Pengguna</h3>
-                        <div className="flex items-center justify-between rounded-lg border p-4">
-                            <div className="flex items-center gap-4">
-                                <Avatar>
-                                    <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person avatar"/>
-                                    <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-semibold">{user.name}</p>
-                                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                                </div>
-                            </div>
-                            <Button variant="ghost" onClick={handleLogout} disabled={isLoading}>
-                                <LogOut className="mr-2 h-4 w-4" /> Logout
-                            </Button>
-                        </div>
-                    </div>
-                ) : (
-                    <div>
+        <div className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Akun & Autentikasi</CardTitle>
+                    <CardDescription>
+                    Kelola sesi login Anda di sini. Login memungkinkan data Anda tersimpan secara persisten.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {user ? (
                         <div className="space-y-4">
-                             <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
-                                <GoogleIcon className="mr-2" />
-                                {isLoading ? "Memproses..." : "Masuk dengan Google"}
-                            </Button>
-
-                            <div className="relative">
-                                <div className="absolute inset-0 flex items-center">
-                                    <span className="w-full border-t" />
+                            <h3 className="font-semibold">Informasi Pengguna</h3>
+                            <div className="flex items-center justify-between rounded-lg border p-4">
+                                <div className="flex items-center gap-4">
+                                    <Avatar>
+                                        <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person avatar"/>
+                                        <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="font-semibold">{user.name}</p>
+                                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                                    </div>
                                 </div>
-                                <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-background px-2 text-muted-foreground">
-                                    Atau lanjutkan dengan email
-                                    </span>
-                                </div>
+                                <Button variant="ghost" onClick={handleLogout} disabled={isLoading}>
+                                    <LogOut className="mr-2 h-4 w-4" /> Logout
+                                </Button>
                             </div>
                         </div>
+                    ) : (
+                        <div>
+                            <div className="space-y-4">
+                                <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
+                                    <GoogleIcon className="mr-2" />
+                                    {isLoading ? "Memproses..." : "Masuk dengan Google"}
+                                </Button>
 
-                         <Form {...loginForm}>
-                            <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4 mt-4">
-                                <FormField control={loginForm.control} name="email" render={({ field }) => (
-                                    <FormItem><FormLabel>Email</FormLabel><FormControl><Input {...field} type="email" placeholder="admin@example.com" /></FormControl><FormMessage /></FormItem>
-                                )}/>
-                                 <FormField control={loginForm.control} name="password" render={({ field }) => (
-                                    <FormItem><FormLabel>Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>
-                                )}/>
-                                <div className="flex items-center gap-2">
-                                  <Button type="submit" disabled={isLoading}>{isLoading ? "Memproses..." : "Login"}</Button>
-                                  
-                                   <Dialog open={isRegisterOpen} onOpenChange={setRegisterOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button type="button" variant="outline">
-                                            <UserPlus className="mr-2 h-4 w-4"/> Buat Akun
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Buat Akun Baru</DialogTitle>
-                                            <DialogDescription>
-                                                Daftarkan akun baru untuk menyimpan data Anda.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <div className="max-h-[65vh] overflow-y-auto pr-4">
-                                            <Form {...registerForm}>
-                                                <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                                                    <FormField control={registerForm.control} name="storeName" render={({ field }) => (<FormItem><FormLabel>Nama Toko</FormLabel><FormControl><Input {...field} placeholder="Kedai Kopi Senja" /></FormControl><FormMessage /></FormItem>)} />
-                                                    <FormField control={registerForm.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nama Lengkap</FormLabel><FormControl><Input {...field} placeholder="John Doe" /></FormControl><FormMessage /></FormItem>)} />
-                                                    <FormField control={registerForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} placeholder="anda@email.com" /></FormControl><FormMessage /></FormItem>)} />
-                                                    <FormField control={registerForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>)} />
-                                                    <FormField control={registerForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Konfirmasi Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>)} />
-                                                    <Button type="submit" disabled={isLoading} className="w-full">{isLoading ? "Mendaftarkan..." : "Buat Akun"}</Button>
-                                                </form>
-                                            </Form>
-                                        </div>
-                                    </DialogContent>
-                                   </Dialog>
+                                <div className="relative">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <span className="w-full border-t" />
+                                    </div>
+                                    <div className="relative flex justify-center text-xs uppercase">
+                                        <span className="bg-background px-2 text-muted-foreground">
+                                        Atau lanjutkan dengan email
+                                        </span>
+                                    </div>
                                 </div>
-                            </form>
-                        </Form>
-                         <Alert className="mt-6">
-                            <KeyRound className="h-4 w-4" />
-                            <AlertTitle>Kredensial Demo</AlertTitle>
-                            <AlertDescription>
-                                Gunakan kredensial berikut untuk mencoba fitur login:
-                                <ul className="list-disc pl-5 mt-2">
-                                    <li><strong>Email:</strong> admin@example.com</li>
-                                    <li><strong>Password:</strong> password</li>
-                                </ul>
-                            </AlertDescription>
-                        </Alert>
-                    </div>
-                )}
-            </CardContent>
-             <CardFooter>
-                <Alert variant="destructive" className="w-full">
-                    <AlertTriangle className="h-4 w-4"/>
-                    <AlertTitle>Peringatan: Sistem Akun Simulasi</AlertTitle>
-                    <AlertDescription>
-                        Sistem ini mensimulasikan **satu akun tunggal**. Mendaftarkan akun baru atau masuk dengan Google akan **menimpa** kredensial login yang ada. Ini dirancang untuk pengembangan dan **tidak aman untuk penggunaan produksi**. Jangan gunakan kata sandi asli.
-                    </AlertDescription>
-                </Alert>
-             </CardFooter>
-        </Card>
+                            </div>
+
+                            <Form {...loginForm}>
+                                <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4 mt-4">
+                                    <FormField control={loginForm.control} name="email" render={({ field }) => (
+                                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input {...field} type="email" placeholder="admin@example.com" /></FormControl><FormMessage /></FormItem>
+                                    )}/>
+                                    <FormField control={loginForm.control} name="password" render={({ field }) => (
+                                        <FormItem><FormLabel>Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>
+                                    )}/>
+                                    <div className="flex items-center gap-2">
+                                    <Button type="submit" disabled={isLoading}>{isLoading ? "Memproses..." : "Login"}</Button>
+                                    
+                                    <Dialog open={isRegisterOpen} onOpenChange={setRegisterOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button type="button" variant="outline">
+                                                <UserPlus className="mr-2 h-4 w-4"/> Buat Akun
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Buat Akun Baru</DialogTitle>
+                                                <DialogDescription>
+                                                    Daftarkan akun baru untuk menyimpan data Anda.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <div className="max-h-[65vh] overflow-y-auto pr-4">
+                                                <Form {...registerForm}>
+                                                    <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                                                        <FormField control={registerForm.control} name="storeName" render={({ field }) => (<FormItem><FormLabel>Nama Toko</FormLabel><FormControl><Input {...field} placeholder="Kedai Kopi Senja" /></FormControl><FormMessage /></FormItem>)} />
+                                                        <FormField control={registerForm.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nama Lengkap</FormLabel><FormControl><Input {...field} placeholder="John Doe" /></FormControl><FormMessage /></FormItem>)} />
+                                                        <FormField control={registerForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} placeholder="anda@email.com" /></FormControl><FormMessage /></FormItem>)} />
+                                                        <FormField control={registerForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>)} />
+                                                        <FormField control={registerForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Konfirmasi Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>)} />
+                                                        <Button type="submit" disabled={isLoading} className="w-full">{isLoading ? "Mendaftarkan..." : "Buat Akun"}</Button>
+                                                    </form>
+                                                </Form>
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
+                                    </div>
+                                </form>
+                            </Form>
+                            <Alert className="mt-6">
+                                <KeyRound className="h-4 w-4" />
+                                <AlertTitle>Kredensial Demo</AlertTitle>
+                                <AlertDescription>
+                                    Gunakan kredensial berikut untuk mencoba fitur login:
+                                    <ul className="list-disc pl-5 mt-2">
+                                        <li><strong>Email:</strong> admin@example.com</li>
+                                        <li><strong>Password:</strong> password</li>
+                                    </ul>
+                                </AlertDescription>
+                            </Alert>
+                        </div>
+                    )}
+                </CardContent>
+                <CardFooter>
+                    <Alert variant="destructive" className="w-full">
+                        <AlertTriangle className="h-4 w-4"/>
+                        <AlertTitle>Peringatan: Sistem Akun Simulasi</AlertTitle>
+                        <AlertDescription>
+                            Sistem ini mensimulasikan **satu akun tunggal**. Mendaftarkan akun baru atau masuk dengan Google akan **menimpa** kredensial login yang ada. Ini dirancang untuk pengembangan dan **tidak aman untuk penggunaan produksi**. Jangan gunakan kata sandi asli.
+                        </AlertDescription>
+                    </Alert>
+                </CardFooter>
+            </Card>
+
+            {user && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Status Langganan</CardTitle>
+                        <CardDescription>Kelola status langganan premium Anda untuk membuka semua fitur.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {user.subscriptionStatus === 'premium' ? (
+                             <div className="flex items-center space-x-4 rounded-md border p-4 bg-gradient-to-r from-yellow-100 to-amber-100 dark:from-yellow-900/30 dark:to-amber-900/30">
+                                <div className="flex-shrink-0">
+                                    <Crown className="h-8 w-8 text-amber-500" />
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                                    Anda adalah Pengguna Premium
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    Terima kasih telah mendukung kami! Anda memiliki akses ke semua fitur tanpa batas.
+                                </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4">
+                                <div>
+                                    <h4 className="font-semibold">Akun Gratis</h4>
+                                    <p className="text-sm text-muted-foreground">Akun gratis dibatasi hingga 10 resep produk.</p>
+                                </div>
+                                <Button onClick={handleUpgrade} disabled={isLoading} className="mt-2 sm:mt-0 bg-gradient-to-r from-primary to-blue-600 text-white">
+                                    <Sparkles className="mr-2 h-4 w-4" />
+                                    {isLoading ? 'Memproses...' : 'Upgrade ke Premium'}
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
+        </div>
     );
 }

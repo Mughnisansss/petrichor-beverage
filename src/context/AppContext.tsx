@@ -49,6 +49,7 @@ const apiService = {
       return res.json();
   },
   logout: async (): Promise<void> => { await fetch('/api/user/logout', { method: 'POST' }); },
+  upgradeToPremium: async (): Promise<User> => (await fetch('/api/user/upgrade', { method: 'POST' })).json(),
   importData: async (data: DbData): Promise<{ ok: boolean, message: string }> => {
     const res = await fetch('/api/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     const responseData = await res.json();
@@ -105,6 +106,9 @@ const getLocalData = (): DbData => {
     
     // --- Data migrations and defaults ---
     parsedData.user = parsedData.user || null;
+    if (parsedData.user) {
+      parsedData.user.subscriptionStatus = parsedData.user.subscriptionStatus || 'free';
+    }
     parsedData.username = parsedData.username || "admin@example.com";
     parsedData.password = parsedData.password || "password";
     parsedData.operationalCosts = (parsedData.operationalCosts || []).map((cost: any) => ({ ...cost, recurrence: cost.recurrence || 'sekali' }));
@@ -130,7 +134,12 @@ const localStorageService = {
     data.username = details.email;
     data.password = details.password;
     data.appName = details.storeName;
-    const newUser: User = { name: details.name, email: details.email, avatar: `https://placehold.co/100x100.png?text=${details.name.charAt(0)}` };
+    const newUser: User = { 
+      name: details.name, 
+      email: details.email, 
+      avatar: `https://placehold.co/100x100.png?text=${details.name.charAt(0)}`,
+      subscriptionStatus: 'free' 
+    };
     data.user = newUser;
     setLocalData(data);
     return Promise.resolve(newUser);
@@ -138,8 +147,16 @@ const localStorageService = {
   login: async (email?: string, password?: string): Promise<User> => {
     const data = getLocalData();
     if (email === data.username && password === data.password) {
-      const dummyUser: User = { name: "Alex Doe", email: "alex.doe@example.com", avatar: "https://placehold.co/100x100.png" };
+      const dummyUser: User = { 
+        name: "Alex Doe", 
+        email: "alex.doe@example.com", 
+        avatar: "https://placehold.co/100x100.png",
+        subscriptionStatus: 'free',
+      };
+      
       data.user = data.user || dummyUser; // Use existing user data if available, otherwise default
+      data.user.subscriptionStatus = data.user.subscriptionStatus || 'free';
+
       if (email === "admin@example.com") {
         data.user.name = "Alex Doe"
       }
@@ -154,6 +171,15 @@ const localStorageService = {
     data.user = null;
     setLocalData(data);
     return Promise.resolve();
+  },
+  upgradeToPremium: async (): Promise<User> => {
+    const data = getLocalData();
+    if (data.user) {
+        data.user.subscriptionStatus = 'premium';
+        setLocalData(data);
+        return Promise.resolve(data.user);
+    }
+    throw new Error("No user is logged in.");
   },
   importData: async (data: DbData): Promise<{ ok: boolean, message: string }> => {
     if (!data || !Array.isArray(data.drinks) || !Array.isArray(data.foods) || !Array.isArray(data.sales) || !Array.isArray(data.operationalCosts) || !Array.isArray(data.rawMaterials)) {
@@ -360,6 +386,7 @@ interface AppContextType {
   login: (email?: string, password?: string) => Promise<User>;
   loginWithGoogle: () => Promise<User>;
   logout: () => Promise<void>;
+  upgradeToPremium: () => Promise<User>;
   importData: (data: DbData) => Promise<{ ok: boolean, message: string }>;
   addDrink: (drink: Omit<Drink, 'id'>) => Promise<Drink>;
   updateDrink: (id: string, drink: Omit<Drink, 'id'>) => Promise<Drink>;
@@ -450,7 +477,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       restOfDbData.sales = (restOfDbData.sales || []).sort((a: Sale, b: Sale) => new Date(b.date).getTime() - new Date(a.date).getTime());
       restOfDbData.operationalCosts = (restOfDbData.operationalCosts || []).sort((a: OperationalCost, b: OperationalCost) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
-      setDbData({ user, ...restOfDbData });
+      const migratedUser = user ? { ...user, subscriptionStatus: user.subscriptionStatus || 'free' } : null;
+
+      setDbData({ user: migratedUser, ...restOfDbData });
 
     } catch (error) {
       console.error("Failed to fetch data", error);
@@ -618,6 +647,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 name: firebaseUser.displayName || 'Pengguna Google',
                 email: firebaseUser.email || 'Tidak ada email',
                 avatar: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${firebaseUser.displayName?.charAt(0) || 'G'}`,
+                subscriptionStatus: 'free',
             };
     
             // Overwrite the current simulated user with the Google user's details.
@@ -640,6 +670,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       logout,
       register,
       loginWithGoogle,
+      upgradeToPremium: wrap(currentService.upgradeToPremium),
       addDrink: wrap(currentService.addDrink),
       updateDrink: wrap(currentService.updateDrink),
       deleteDrink: wrap(currentService.deleteDrink),

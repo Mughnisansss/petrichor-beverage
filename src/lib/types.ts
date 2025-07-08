@@ -4,6 +4,7 @@ export interface User {
   name: string;
   email: string;
   avatar: string;
+  subscriptionStatus: 'free' | 'premium';
 }
 
 export interface RawMaterial {

@@ -6,6 +6,7 @@ import { useForm, useFieldArray, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
+import Link from "next/link";
 import { nanoid } from "nanoid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Drink, Food, RawMaterial, PackagingInfo } from "@/lib/types";
-import { PlusCircle, Edit, Trash2, X, ImageIcon, Upload } from "lucide-react";
+import { PlusCircle, Edit, Trash2, X, ImageIcon, Upload, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
@@ -23,6 +24,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useAppContext } from "@/context/AppContext";
 
 // --- Schemas ---
 const ingredientSchema = z.object({
@@ -143,9 +146,6 @@ const PackagingOptionAccordionItem = ({
 // --- Form Component ---
 interface ProductFormProps {
   productType: 'minuman' | 'makanan';
-  rawMaterials: RawMaterial[];
-  addProduct: (product: Omit<Product, 'id'>) => Promise<any>;
-  updateProduct: (id: string, product: Omit<Product, 'id'>) => Promise<any>;
   onFinished: () => void;
 }
 
@@ -154,12 +154,21 @@ type Product = Drink | Food;
 const ProductForm = React.forwardRef<
     { handleEdit: (product: Product) => void; handleNew: (subCategory?: string) => void; },
     ProductFormProps
->(({ productType, rawMaterials, addProduct, updateProduct, onFinished }, ref) => {
+>(({ productType, onFinished }, ref) => {
+    const { 
+        rawMaterials, 
+        addDrink, 
+        updateDrink,
+        addFood,
+        updateFood
+    } = useAppContext();
     const { toast } = useToast();
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
 
     const productTypeName = productType === 'minuman' ? 'Minuman' : 'Makanan';
+    const addProduct = productType === 'minuman' ? addDrink : addFood;
+    const updateProduct = productType === 'minuman' ? updateDrink : updateFood;
     
     const productSchema = z.object({
         name: z.string().min(1, "Nama produk tidak boleh kosong"),
@@ -449,20 +458,27 @@ ProductForm.displayName = 'ProductForm';
 // --- Main Manager Component ---
 interface ProductManagerProps {
   productType: 'minuman' | 'makanan';
-  products: Product[];
-  rawMaterials: RawMaterial[];
-  addProduct: (product: Omit<Product, 'id'>) => Promise<any>;
-  updateProduct: (id: string, product: Omit<Product, 'id'>) => Promise<any>;
-  deleteProduct: (id: string) => Promise<{ ok: boolean; message: string }>;
 }
 
-export function ProductManager({ productType, products, rawMaterials, addProduct, updateProduct, deleteProduct }: ProductManagerProps) {
+export function ProductManager({ productType }: ProductManagerProps) {
+    const { 
+        user,
+        drinks, 
+        foods,
+        deleteDrink,
+        deleteFood,
+    } = useAppContext();
+
+    const products = productType === 'minuman' ? drinks : foods;
+    const deleteProduct = productType === 'minuman' ? deleteDrink : deleteFood;
+
     const { toast } = useToast();
     const [isFormVisible, setFormVisible] = useState(false);
     const formRef = useRef<{ handleEdit: (product: Product) => void; handleNew: (subCategory?: string) => void; }>(null);
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [isAddCategoryOpen, setAddCategoryOpen] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
+    const [isUpgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
 
     const productTypeName = productType === 'minuman' ? 'Minuman' : 'Makanan';
 
@@ -483,16 +499,7 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
             toast({ title: "Nama kategori tidak boleh kosong", variant: "destructive" });
             return;
         }
-        setCategoryFilter(newCategoryName);
-        if (formRef.current) {
-            formRef.current.handleNew(newCategoryName);
-            if (!isFormVisible) {
-                setFormVisible(true);
-            }
-            setTimeout(() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 50);
-        }
+        handleShowForm(newCategoryName);
         setAddCategoryOpen(false);
         setNewCategoryName("");
     };
@@ -515,15 +522,26 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
             formRef.current?.handleEdit(product);
         }, 50);
     }
+    
+    const handleShowForm = (newCategory?: string) => {
+        if (!user) {
+            toast({ title: "Harap Login", description: "Anda harus login untuk menambah produk.", variant: "destructive" });
+            return;
+        }
 
-    const handleToggleForm = () => {
-        if (isFormVisible) {
+        const totalProducts = (drinks?.length || 0) + (foods?.length || 0);
+        if (user.subscriptionStatus === 'free' && totalProducts >= 10 && !isFormVisible) {
+            setUpgradeDialogOpen(true);
+            return;
+        }
+
+        if (isFormVisible && !newCategory) {
             setFormVisible(false);
         } else {
             setFormVisible(true);
             setTimeout(() => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                const subCategory = categoryFilter !== 'all' ? categoryFilter : '';
+                const subCategory = newCategory || (categoryFilter !== 'all' ? categoryFilter : '');
                 formRef.current?.handleNew(subCategory);
             }, 50);
         }
@@ -531,6 +549,26 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
     
     return (
         <div className="flex flex-col gap-8">
+            <AlertDialog open={isUpgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-yellow-100 to-amber-100">
+                             <Sparkles className="h-6 w-6 text-amber-600" />
+                        </div>
+                        <AlertDialogTitle className="text-center">Batas Resep Gratis Tercapai</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center">
+                            Akun gratis Anda dibatasi hingga 10 resep. Upgrade ke Premium untuk menambah resep tanpa batas, melacak sumber pembelian, dan membuka semua fitur canggih lainnya.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row">
+                        <AlertDialogCancel>Nanti Saja</AlertDialogCancel>
+                        <AlertDialogAction asChild>
+                            <Link href="/pengaturan/akun">Upgrade ke Premium</Link>
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
             <Dialog open={isAddCategoryOpen} onOpenChange={setAddCategoryOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -556,7 +594,7 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
 
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-semibold">Manajemen {productTypeName}</h1>
-                <Button onClick={handleToggleForm}>
+                <Button onClick={() => handleShowForm()}>
                     <PlusCircle className="mr-2 h-4 w-4" /> {isFormVisible ? "Tutup Form" : `Tambah ${productTypeName}`}
                 </Button>
             </div>
@@ -572,9 +610,6 @@ export function ProductManager({ productType, products, rawMaterials, addProduct
                          ref={formRef} 
                          onFinished={() => setFormVisible(false)} 
                          productType={productType}
-                         rawMaterials={rawMaterials}
-                         addProduct={addProduct}
-                         updateProduct={updateProduct}
                        />
                     </CardContent>
                 </Card>
