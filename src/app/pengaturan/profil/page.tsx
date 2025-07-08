@@ -84,7 +84,7 @@ export default function ProfilPengaturanPage() {
                     <div className="space-y-2">
                         <Label htmlFor="appName">Nama Aplikasi</Label>
                         <Input id="appName" value={localAppName} onChange={(e) => setLocalAppName(e.target.value)} placeholder="Masukkan nama aplikasi/toko Anda" />
-                        <p className="text-sm text-muted-foreground">Nama ini akan muncul di pesan selamat datang, teks berjalan, dan beberapa bagian lain di aplikasi.</p>
+                        <p className="text-sm text-muted-foreground">Nama ini akan muncul di logo, pesan selamat datang, teks berjalan, dan beberapa bagian lain di aplikasi.</p>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="marqueeText">Teks Berjalan</Label>
