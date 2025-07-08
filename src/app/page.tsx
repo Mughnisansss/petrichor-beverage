@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -52,7 +51,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Selamat Datang di Dasbor Anda
+            selamat datang di Petrichor app
           </h1>
           <p className="text-lg text-muted-foreground mt-4 max-w-2xl mx-auto">
             Ini adalah pusat kendali untuk bisnis Anda. Akses semua fitur utama dari sini untuk mengelola operasi kafe Anda dengan efisien.
