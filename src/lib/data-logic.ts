@@ -4,7 +4,7 @@
  * Contains centralized business logic for data manipulation to ensure consistency
  * between local storage and server-side API operations.
  */
-import type { DbData, Drink, Food, OperationalCost, RawMaterial, Sale } from './types';
+import type { DbData, Drink, Food, OperationalCost, RawMaterial, Sale, Ingredient } from './types';
 import { differenceInDays, isWithinInterval, parseISO } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 
@@ -157,4 +157,77 @@ export function recalculateDependentProductCosts(db: DbData, updatedMaterialId: 
       }
     });
   }
+}
+
+/**
+ * Deducts raw material stock based on a list of sale items.
+ * It directly mutates the `rawMaterials` array within the provided `db` object.
+ * @param saleItems An array of sale objects (without id and date).
+ * @param db The entire database object.
+ */
+export function deductStockForSaleItems(
+  saleItems: Omit<Sale, 'id' | 'date'>[],
+  db: DbData
+): void {
+  const { drinks, foods, rawMaterials } = db;
+
+  saleItems.forEach(sale => {
+    const { productId, productType, quantity, selectedToppings, selectedPackagingId } = sale;
+    const product = productType === 'drink'
+      ? drinks.find(d => d.id === productId)
+      : foods.find(f => f.id === productId);
+
+    if (!product) {
+      console.warn(`Product with ID ${productId} not found during stock deduction.`);
+      return; // Skip if product doesn't exist
+    }
+
+    const allIngredientsToDeduct: Ingredient[] = [];
+
+    // 1. Add base product ingredients
+    allIngredientsToDeduct.push(...product.ingredients);
+
+    // 2. Add packaging ingredients
+    if (selectedPackagingId && product.packagingOptions) {
+      const packaging = product.packagingOptions.find(p => p.id === selectedPackagingId);
+      if (packaging && packaging.ingredients) {
+        allIngredientsToDeduct.push(...packaging.ingredients);
+      }
+    }
+
+    // 3. Add topping ingredients
+    if (selectedToppings) {
+      allIngredientsToDeduct.push(...selectedToppings);
+    }
+    
+    // 4. Consolidate and deduct from stock
+    const materialDeductions = new Map<string, number>();
+
+    allIngredientsToDeduct.forEach(ing => {
+      const totalQuantityToDeduct = ing.quantity * quantity;
+      materialDeductions.set(
+        ing.rawMaterialId,
+        (materialDeductions.get(ing.rawMaterialId) || 0) + totalQuantityToDeduct
+      );
+    });
+    
+    materialDeductions.forEach((amountToDeduct, materialId) => {
+      const materialIndex = rawMaterials.findIndex(m => m.id === materialId);
+      if (materialIndex !== -1) {
+        const originalQuantity = rawMaterials[materialIndex].totalQuantity;
+        const newQuantity = originalQuantity - amountToDeduct;
+        
+        // Also update totalCost based on weighted average to keep it consistent
+        const costPerUnit = rawMaterials[materialIndex].costPerUnit || 0;
+        const newCost = newQuantity * costPerUnit;
+
+        rawMaterials[materialIndex].totalQuantity = newQuantity;
+        rawMaterials[materialIndex].totalCost = newCost;
+
+        if (newQuantity < 0) {
+            console.warn(`Stock for material ${rawMaterials[materialIndex].name} has gone negative!`);
+        }
+      }
+    });
+  });
 }

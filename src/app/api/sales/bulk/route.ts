@@ -3,15 +3,18 @@ import { NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { readDb, writeDb } from '@/lib/db';
 import type { Sale } from '@/lib/types';
+import { deductStockForSaleItems } from '@/lib/data-logic';
 
 export async function POST(request: Request) {
-  // Now expecting sales to have `totalSalePrice` and optionally `selectedToppings`
   const salesToAdd: Omit<Sale, 'id' | 'date'>[] = await request.json();
   const data = await readDb();
   
   if (!salesToAdd || !Array.isArray(salesToAdd)) {
       return NextResponse.json({ message: 'Invalid input' }, { status: 400 });
   }
+
+  // Perform stock deduction for all items in the batch
+  deductStockForSaleItems(salesToAdd, data);
 
   const newSales: Sale[] = salesToAdd.map(sale => ({
     ...sale,

@@ -10,7 +10,8 @@ import {
   isRawMaterialInUse, 
   hasDrinkAssociatedSales,
   hasFoodAssociatedSales,
-  recalculateDependentProductCosts 
+  recalculateDependentProductCosts,
+  deductStockForSaleItems
 } from '@/lib/data-logic';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { auth } from '@/lib/firebase';
@@ -272,6 +273,7 @@ const localStorageService = {
   },
   addSale: async (sale: Omit<Sale, 'id' | 'date'>): Promise<Sale> => {
     const data = getLocalData();
+    deductStockForSaleItems([sale], data);
     const newSale = { ...sale, id: nanoid(), date: new Date().toISOString() };
     data.sales.unshift(newSale);
     setLocalData(data);
@@ -285,6 +287,7 @@ const localStorageService = {
   },
   batchAddSales: async (sales: Omit<Sale, 'id' | 'date'>[]): Promise<Sale[]> => {
     const data = getLocalData();
+    deductStockForSaleItems(sales, data);
     const newSales = sales.map(s => ({ ...s, id: nanoid(), date: new Date().toISOString() }));
     data.sales.unshift(...newSales);
     data.sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { readDb, writeDb } from '@/lib/db';
 import type { Sale } from '@/lib/types';
+import { deductStockForSaleItems } from '@/lib/data-logic';
 
 export async function GET() {
   const data = await readDb();
@@ -14,6 +15,9 @@ export async function GET() {
 export async function POST(request: Request) {
   const newSaleData: Omit<Sale, 'id' | 'date'> = await request.json();
   const data = await readDb();
+  
+  // Perform stock deduction
+  deductStockForSaleItems([newSaleData], data);
   
   const saleToAdd: Sale = { 
     ...newSaleData, 
