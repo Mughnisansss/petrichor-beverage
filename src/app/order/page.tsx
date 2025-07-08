@@ -451,11 +451,6 @@ export default function OrderPage() {
                 <CardContent className="p-4 flex-grow">
                     <h3 className="text-lg font-bold truncate text-foreground">{item.name}</h3>
                 </CardContent>
-                <CardFooter className="p-4 pt-0">
-                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg">
-                      <Plus className="mr-2 h-4 w-4" /> Pesan
-                  </Button>
-                </CardFooter>
               </Card>
           ))}
         </div>
@@ -552,11 +547,6 @@ export default function OrderPage() {
                                             <CardContent className="p-4 flex-grow">
                                                 <h3 className="text-lg font-bold truncate text-foreground">{product.name}</h3>
                                             </CardContent>
-                                            <CardFooter className="p-4 pt-0">
-                                                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg">
-                                                    <Plus className="mr-2 h-4 w-4" /> Pesan
-                                                </Button>
-                                            </CardFooter>
                                         </Card>
                                     ))}
                                 </div>
