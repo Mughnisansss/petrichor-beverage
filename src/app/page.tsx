@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -47,7 +48,7 @@ export default function DashboardPage() {
               ) : (
                 <CupSoda className="h-14 w-14" />
               )}
-              <span>{appName}</span>
+              <span>Petrichor</span>
             </div>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
