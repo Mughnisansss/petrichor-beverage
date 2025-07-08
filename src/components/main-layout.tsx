@@ -138,8 +138,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
               <div className={cn(
-                "flex-1 overflow-hidden flex items-center h-10 rounded-md",
+                "flex-1 overflow-hidden items-center h-10 rounded-md",
                 "bg-muted border border-input",
+                "hidden md:flex"
               )}>
                  <div className="relative flex overflow-x-hidden">
                     <div className="animate-marquee whitespace-nowrap">

@@ -122,7 +122,7 @@ function QuickSellDialog({
             {packagingOptions.length > 0 && (
                 <div className="space-y-2">
                     <h4 className="font-semibold">Ukuran</h4>
-                    <RadioGroup value={selectedPackagingId} onValueChange={setSelectedPackagingId} className="grid grid-cols-3 gap-3">
+                    <RadioGroup value={selectedPackagingId} onValueChange={setSelectedPackagingId} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {packagingOptions.map((pack) => (
                             <Label key={pack.id} htmlFor={`qs-pack-${pack.id}`} className={cn(
                                 "flex flex-col items-center justify-center rounded-md border-2 p-3 hover:bg-accent/80 cursor-pointer",

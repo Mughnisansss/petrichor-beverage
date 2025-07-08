@@ -255,19 +255,19 @@ export default function BahanBakuPage() {
   
   return (
     <div className="flex flex-col gap-8">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h1 className="text-2xl font-semibold">Manajemen Bahan Baku</h1>
                 <p className="text-muted-foreground">Kelola semua inventaris bahan baku Anda di sini.</p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              <div className="text-right flex-grow sm:flex-grow-0">
                   <div className="text-sm font-medium text-muted-foreground">Total Nilai Stok</div>
                   <div className="text-xl font-bold">{formatCurrency(totalInventoryValue)}</div>
               </div>
-              <Button onClick={openFormForNew}>
+              <Button onClick={openFormForNew} className="shrink-0">
                   <PlusCircle className="mr-2 h-4 w-4" /> 
-                  Tambah Bahan Baku
+                  Tambah
               </Button>
             </div>
         </div>

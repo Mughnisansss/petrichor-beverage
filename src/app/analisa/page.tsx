@@ -162,7 +162,7 @@ const KasHarianManager = () => {
                 <div className="space-y-4">
                     <h4 className="font-medium">Catat Pengeluaran Tunai Harian</h4>
                      <p className="text-sm text-muted-foreground">Catat pengeluaran kecil yang dibayar tunai (cth: beli es batu, parkir). Biaya operasional besar seperti gaji atau sewa harus dicatat di tab "Biaya Operasional".</p>
-                    <div className="grid sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <Input value={expenseDesc} onChange={(e) => setExpenseDesc(e.target.value)} placeholder="Deskripsi (cth: Beli es batu)" className="sm:col-span-2" />
                     <Input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} type="number" placeholder="Jumlah (Rp)" />
                     </div>

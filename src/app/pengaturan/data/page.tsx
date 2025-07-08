@@ -162,6 +162,28 @@ export default function DataPengaturanPage() {
         });
     };
 
+    const CsvActionRow = ({ label, description, onImport, onExport, onFileChange, isDisabled, isExportDisabled }: any) => (
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors">
+            <div className="flex-grow">
+                <Label className="font-semibold text-base">{label}</Label>
+                <p className="text-sm text-muted-foreground">{description}</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto shrink-0">
+                {!isDisabled ? (
+                    <>
+                    <Button onClick={onImport} variant="outline" size="sm" className="w-full sm:w-auto">Impor</Button>
+                    <Input type="file" accept=".csv" onChange={onFileChange} className="text-xs file:mr-2 file:text-xs file:h-9 file:rounded-md file:border-0 file:bg-muted file:px-2 w-full sm:w-56" />
+                    </>
+                ) : (
+                    <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                        <div className="w-full sm:w-auto"><Button variant="outline" size="sm" disabled className="w-full">Impor</Button></div>
+                    </TooltipTrigger><TooltipContent><p>Gunakan Restore JSON untuk impor data ini.</p></TooltipContent></Tooltip></TooltipProvider>
+                )}
+                 <Button onClick={onExport} variant="outline" size="sm" disabled={isExportDisabled} className="w-full sm:w-auto">Ekspor</Button>
+            </div>
+        </div>
+    );
+
     return (
         <div className="space-y-8">
             <Card>
@@ -189,73 +211,68 @@ export default function DataPengaturanPage() {
                     <div className="p-4 border rounded-lg space-y-4">
                         <h4 className="font-semibold text-base">Backup & Restore (JSON)</h4>
                         <p className="text-sm text-muted-foreground">Gunakan format JSON untuk backup lengkap yang dapat dipulihkan. <strong className="text-destructive">Mengimpor akan menimpa semua data yang ada.</strong></p>
-                        <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="flex-1 space-y-2">
-                            <Label htmlFor="importFile" className="text-xs font-semibold">IMPOR DARI BACKUP</Label>
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <Label htmlFor="importFile" className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer")}><UploadCloud className="mr-2 h-4 w-4" /> Pilih File JSON...</Label>
-                                <Input id="importFile" type="file" accept=".json" onChange={(e) => setFileToImport(e.target.files?.[0] || null)} className="hidden" />
-                                <Button onClick={handleImportJson} disabled={!fileToImport || isLoading}>Impor</Button>
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <div className="flex-1 space-y-2">
+                                <Label htmlFor="importFile" className="text-xs font-semibold">IMPOR DARI BACKUP</Label>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <Label htmlFor="importFile" className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer")}><UploadCloud className="mr-2 h-4 w-4" /> Pilih File JSON...</Label>
+                                    <Input id="importFile" type="file" accept=".json" onChange={(e) => setFileToImport(e.target.files?.[0] || null)} className="hidden" />
+                                    <Button onClick={handleImportJson} disabled={!fileToImport || isLoading}>Impor</Button>
+                                </div>
+                                {fileToImport && <p className="text-xs text-muted-foreground">File dipilih: <strong>{fileToImport.name}</strong></p>}
                             </div>
-                            {fileToImport && <p className="text-xs text-muted-foreground">File dipilih: <strong>{fileToImport.name}</strong></p>}
-                        </div>
-                        <div className="flex-1 space-y-2">
-                            <Label className="text-xs font-semibold">BUAT FILE BACKUP</Label>
-                            <div>
-                                <Button onClick={handleExportJson} variant="secondary" disabled={isLoading} className="w-full sm:w-auto"><Download className="mr-2 h-4 w-4" /> Ekspor Semua Data (JSON)</Button>
+                            <div className="flex-1 space-y-2">
+                                <Label className="text-xs font-semibold">BUAT FILE BACKUP</Label>
+                                <div>
+                                    <Button onClick={handleExportJson} variant="secondary" disabled={isLoading} className="w-full sm:w-auto"><Download className="mr-2 h-4 w-4" /> Ekspor Semua Data (JSON)</Button>
+                                </div>
                             </div>
-                        </div>
                         </div>
                     </div>
               
-                    <div className="p-4 border rounded-lg space-y-4">
+                    <div className="space-y-4">
                         <h4 className="font-semibold text-base">Analisis & Tambah Massal (CSV)</h4>
                         <p className="text-sm text-muted-foreground">Gunakan format CSV untuk diolah di spreadsheet atau untuk menambahkan data baru secara massal.</p>
                         <div className="space-y-3">
-                        {/* CSV Row: Bahan Baku */}
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 p-2 rounded-md hover:bg-muted/50">
-                            <Label className="font-medium">Bahan Baku</Label>
-                            <div className="flex gap-2 flex-wrap justify-end">
-                            <Button onClick={() => handleImportCsv(bahanBakuCsv, importRawMaterialsFromCsv, 'Bahan Baku')} variant="outline" size="sm" disabled={isLoading}>Impor dari CSV</Button>
-                            <Input type="file" accept=".csv" onChange={(e) => setBahanBakuCsv(e.target.files?.[0] || null)} className="text-xs file:mr-2 file:text-xs file:h-full file:rounded-md file:border-0 file:bg-muted file:px-2 w-48 h-9" />
-                            <Button onClick={() => exportDataAsCsv(rawMaterials, 'bahan_baku.csv')} variant="outline" size="sm" disabled={isLoading}>Ekspor</Button>
-                            </div>
-                        </div>
-                        {/* CSV Row: Biaya Operasional */}
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 p-2 rounded-md hover:bg-muted/50">
-                            <Label className="font-medium">Biaya Operasional</Label>
-                            <div className="flex gap-2 flex-wrap justify-end">
-                            <Button onClick={() => handleImportCsv(operasionalCsv, importOperationalCostsFromCsv, 'Biaya Operasional')} variant="outline" size="sm" disabled={isLoading}>Impor dari CSV</Button>
-                            <Input type="file" accept=".csv" onChange={(e) => setOperasionalCsv(e.target.files?.[0] || null)} className="text-xs file:mr-2 file:text-xs file:h-full file:rounded-md file:border-0 file:bg-muted file:px-2 w-48 h-9" />
-                            <Button onClick={() => exportDataAsCsv(operationalCosts, 'biaya_operasional.csv')} variant="outline" size="sm" disabled={isLoading}>Ekspor</Button>
-                            </div>
-                        </div>
-                        <Separator />
-                        <p className="text-xs text-muted-foreground flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Impor CSV untuk Penjualan &amp; Produk dinonaktifkan untuk menjaga integritas data resep dan transaksi. Gunakan fitur Backup &amp; Restore JSON.</p>
-                        {/* CSV Row: Penjualan (Disabled) */}
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 p-2 rounded-md opacity-50">
-                            <Label className="font-medium">Penjualan</Label>
-                            <div className="flex gap-2 flex-wrap justify-end">
-                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="outline" size="sm" disabled>Impor dari CSV</Button></TooltipTrigger><TooltipContent><p>Gunakan Restore JSON untuk impor penjualan.</p></TooltipContent></Tooltip></TooltipProvider>
-                            <Button onClick={() => exportDataAsCsv(sales, 'penjualan.csv', processSalesForCsv)} variant="outline" size="sm" disabled={isLoading}>Ekspor</Button>
-                            </div>
-                        </div>
-                        {/* CSV Row: Minuman (Disabled) */}
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 p-2 rounded-md opacity-50">
-                            <Label className="font-medium">Minuman</Label>
-                            <div className="flex gap-2 flex-wrap justify-end">
-                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="outline" size="sm" disabled>Impor dari CSV</Button></TooltipTrigger><TooltipContent><p>Gunakan Restore JSON untuk impor produk.</p></TooltipContent></Tooltip></TooltipProvider>
-                            <Button onClick={() => exportDataAsCsv(drinks, 'minuman.csv', processProductsForCsv)} variant="outline" size="sm" disabled={isLoading}>Ekspor</Button>
-                            </div>
-                        </div>
-                        {/* CSV Row: Makanan (Disabled) */}
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 p-2 rounded-md opacity-50">
-                            <Label className="font-medium">Makanan</Label>
-                            <div className="flex gap-2 flex-wrap justify-end">
-                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="outline" size="sm" disabled>Impor dari CSV</Button></TooltipTrigger><TooltipContent><p>Gunakan Restore JSON untuk impor produk.</p></TooltipContent></Tooltip></TooltipProvider>
-                            <Button onClick={() => exportDataAsCsv(foods, 'makanan.csv', processProductsForCsv)} variant="outline" size="sm" disabled={isLoading}>Ekspor</Button>
-                            </div>
-                        </div>
+                           <CsvActionRow 
+                             label="Bahan Baku"
+                             description="Tambah / Ekspor data inventaris."
+                             onImport={() => handleImportCsv(bahanBakuCsv, importRawMaterialsFromCsv, 'Bahan Baku')}
+                             onExport={() => exportDataAsCsv(rawMaterials, 'bahan_baku.csv')}
+                             onFileChange={(e: any) => setBahanBakuCsv(e.target.files?.[0] || null)}
+                             isExportDisabled={isLoading || rawMaterials.length === 0}
+                           />
+                           <CsvActionRow 
+                             label="Biaya Operasional"
+                             description="Tambah / Ekspor biaya rutin."
+                             onImport={() => handleImportCsv(operasionalCsv, importOperationalCostsFromCsv, 'Biaya Operasional')}
+                             onExport={() => exportDataAsCsv(operationalCosts, 'biaya_operasional.csv')}
+                             onFileChange={(e: any) => setOperasionalCsv(e.target.files?.[0] || null)}
+                              isExportDisabled={isLoading || operationalCosts.length === 0}
+                           />
+                           <Separator />
+                           <p className="text-xs text-muted-foreground flex items-center gap-2 px-1"><AlertTriangle className="h-4 w-4" /> Impor CSV untuk Penjualan & Produk dinonaktifkan untuk menjaga integritas data. Gunakan fitur Backup & Restore (JSON).</p>
+                           <CsvActionRow 
+                             label="Penjualan"
+                             description="Ekspor riwayat penjualan untuk analisis."
+                             isDisabled={true}
+                             onExport={() => exportDataAsCsv(sales, 'penjualan.csv', processSalesForCsv)}
+                             isExportDisabled={isLoading || sales.length === 0}
+                           />
+                           <CsvActionRow 
+                             label="Minuman"
+                             description="Ekspor data resep dan harga minuman."
+                             isDisabled={true}
+                             onExport={() => exportDataAsCsv(drinks, 'minuman.csv', processProductsForCsv)}
+                              isExportDisabled={isLoading || drinks.length === 0}
+                           />
+                            <CsvActionRow 
+                             label="Makanan"
+                             description="Ekspor data resep dan harga makanan."
+                             isDisabled={true}
+                             onExport={() => exportDataAsCsv(foods, 'makanan.csv', processProductsForCsv)}
+                             isExportDisabled={isLoading || foods.length === 0}
+                           />
                         </div>
                     </div>
                 </CardContent>

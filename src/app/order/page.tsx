@@ -503,7 +503,7 @@ export default function OrderPage() {
 
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <div className="flex flex-col items-center text-center mb-16">
-                    <h1 className="font-pacifico text-5xl md:text-7xl text-primary tracking-tight">Selamat Datang di <span className="text-secondary">{appName}</span></h1>
+                    <h1 className="font-pacifico text-4xl sm:text-5xl md:text-7xl text-primary tracking-tight">Selamat Datang di <span className="text-secondary">{appName}</span></h1>
                     <p className="text-xl text-foreground mt-4 max-w-2xl font-body">
                         Pilih menu favorit Anda di bawah ini dan nikmati sensasi rasa yang tak terlupakan.
                     </p>
@@ -518,7 +518,7 @@ export default function OrderPage() {
                                     <div className="bg-secondary/80 p-3 rounded-full shadow-sm">
                                         <Sparkles className="h-8 w-8 text-secondary-foreground"/>
                                     </div>
-                                    <h2 className="font-pacifico text-5xl text-secondary">Paling Laris</h2>
+                                    <h2 className="font-pacifico text-4xl sm:text-5xl text-secondary">Paling Laris</h2>
                                     <div className="flex-grow h-1 bg-gradient-to-r from-secondary/50 to-transparent rounded-full" />
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -560,7 +560,7 @@ export default function OrderPage() {
                                     <div className="bg-accent/80 p-3 rounded-full shadow-sm">
                                         <CupSoda className="h-8 w-8 text-primary"/>
                                     </div>
-                                    <h2 className="font-pacifico text-5xl text-primary capitalize">{category}</h2>
+                                    <h2 className="font-pacifico text-4xl sm:text-5xl text-primary capitalize">{category}</h2>
                                     <div className="flex-grow h-1 bg-gradient-to-r from-accent/50 to-transparent rounded-full" />
                                 </div>
                                 {renderProductGrid(products, 'drink')}
@@ -574,7 +574,7 @@ export default function OrderPage() {
                                 <div className="bg-accent/80 p-3 rounded-full shadow-sm">
                                     <Utensils className="h-8 w-8 text-primary"/>
                                 </div>
-                                    <h2 className="font-pacifico text-5xl text-primary capitalize">{category}</h2>
+                                    <h2 className="font-pacifico text-4xl sm:text-5xl text-primary capitalize">{category}</h2>
                                     <div className="flex-grow h-1 bg-gradient-to-r from-accent/50 to-transparent rounded-full" />
                                 </div>
                                 {renderProductGrid(products, 'food')}
