@@ -142,15 +142,15 @@ function ProductCustomizationDialog({
           {packagingOptions.length > 0 && (
             <div className="space-y-2">
                 <h4 className="font-bold text-foreground">Ukuran</h4>
-                <RadioGroup value={selectedPackagingId} onValueChange={setSelectedPackagingId} className="grid grid-cols-2 gap-2">
+                <RadioGroup value={selectedPackagingId} onValueChange={setSelectedPackagingId} className="grid grid-cols-2 gap-4">
                     {packagingOptions.map((pack) => (
                         <Label key={pack.id} htmlFor={pack.id} className={cn(
-                            "flex flex-col items-center justify-center rounded-md border-2 p-3 hover:bg-primary/10 cursor-pointer transition-colors",
+                            "flex flex-col items-center justify-center rounded-lg border-2 p-4 hover:bg-primary/10 cursor-pointer transition-colors",
                             selectedPackagingId === pack.id ? "bg-primary text-primary-foreground border-primary" : "border-input bg-card/50 text-foreground"
                         )}>
                             <RadioGroupItem value={pack.id} id={pack.id} className="sr-only" />
-                            <span className="font-bold">{pack.name}</span>
-                            <span className="text-xs">+{formatCurrency(pack.additionalPrice)}</span>
+                            <span className="font-bold text-base">{pack.name}</span>
+                            <span className="text-sm">+{formatCurrency(pack.additionalPrice)}</span>
                         </Label>
                     ))}
                 </RadioGroup>
