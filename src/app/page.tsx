@@ -28,28 +28,12 @@ const FeatureCard = ({ icon: Icon, title, description, href }: { icon: React.Ele
 );
 
 export default function DashboardPage() {
-  const { appName, user, logoImageUri } = useAppContext();
+  const { user } = useAppContext();
 
   return (
     <MainLayout>
       <div className="flex flex-col gap-12">
         <div className="text-center py-12 px-6 bg-muted/50 rounded-lg border">
-          <div className="flex justify-center mb-6">
-            <div className="flex items-center gap-4 text-4xl font-bold text-primary">
-              {logoImageUri ? (
-                <Image
-                  src={logoImageUri}
-                  alt={`${appName} logo`}
-                  width={56}
-                  height={56}
-                  className="h-14 w-14 rounded-md object-cover"
-                />
-              ) : (
-                <CupSoda className="h-14 w-14" />
-              )}
-              <span>Petrichor</span>
-            </div>
-          </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
             selamat datang di Petrichor app
           </h1>
