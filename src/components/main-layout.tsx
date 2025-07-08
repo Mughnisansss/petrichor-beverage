@@ -23,6 +23,7 @@ const topNavItems = [
   { href: "/order", label: "Order" },
   { href: "/kasir", label: "Kasir" },
   { href: "/racik/minuman", label: "Produk" },
+  { href: "/analisa", label: "Analisa" },
 ];
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
@@ -37,6 +38,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const isActive = (href: string, currentPath: string) => {
     if (href === '/racik/minuman') return currentPath.startsWith('/racik');
     if (href === '/kasir') return currentPath.startsWith('/kasir');
+    if (href === '/analisa') return currentPath.startsWith('/analisa');
     return currentPath.startsWith(href);
   };
 
