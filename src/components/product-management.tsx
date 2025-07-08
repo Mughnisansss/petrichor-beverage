@@ -206,12 +206,13 @@ const ProductForm = React.forwardRef<
 
     async function onSubmit(values: ProductFormValues) {
         try {
-            const productData = { ...values, costPrice: calculatedCostPrice };
+            // The `values` object (ProductFormValues) already matches the new payload type.
+            // The backend (API or local storage service) will handle the costPrice calculation.
             if (editingProduct) {
-                await updateProduct(editingProduct.id, productData);
+                await updateProduct(editingProduct.id, values);
                 toast({ title: "Sukses", description: `${productTypeName} berhasil diperbarui.` });
             } else {
-                await addProduct(productData);
+                await addProduct(values);
                 toast({ title: "Sukses", description: `${productTypeName} berhasil ditambahkan.` });
             }
             onFinished();

@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 import { readDb, writeDb } from '@/lib/db';
-import { hasDrinkAssociatedSales } from '@/lib/data-logic';
+import { hasDrinkAssociatedSales, calculateItemCostPrice } from '@/lib/data-logic';
 import type { Drink } from '@/lib/types';
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   const { id } = params;
-  // The client will recalculate costPrice based on ingredients and send it
-  const updatedDrinkData: Omit<Drink, 'id'> = await request.json();
+  const updatedDrinkData: Partial<Omit<Drink, 'id'>> = await request.json();
   const data = await readDb();
   
   const drinkIndex = data.drinks.findIndex(d => d.id === id);
@@ -14,8 +13,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ message: 'Drink not found' }, { status: 404 });
   }
 
+  const existingDrink = data.drinks[drinkIndex];
+  
+  // Recalculate costPrice on the server if ingredients change
+  if (updatedDrinkData.ingredients) {
+      updatedDrinkData.costPrice = calculateItemCostPrice(updatedDrinkData.ingredients, data.rawMaterials);
+  }
+
   // Ensure we merge existing data with the update payload
-  const updatedDrink: Drink = { ...data.drinks[drinkIndex], ...updatedDrinkData, id };
+  const updatedDrink: Drink = { ...existingDrink, ...updatedDrinkData, id };
   data.drinks[drinkIndex] = updatedDrink;
   
   await writeDb(data);

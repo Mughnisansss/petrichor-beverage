@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { readDb, writeDb } from '@/lib/db';
 import type { Food } from '@/lib/types';
+import { calculateItemCostPrice } from '@/lib/data-logic';
 
 export async function GET() {
   const data = await readDb();
@@ -12,15 +13,16 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  // The client will calculate costPrice based on ingredients and send it
-  const newFood: Omit<Food, 'id'> = await request.json();
+  const newFoodData: Omit<Food, 'id' | 'costPrice'> = await request.json();
   const data = await readDb();
 
   if (!data.foods) {
     data.foods = [];
   }
   
-  const foodToAdd: Food = { ...newFood, id: nanoid() };
+  const costPrice = calculateItemCostPrice(newFoodData.ingredients, data.rawMaterials);
+  
+  const foodToAdd: Food = { ...newFoodData, id: nanoid(), costPrice };
   data.foods.push(foodToAdd);
   
   await writeDb(data);

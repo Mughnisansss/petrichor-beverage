@@ -11,7 +11,8 @@ import {
   hasDrinkAssociatedSales,
   hasFoodAssociatedSales,
   recalculateDependentProductCosts,
-  deductStockForSaleItems
+  deductStockForSaleItems,
+  calculateItemCostPrice,
 } from '@/lib/data-logic';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { auth } from '@/lib/firebase';
@@ -56,15 +57,15 @@ const apiService = {
     const responseData = await res.json();
     return { ok: res.ok, message: responseData.message };
   },
-  addDrink: async (drink: Omit<Drink, 'id'>): Promise<Drink> => (await fetch('/api/drinks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(drink) })).json(),
-  updateDrink: async (id: string, drink: Omit<Drink, 'id'>): Promise<Drink> => (await fetch(`/api/drinks/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(drink) })).json(),
+  addDrink: async (drink: Omit<Drink, 'id' | 'costPrice'>): Promise<Drink> => (await fetch('/api/drinks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(drink) })).json(),
+  updateDrink: async (id: string, drink: Partial<Omit<Drink, 'id'>>): Promise<Drink> => (await fetch(`/api/drinks/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(drink) })).json(),
   deleteDrink: async (id: string) => {
     const res = await fetch(`/api/drinks/${id}`, { method: 'DELETE' });
     const data = res.ok ? { message: 'Minuman berhasil dihapus.' } : await res.json();
     return { ok: res.ok, message: data.message };
   },
-  addFood: async (food: Omit<Food, 'id'>): Promise<Food> => (await fetch('/api/foods', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(food) })).json(),
-  updateFood: async (id: string, food: Omit<Food, 'id'>): Promise<Food> => (await fetch(`/api/foods/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(food) })).json(),
+  addFood: async (food: Omit<Food, 'id' | 'costPrice'>): Promise<Food> => (await fetch('/api/foods', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(food) })).json(),
+  updateFood: async (id: string, food: Partial<Omit<Food, 'id'>>): Promise<Food> => (await fetch(`/api/foods/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(food) })).json(),
   deleteFood: async (id: string) => {
     const res = await fetch(`/api/foods/${id}`, { method: 'DELETE' });
     const data = res.ok ? { message: 'Makanan berhasil dihapus.' } : await res.json();
@@ -222,20 +223,27 @@ const localStorageService = {
     setLocalData(data);
     return Promise.resolve({ ok: true, message: 'Bahan baku berhasil dihapus.' });
   },
-  addDrink: async (drink: Omit<Drink, 'id'>): Promise<Drink> => {
+  addDrink: async (drinkData: Omit<Drink, 'id' | 'costPrice'>): Promise<Drink> => {
     const data = getLocalData();
-    const newDrink = { ...drink, id: nanoid() };
+    const costPrice = calculateItemCostPrice(drinkData.ingredients, data.rawMaterials);
+    const newDrink = { ...drinkData, id: nanoid(), costPrice };
     data.drinks.push(newDrink);
     setLocalData(data);
     return Promise.resolve(newDrink);
   },
-  updateDrink: async (id: string, drinkUpdate: Omit<Drink, 'id'>): Promise<Drink> => {
+  updateDrink: async (id: string, drinkUpdate: Partial<Omit<Drink, 'id'>>): Promise<Drink> => {
     const data = getLocalData();
     const index = data.drinks.findIndex(d => d.id === id);
     if (index === -1) throw new Error("Drink not found");
-    data.drinks[index] = { ...data.drinks[index], ...drinkUpdate, id };
+    
+    if (drinkUpdate.ingredients) {
+        drinkUpdate.costPrice = calculateItemCostPrice(drinkUpdate.ingredients, data.rawMaterials);
+    }
+    
+    const updatedDrink = { ...data.drinks[index], ...drinkUpdate, id };
+    data.drinks[index] = updatedDrink;
     setLocalData(data);
-    return Promise.resolve(data.drinks[index]);
+    return Promise.resolve(updatedDrink);
   },
   deleteDrink: async (id: string) => {
     const data = getLocalData();
@@ -246,21 +254,28 @@ const localStorageService = {
     setLocalData(data);
     return Promise.resolve({ ok: true, message: 'Minuman berhasil dihapus.' });
   },
-  addFood: async (food: Omit<Food, 'id'>): Promise<Food> => {
+  addFood: async (foodData: Omit<Food, 'id' | 'costPrice'>): Promise<Food> => {
     const data = getLocalData();
-    const newFood = { ...food, id: nanoid() };
     if(!data.foods) data.foods = [];
+    const costPrice = calculateItemCostPrice(foodData.ingredients, data.rawMaterials);
+    const newFood = { ...foodData, id: nanoid(), costPrice };
     data.foods.push(newFood);
     setLocalData(data);
     return Promise.resolve(newFood);
   },
-  updateFood: async (id: string, foodUpdate: Omit<Food, 'id'>): Promise<Food> => {
+  updateFood: async (id: string, foodUpdate: Partial<Omit<Food, 'id'>>): Promise<Food> => {
     const data = getLocalData();
     const index = data.foods.findIndex(d => d.id === id);
     if (index === -1) throw new Error("Food not found");
-    data.foods[index] = { ...data.foods[index], ...foodUpdate, id };
+
+    if (foodUpdate.ingredients) {
+        foodUpdate.costPrice = calculateItemCostPrice(foodUpdate.ingredients, data.rawMaterials);
+    }
+
+    const updatedFood = { ...data.foods[index], ...foodUpdate, id };
+    data.foods[index] = updatedFood;
     setLocalData(data);
-    return Promise.resolve(data.foods[index]);
+    return Promise.resolve(updatedFood);
   },
   deleteFood: async (id: string) => {
     const data = getLocalData();
@@ -391,11 +406,11 @@ interface AppContextType {
   logout: () => Promise<void>;
   upgradeToPremium: () => Promise<User>;
   importData: (data: DbData) => Promise<{ ok: boolean, message: string }>;
-  addDrink: (drink: Omit<Drink, 'id'>) => Promise<Drink>;
-  updateDrink: (id: string, drink: Omit<Drink, 'id'>) => Promise<Drink>;
+  addDrink: (drink: Omit<Drink, 'id' | 'costPrice'>) => Promise<Drink>;
+  updateDrink: (id: string, drink: Partial<Omit<Drink, 'id'>>) => Promise<Drink>;
   deleteDrink: (id: string) => Promise<{ ok: boolean, message: string }>;
-  addFood: (food: Omit<Food, 'id'>) => Promise<Food>;
-  updateFood: (id: string, food: Omit<Food, 'id'>) => Promise<Food>;
+  addFood: (food: Omit<Food, 'id' | 'costPrice'>) => Promise<Food>;
+  updateFood: (id: string, food: Partial<Omit<Food, 'id'>>) => Promise<Food>;
   deleteFood: (id: string) => Promise<{ ok: boolean, message: string }>;
   addSale: (sale: Omit<Sale, 'id' | 'date'>) => Promise<Sale>;
   deleteSale: (id: string) => Promise<{ ok: boolean; message: string }>;
