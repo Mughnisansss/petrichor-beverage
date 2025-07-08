@@ -149,7 +149,7 @@ function ProductCustomizationDialog({
                             selectedPackagingId === pack.id ? "bg-primary text-primary-foreground border-primary" : "border-input bg-card/50 text-foreground"
                         )}>
                             <RadioGroupItem value={pack.id} id={pack.id} className="sr-only" />
-                            <span className="font-bold text-base">{pack.name}</span>
+                            <span className="font-bold text-lg">{pack.name}</span>
                             <span className="text-sm">+{formatCurrency(pack.additionalPrice)}</span>
                         </Label>
                     ))}
@@ -449,7 +449,7 @@ export default function OrderPage() {
                     </div>
                   </div>
                 <CardContent className="p-4 flex-grow">
-                    <h3 className="text-lg font-bold truncate text-foreground">{item.name}</h3>
+                    <h3 className="font-pacifico text-xl text-primary text-center">{item.name}</h3>
                 </CardContent>
               </Card>
           ))}
@@ -545,7 +545,7 @@ export default function OrderPage() {
                                                 </div>
                                             </div>
                                             <CardContent className="p-4 flex-grow">
-                                                <h3 className="text-lg font-bold truncate text-foreground">{product.name}</h3>
+                                                <h3 className="font-pacifico text-xl text-primary text-center">{product.name}</h3>
                                             </CardContent>
                                         </Card>
                                     ))}
