@@ -145,22 +145,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <MobileNav />
             </div>
             <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-              <div className={cn(
-                "flex-1 overflow-hidden items-center h-10 rounded-md",
-                "bg-muted border border-input",
-                "hidden md:flex"
-              )}>
-                 <div className="relative flex overflow-x-hidden">
-                    <div className="animate-marquee whitespace-nowrap">
-                      <span className="mx-4 text-sm font-medium">{displayText}</span>
-                      <span className="mx-4 text-sm font-medium">{displayText}</span>
-                    </div>
-                    <div className="absolute top-0 animate-marquee2 whitespace-nowrap">
-                       <span className="mx-4 text-sm font-medium">{displayText}</span>
-                       <span className="mx-4 text-sm font-medium">{displayText}</span>
-                    </div>
-                  </div>
-              </div>
               <ThemeToggle />
               <Link href={settingsHref} passHref>
                 <Button variant="ghost" size="icon">
