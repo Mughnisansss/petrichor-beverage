@@ -1,13 +1,5 @@
 
 
-export interface User {
-  uid: string;
-  name: string;
-  email: string;
-  avatar: string;
-  subscriptionStatus: 'free' | 'premium';
-}
-
 export interface RawMaterial {
   id: string;
   name: string;

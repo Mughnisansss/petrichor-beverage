@@ -463,7 +463,6 @@ interface ProductManagerProps {
 
 export function ProductManager({ productType }: ProductManagerProps) {
     const { 
-        user,
         drinks, 
         foods,
         deleteDrink,
@@ -479,7 +478,6 @@ export function ProductManager({ productType }: ProductManagerProps) {
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [isAddCategoryOpen, setAddCategoryOpen] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
-    const [isUpgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
 
     const productTypeName = productType === 'minuman' ? 'Minuman' : 'Makanan';
 
@@ -525,17 +523,6 @@ export function ProductManager({ productType }: ProductManagerProps) {
     }
     
     const handleShowForm = (newCategory?: string) => {
-        if (!user) {
-            toast({ title: "Harap Login", description: "Anda harus login untuk menambah produk.", variant: "destructive" });
-            return;
-        }
-
-        const totalProducts = (drinks?.length || 0) + (foods?.length || 0);
-        if (user.subscriptionStatus === 'free' && totalProducts >= 10 && !isFormVisible) {
-            setUpgradeDialogOpen(true);
-            return;
-        }
-
         if (isFormVisible && !newCategory) {
             setFormVisible(false);
         } else {
@@ -550,26 +537,6 @@ export function ProductManager({ productType }: ProductManagerProps) {
     
     return (
         <div className="flex flex-col gap-8">
-            <AlertDialog open={isUpgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-yellow-100 to-amber-100">
-                             <Sparkles className="h-6 w-6 text-amber-600" />
-                        </div>
-                        <AlertDialogTitle className="text-center">Batas Resep Gratis Tercapai</AlertDialogTitle>
-                        <AlertDialogDescription className="text-center">
-                            Akun gratis Anda dibatasi hingga 10 resep. Upgrade ke Premium untuk menambah resep tanpa batas, melacak sumber pembelian, dan membuka semua fitur canggih lainnya.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row">
-                        <AlertDialogCancel>Nanti Saja</AlertDialogCancel>
-                        <AlertDialogAction asChild>
-                            <Link href="/pengaturan/akun">Upgrade ke Premium</Link>
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
             <Dialog open={isAddCategoryOpen} onOpenChange={setAddCategoryOpen}>
                 <DialogContent>
                     <DialogHeader>

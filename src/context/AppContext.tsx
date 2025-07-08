@@ -4,7 +4,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { nanoid } from 'nanoid';
-import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem, Ingredient, QueuedOrder, PackagingInfo, CashExpense, User } from '@/lib/types';
+import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem, Ingredient, QueuedOrder, PackagingInfo, CashExpense } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { 
   isRawMaterialInUse, 
@@ -14,17 +14,6 @@ import {
   deductStockForSaleItems,
   calculateItemCostPrice,
 } from '@/lib/data-logic';
-import { 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signOut,
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile,
-} from "firebase/auth";
-import { getDoc, setDoc, doc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
 
 type StorageMode = 'local' | 'server';
 
@@ -302,7 +291,6 @@ const localStorageService = {
 };
 
 interface AppContextType {
-  user: User | null;
   drinks: Drink[];
   foods: Food[];
   sales: Sale[];
@@ -325,10 +313,6 @@ interface AppContextType {
   addCashExpense: (expense: { description: string, amount: number }) => void;
   deleteCashExpense: (id: string) => void;
   fetchData: () => Promise<void>;
-  register: (details: {storeName: string, name: string, email: string, password: string}) => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
-  logout: () => Promise<void>;
   importData: (data: DbData) => Promise<{ ok: boolean, message: string }>;
   addDrink: (drink: Omit<Drink, 'id' | 'costPrice'>) => Promise<Drink>;
   updateDrink: (id: string, drink: Partial<Omit<Drink, 'id'>>) => Promise<Drink>;
@@ -367,7 +351,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [orderQueue, setOrderQueue] = useLocalStorage<QueuedOrder[]>('petrichor_order_queue', []);
   const [lastQueueNumber, setLastQueueNumber] = useLocalStorage<number>('petrichor_last_queue_number', 0);
   const [dbData, setDbData] = useState<DbData>({ appName: 'Petrichor', logoImageUri: null, marqueeText: '', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
-  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [initialCapital, setInitialCapital] = useLocalStorage<number>('petrichor_initial_capital', 0);
   const [cashExpenses, setCashExpenses] = useLocalStorage<CashExpense[]>('petrichor_cash_expenses', []);
@@ -376,48 +359,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return storageMode === 'local' ? localStorageService : apiService;
   }, [storageMode]);
 
-  useEffect(() => {
-    // If Firebase isn't configured, immediately set loading to false and return.
-    if (!auth || !db) {
-      setUser(null);
-      setIsLoading(false);
-      return;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        if (firebaseUser) {
-            let subscriptionStatus: 'free' | 'premium' = 'free';
-            
-            // Fetch user profile from Firestore to get real subscription status
-            try {
-                const userProfileRef = doc(db, "user_profiles", firebaseUser.uid);
-                const userProfileSnap = await getDoc(userProfileRef);
-                if (userProfileSnap.exists()) {
-                    subscriptionStatus = userProfileSnap.data().subscriptionStatus || 'free';
-                }
-            } catch (error) {
-                console.error("Failed to fetch user profile:", error);
-                // Default to 'free' if Firestore fetch fails
-            }
-
-            setUser({
-                uid: firebaseUser.uid,
-                name: firebaseUser.displayName || 'Pengguna',
-                email: firebaseUser.email || '',
-                avatar: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${firebaseUser.displayName?.charAt(0) || 'P'}`,
-                subscriptionStatus: subscriptionStatus
-            });
-        } else {
-            setUser(null);
-        }
-        setIsLoading(false); // Auth check is complete, app is ready
-    });
-
-    return () => unsubscribe();
-  }, []);
-
   const fetchData = useCallback(async () => {
-    // This function will now only fetch non-user data. User is handled by onAuthStateChanged.
+    setIsLoading(true);
     try {
       const data = await currentService.getData();
       
@@ -463,14 +406,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Failed to fetch data", error);
       setDbData({ appName: 'Petrichor', logoImageUri: null, marqueeText: '', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
+    } finally {
+        setIsLoading(false);
     }
   }, [currentService, setAppName, setLogoImageUri, setMarqueeText, setInitialCapital, setCashExpenses]);
 
   useEffect(() => {
-    if (!isLoading) { // Only fetch data after initial auth check
-      fetchData();
-    }
-  }, [fetchData, isLoading]);
+    fetchData();
+  }, [fetchData]);
   
   const addToCart = useCallback((product: Drink | Food, type: 'drink' | 'food', quantity: number, selectedToppings: Ingredient[], selectedPackaging: PackagingInfo | undefined, finalUnitPrice: number) => {
     setCart(prevCart => {
@@ -588,57 +531,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return result;
   }, [currentService, setAppName, setLogoImageUri, setMarqueeText, setInitialCapital, setCashExpenses]);
 
-  const register = async (details: {storeName: string; name: string; email: string; password: string;}) => {
-    if (!auth || !db) throw new Error("Firebase tidak dikonfigurasi. Autentikasi dinonaktifkan.");
-    
-    // Create user in Auth
-    const userCredential = await createUserWithEmailAndPassword(auth, details.email, details.password);
-    
-    // Update user profile in Auth
-    await updateProfile(userCredential.user, { displayName: details.name });
-
-    // Create user profile document in Firestore
-    await setDoc(doc(db, "user_profiles", userCredential.user.uid), {
-        name: details.name,
-        email: details.email,
-        subscriptionStatus: 'free',
-        createdAt: new Date().toISOString(),
-    });
-
-    // Update local app state
-    setAppName(details.storeName);
-  };
-  
-  const login = async (email: string, password: string) => {
-    if (!auth) throw new Error("Firebase tidak dikonfigurasi. Autentikasi dinonaktifkan.");
-    await signInWithEmailAndPassword(auth, email, password);
-  };
-
-  const loginWithGoogle = async () => {
-    if (!auth || !db) throw new Error("Firebase tidak dikonfigurasi. Autentikasi dinonaktifkan.");
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    const firebaseUser = result.user;
-
-    // Check if user profile already exists. If not, create it.
-    const userProfileRef = doc(db, "user_profiles", firebaseUser.uid);
-    const userProfileSnap = await getDoc(userProfileRef);
-    if (!userProfileSnap.exists()) {
-       await setDoc(userProfileRef, {
-            name: firebaseUser.displayName,
-            email: firebaseUser.email,
-            subscriptionStatus: 'free',
-            createdAt: new Date().toISOString(),
-        });
-    }
-  };
-
-  const logout = async () => {
-    if (!auth) throw new Error("Firebase tidak dikonfigurasi. Autentikasi dinonaktifkan.");
-    await signOut(auth);
-  };
-
-
   const wrappedService = useMemo(() => {
     const wrap = <T extends (...args: any[]) => Promise<any>>(fn: T) => {
       return async (...args: Parameters<T>): Promise<ReturnType<T>> => {
@@ -680,7 +572,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [setCashExpenses]);
 
   const contextValue = useMemo(() => ({
-    user,
     drinks: dbData.drinks,
     foods: dbData.foods,
     sales: dbData.sales,
@@ -703,10 +594,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addCashExpense,
     deleteCashExpense,
     fetchData,
-    register,
-    login,
-    loginWithGoogle,
-    logout,
     ...wrappedService,
     importData,
     addToCart,
@@ -717,12 +604,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     updateQueuedOrderStatus,
     processQueuedOrder,
   }), [
-    user, dbData, cart, orderQueue, isLoading, storageMode, setStorageMode, appName, setAppName, 
+    dbData, cart, orderQueue, isLoading, storageMode, setStorageMode, appName, setAppName, 
     logoImageUri, setLogoImageUri, marqueeText, setMarqueeText, fetchData, 
     wrappedService, importData, addToCart, updateCartItemQuantity, removeFromCart, clearCart,
     submitCustomerOrder, updateQueuedOrderStatus, processQueuedOrder,
     initialCapital, setInitialCapital, cashExpenses, addCashExpense, deleteCashExpense,
-    register, login, loginWithGoogle, logout
   ]);
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

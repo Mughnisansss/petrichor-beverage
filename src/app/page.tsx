@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -7,7 +8,6 @@ import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowRight, BarChart2, ShoppingCart, CupSoda, Settings } from "lucide-react";
-import { useAppContext } from "@/context/AppContext";
 
 const FeatureCard = ({ icon: Icon, title, description, href }: { icon: React.ElementType, title: string, description: string, href: string }) => (
   <Link href={href} className="group">
@@ -28,8 +28,6 @@ const FeatureCard = ({ icon: Icon, title, description, href }: { icon: React.Ele
 );
 
 export default function DashboardPage() {
-  const { user } = useAppContext();
-
   return (
     <MainLayout>
       <div className="flex flex-col gap-12">
@@ -85,11 +83,6 @@ export default function DashboardPage() {
                      <Button asChild variant="secondary">
                         <Link href="/racik/minuman">Tambah Produk Baru <ArrowRight className="ml-2"/></Link>
                     </Button>
-                    { !user &&
-                        <Button asChild variant="outline">
-                            <Link href="/pengaturan/akun">Buat Akun/Login <ArrowRight className="ml-2"/></Link>
-                        </Button>
-                    }
                 </div>
             </CardContent>
         </Card>
