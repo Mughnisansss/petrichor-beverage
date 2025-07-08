@@ -165,19 +165,15 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               <span className="sr-only">{appName}</span>
             </Link>
             <div className={cn(
-                "flex-1 overflow-hidden items-center h-10 rounded-md bg-primary/10 text-primary",
+                "flex-1 overflow-hidden relative h-10 rounded-md bg-primary/10 text-primary",
                 "hidden md:flex"
               )}>
-              <div className="relative flex overflow-x-hidden">
-                  <div className="animate-marquee whitespace-nowrap">
-                    <span className="mx-4 text-sm font-medium">{displayText}</span>
-                    <span className="mx-4 text-sm font-medium">{displayText}</span>
-                  </div>
-                  <div className="absolute top-0 animate-marquee2 whitespace-nowrap">
-                    <span className="mx-4 text-sm font-medium">{displayText}</span>
-                    <span className="mx-4 text-sm font-medium">{displayText}</span>
-                  </div>
-                </div>
+                <div className="absolute whitespace-nowrap h-full flex items-center animate-marquee">
+                  <span className="mx-4 text-sm font-medium">{displayText}</span>
+                  <span className="mx-4 text-sm font-medium">{displayText}</span>
+                  <span className="mx-4 text-sm font-medium">{displayText}</span>
+                  <span className="mx-4 text-sm font-medium">{displayText}</span>
+              </div>
             </div>
           </div>
         )}
