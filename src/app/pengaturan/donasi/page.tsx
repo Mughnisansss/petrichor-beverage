@@ -16,8 +16,8 @@ export default function DonasiPage() {
     };
     
     const accountInfo = [
-        { label: "Nomor DANA", value: "081234567890" },
-        { label: "Atas Nama", value: "Pengembang" },
+        { label: "Nomor DANA", value: "085340458336" },
+        { label: "Atas Nama", value: "MUGNI SANTOSO" },
     ];
 
     return (
@@ -37,12 +37,11 @@ export default function DonasiPage() {
                     <h3 className="font-semibold text-xl">Donasi via DANA</h3>
                     <p className="text-sm text-muted-foreground text-center pb-2">Scan QRIS di bawah ini menggunakan aplikasi DANA Anda.</p>
                     <Image
-                        src="https://placehold.co/200x200.png"
-                        alt="QR Code DANA"
+                        src="/qris-dana.png"
+                        alt="QR Code DANA untuk MUGNI SANTOSO"
                         width={200}
                         height={200}
                         className="rounded-lg"
-                        data-ai-hint="qr code"
                     />
                     <div className="w-full space-y-2 pt-2">
                         {accountInfo.map((info, index) => (
