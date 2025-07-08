@@ -7,7 +7,7 @@ import { useAppContext } from "@/context/AppContext";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, cn } from "@/lib/utils";
-import { CupSoda, Utensils, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { CupSoda, Utensils, Plus, ShoppingCart, Trash2, Sparkles } from "lucide-react";
 import { MainLayout } from "@/components/main-layout";
 import type { Drink, Food, RawMaterial, Ingredient, CartItem, PackagingInfo } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -354,12 +354,37 @@ function OrderSummarySheet({ onConfirm }: { onConfirm: () => void }) {
 
 // --- Main Page Component ---
 export default function OrderPage() {
-  const { drinks, foods, appName, submitCustomerOrder, cart } = useAppContext();
+  const { drinks, foods, sales, appName, submitCustomerOrder, cart } = useAppContext();
   const [customizingProduct, setCustomizingProduct] = useState<Drink | Food | null>(null);
   const [productType, setProductType] = useState<'drink' | 'food'>('drink');
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [newQueueNumber, setNewQueueNumber] = useState<number | null>(null);
   const { toast } = useToast();
+
+  const topProducts = useMemo(() => {
+    const productSales: { [productId: string]: { product: Drink | Food, type: 'drink' | 'food', totalQuantity: number } } = {};
+
+    sales.forEach(sale => {
+        const product = sale.productType === 'drink'
+            ? drinks.find(d => d.id === sale.productId)
+            : foods.find(f => f.id === sale.productId);
+
+        if (product) {
+            if (!productSales[product.id]) {
+                productSales[product.id] = {
+                    product: product,
+                    type: sale.productType,
+                    totalQuantity: 0,
+                };
+            }
+            productSales[product.id].totalQuantity += sale.quantity;
+        }
+    });
+
+    return Object.values(productSales)
+        .sort((a, b) => b.totalQuantity - a.totalQuantity)
+        .slice(0, 3);
+  }, [sales, drinks, foods]);
 
   const groupedDrinks = useMemo(() => {
     return drinks.reduce((acc, drink) => {
@@ -491,6 +516,53 @@ export default function OrderPage() {
                 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
                     <div className="lg:col-span-2 space-y-20">
+                        
+                        {topProducts.length > 0 && (
+                            <div>
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="bg-secondary/80 p-3 rounded-full shadow-sm">
+                                        <Sparkles className="h-8 w-8 text-secondary-foreground"/>
+                                    </div>
+                                    <h2 className="font-pacifico text-5xl text-secondary">Paling Laris</h2>
+                                    <div className="flex-grow h-1 bg-gradient-to-r from-secondary/50 to-transparent rounded-full" />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                                    {topProducts.map(({ product, type }, index) => (
+                                        <Card
+                                            key={`top-${product.id}`}
+                                            className="flex flex-col overflow-hidden group cursor-pointer rounded-2xl bg-card backdrop-blur-sm border-2 border-primary/10 shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2"
+                                            onClick={() => handleOrderClick(product, type)}
+                                        >
+                                            <div className="relative">
+                                                <Image
+                                                    src={product.imageUri || `https://placehold.co/600x400.png`}
+                                                    alt={product.name}
+                                                    width={600}
+                                                    height={400}
+                                                    className="object-cover w-full h-48 transition-transform duration-300 group-hover:scale-110"
+                                                    data-ai-hint={type === 'drink' ? "drink coffee" : "food pastry"}
+                                                />
+                                                <div className="absolute top-3 left-3 bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full text-sm font-bold shadow-md">
+                                                   #{index + 1} Terlaris
+                                                </div>
+                                                <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-bold shadow-md">
+                                                    {formatCurrency(product.sellingPrice)}
+                                                </div>
+                                            </div>
+                                            <CardContent className="p-4 flex-grow">
+                                                <h3 className="text-lg font-bold truncate text-foreground">{product.name}</h3>
+                                            </CardContent>
+                                            <CardFooter className="p-4 pt-0">
+                                                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg">
+                                                    <Plus className="mr-2 h-4 w-4" /> Pesan
+                                                </Button>
+                                            </CardFooter>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Drinks Sections */}
                         {Object.entries(groupedDrinks).map(([category, products]) => (
                             <div key={`drink-${category}`}>
