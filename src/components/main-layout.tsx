@@ -178,15 +178,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                   </div>
                 </div>
             </div>
-            <div className="flex items-center gap-2">
-                
-                <Link href={settingsHref} passHref>
-                    <Button variant="ghost" size="icon">
-                        <Settings className="h-5 w-5" />
-                        <span className="sr-only">Pengaturan</span>
-                    </Button>
-                </Link>
-            </div>
           </div>
         )}
       </header>
