@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, Settings } from "lucide-react";
@@ -31,12 +30,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isLoading, appName, orderQueue, marqueeText } = useAppContext();
   
-  useEffect(() => {
-    if (appName) {
-      document.title = appName;
-    }
-  }, [appName]);
-
   const settingsHref = "/pengaturan";
   const isOrderPage = pathname === '/order';
   
