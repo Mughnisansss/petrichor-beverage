@@ -54,7 +54,7 @@ export default function DashboardPage() {
             selamat datang di Petrichor app
           </h1>
           <p className="text-lg text-muted-foreground mt-4 max-w-2xl mx-auto">
-            Ini adalah pusat kendali untuk bisnis Anda. Akses semua fitur utama dari sini untuk mengelola operasi kafe Anda dengan efisien.
+            seindah wangi tanah setelah hujan.
           </p>
         </div>
         
