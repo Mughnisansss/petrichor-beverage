@@ -54,7 +54,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <span className="sr-only">Buka menu navigasi</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left">
+        <SheetContent side="left" className="flex flex-col">
            <SheetHeader className="border-b pb-4">
             <SheetTitle className="sr-only">Menu Navigasi</SheetTitle>
             <Link
@@ -64,7 +64,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               <Logo />
             </Link>
           </SheetHeader>
-          <nav className="grid gap-4 py-4 text-lg font-medium">
+          <nav className="grid gap-4 py-4 text-lg font-medium flex-1 overflow-y-auto">
             {topNavItems.map((item) => (
               <Link
                 key={item.href}
@@ -82,17 +82,25 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 )}
               </Link>
             ))}
-            <Link
-                href={settingsHref}
-                className={cn(
-                  "hover:text-foreground",
-                   "text-muted-foreground",
-                  pathname.startsWith('/pengaturan') && "text-foreground"
-                )}
-              >
-                Pengaturan
-            </Link>
           </nav>
+          <div className="mt-auto border-t pt-4">
+             <div className="flex flex-col gap-4">
+                <Link
+                    href={settingsHref}
+                    className={cn(
+                      "flex items-center gap-2 text-lg font-medium hover:text-foreground",
+                      pathname.startsWith('/pengaturan') ? "text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    <Settings className="h-5 w-5" />
+                    <span>Pengaturan</span>
+                </Link>
+                <div className="flex items-center justify-between">
+                    <span className="text-lg font-medium text-muted-foreground">Tema</span>
+                    <ThemeToggle />
+                </div>
+            </div>
+          </div>
         </SheetContent>
       </Sheet>
   )
@@ -182,6 +190,15 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     <span className="mx-4 text-sm font-medium">{displayText}</span>
                   </div>
                 </div>
+            </div>
+            <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <Link href={settingsHref} passHref>
+                    <Button variant="ghost" size="icon">
+                        <Settings className="h-5 w-5" />
+                        <span className="sr-only">Pengaturan</span>
+                    </Button>
+                </Link>
             </div>
           </div>
         )}
