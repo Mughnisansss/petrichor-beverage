@@ -14,8 +14,17 @@ import {
   deductStockForSaleItems,
   calculateItemCostPrice,
 } from '@/lib/data-logic';
-import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { auth } from '@/lib/firebase';
+import { 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut,
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import { getDoc, setDoc, doc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 
 type StorageMode = 'local' | 'server';
 
@@ -26,32 +35,6 @@ const apiService = {
     if (!res.ok) throw new Error('Failed to fetch data from server');
     return res.json();
   },
-  register: async (details: {storeName: string, name: string, email: string, password: string}): Promise<User> => {
-      const res = await fetch('/api/user/register', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(details)
-      });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Registration failed");
-      }
-      return res.json();
-  },
-  login: async (email?: string, password?: string): Promise<User> => {
-      const res = await fetch('/api/user/login', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Login failed");
-      }
-      return res.json();
-  },
-  logout: async (): Promise<void> => { await fetch('/api/user/logout', { method: 'POST' }); },
-  upgradeToPremium: async (): Promise<User> => (await fetch('/api/user/upgrade', { method: 'POST' })).json(),
   importData: async (data: DbData): Promise<{ ok: boolean, message: string }> => {
     const res = await fetch('/api/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     const responseData = await res.json();
@@ -100,19 +83,13 @@ const LOCAL_STORAGE_KEY = 'petrichor_data';
 
 const getLocalData = (): DbData => {
   if (typeof window === 'undefined') {
-    return { user: null, username: "admin@example.com", password: "password", appName: 'Petrichor', logoImageUri: null, marqueeText: 'Welcome!', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
+    return { appName: 'Petrichor', logoImageUri: null, marqueeText: 'Welcome!', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
   }
   const data = window.localStorage.getItem(LOCAL_STORAGE_KEY);
   try {
     const parsedData = data ? JSON.parse(data) : {};
     
     // --- Data migrations and defaults ---
-    parsedData.user = parsedData.user || null;
-    if (parsedData.user) {
-      parsedData.user.subscriptionStatus = parsedData.user.subscriptionStatus || 'free';
-    }
-    parsedData.username = parsedData.username || "admin@example.com";
-    parsedData.password = parsedData.password || "password";
     parsedData.operationalCosts = (parsedData.operationalCosts || []).map((cost: any) => ({ ...cost, recurrence: cost.recurrence || 'sekali' }));
     parsedData.rawMaterials = (parsedData.rawMaterials || []).map((m: any) => ({ ...m, category: m.category || 'main' }));
     parsedData.drinks = parsedData.drinks || [];
@@ -121,7 +98,7 @@ const getLocalData = (): DbData => {
     
     return parsedData as DbData;
   } catch {
-    return { user: null, username: "admin@example.com", password: "password", appName: 'Petrichor', logoImageUri: null, marqueeText: 'Welcome!', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
+    return { appName: 'Petrichor', logoImageUri: null, marqueeText: 'Welcome!', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
   }
 };
 
@@ -131,58 +108,6 @@ const setLocalData = (data: DbData) => {
 
 const localStorageService = {
   getData: async (): Promise<DbData> => Promise.resolve(getLocalData()),
-  register: async (details: {storeName: string, name: string, email: string, password: string}): Promise<User> => {
-    const data = getLocalData();
-    data.username = details.email;
-    data.password = details.password;
-    data.appName = details.storeName;
-    const newUser: User = { 
-      name: details.name, 
-      email: details.email, 
-      avatar: `https://placehold.co/100x100.png?text=${details.name.charAt(0)}`,
-      subscriptionStatus: 'free' 
-    };
-    data.user = newUser;
-    setLocalData(data);
-    return Promise.resolve(newUser);
-  },
-  login: async (email?: string, password?: string): Promise<User> => {
-    const data = getLocalData();
-    if (email === data.username && password === data.password) {
-      const dummyUser: User = { 
-        name: "Alex Doe", 
-        email: "alex.doe@example.com", 
-        avatar: "https://placehold.co/100x100.png",
-        subscriptionStatus: 'free',
-      };
-      
-      data.user = data.user || dummyUser; // Use existing user data if available, otherwise default
-      data.user.subscriptionStatus = data.user.subscriptionStatus || 'free';
-
-      if (email === "admin@example.com") {
-        data.user.name = "Alex Doe"
-      }
-      setLocalData(data);
-      return Promise.resolve(data.user);
-    } else {
-      return Promise.reject(new Error("Email atau kata sandi salah."));
-    }
-  },
-  logout: async (): Promise<void> => {
-    const data = getLocalData();
-    data.user = null;
-    setLocalData(data);
-    return Promise.resolve();
-  },
-  upgradeToPremium: async (): Promise<User> => {
-    const data = getLocalData();
-    if (data.user) {
-        data.user.subscriptionStatus = 'premium';
-        setLocalData(data);
-        return Promise.resolve(data.user);
-    }
-    throw new Error("No user is logged in.");
-  },
   importData: async (data: DbData): Promise<{ ok: boolean, message: string }> => {
     if (!data || !Array.isArray(data.drinks) || !Array.isArray(data.foods) || !Array.isArray(data.sales) || !Array.isArray(data.operationalCosts) || !Array.isArray(data.rawMaterials)) {
       return Promise.resolve({ ok: false, message: 'Data JSON tidak valid atau formatnya salah.' });
@@ -400,11 +325,10 @@ interface AppContextType {
   addCashExpense: (expense: { description: string, amount: number }) => void;
   deleteCashExpense: (id: string) => void;
   fetchData: () => Promise<void>;
-  register: (details: {storeName: string, name: string, email: string, password: string}) => Promise<User>;
-  login: (email?: string, password?: string) => Promise<User>;
-  loginWithGoogle: () => Promise<User>;
+  register: (details: {storeName: string, name: string, email: string, password: string}) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
-  upgradeToPremium: () => Promise<User>;
   importData: (data: DbData) => Promise<{ ok: boolean, message: string }>;
   addDrink: (drink: Omit<Drink, 'id' | 'costPrice'>) => Promise<Drink>;
   updateDrink: (id: string, drink: Partial<Omit<Drink, 'id'>>) => Promise<Drink>;
@@ -442,7 +366,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useLocalStorage<CartItem[]>('petrichor_customer_cart', []);
   const [orderQueue, setOrderQueue] = useLocalStorage<QueuedOrder[]>('petrichor_order_queue', []);
   const [lastQueueNumber, setLastQueueNumber] = useLocalStorage<number>('petrichor_last_queue_number', 0);
-  const [dbData, setDbData] = useState<Omit<DbData, 'appName' | 'logoImageUri' | 'marqueeText' | 'initialCapital' | 'cashExpenses' | 'username' | 'password'>>({ user: null, drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
+  const [dbData, setDbData] = useState<DbData>({ appName: 'Petrichor', logoImageUri: null, marqueeText: '', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [initialCapital, setInitialCapital] = useLocalStorage<number>('petrichor_initial_capital', 0);
   const [cashExpenses, setCashExpenses] = useLocalStorage<CashExpense[]>('petrichor_cash_expenses', []);
@@ -451,12 +376,52 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return storageMode === 'local' ? localStorageService : apiService;
   }, [storageMode]);
 
+  useEffect(() => {
+    // If Firebase isn't configured, immediately set loading to false and return.
+    if (!auth || !db) {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+            let subscriptionStatus: 'free' | 'premium' = 'free';
+            
+            // Fetch user profile from Firestore to get real subscription status
+            try {
+                const userProfileRef = doc(db, "user_profiles", firebaseUser.uid);
+                const userProfileSnap = await getDoc(userProfileRef);
+                if (userProfileSnap.exists()) {
+                    subscriptionStatus = userProfileSnap.data().subscriptionStatus || 'free';
+                }
+            } catch (error) {
+                console.error("Failed to fetch user profile:", error);
+                // Default to 'free' if Firestore fetch fails
+            }
+
+            setUser({
+                uid: firebaseUser.uid,
+                name: firebaseUser.displayName || 'Pengguna',
+                email: firebaseUser.email || '',
+                avatar: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${firebaseUser.displayName?.charAt(0) || 'P'}`,
+                subscriptionStatus: subscriptionStatus
+            });
+        } else {
+            setUser(null);
+        }
+        setIsLoading(false); // Auth check is complete, app is ready
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const fetchData = useCallback(async () => {
-    setIsLoading(true);
+    // This function will now only fetch non-user data. User is handled by onAuthStateChanged.
     try {
       const data = await currentService.getData();
       
-      const { appName, logoImageUri, marqueeText, initialCapital, cashExpenses, user, username, password, ...restOfDbData } = data;
+      const { appName, logoImageUri, marqueeText, initialCapital, cashExpenses, ...restOfDbData } = data;
 
       if (appName) setAppName(appName);
       if (logoImageUri !== undefined) setLogoImageUri(logoImageUri);
@@ -467,7 +432,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // --- Data Migrations ---
       if (restOfDbData.drinks && Array.isArray(restOfDbData.drinks)) {
         restOfDbData.drinks = restOfDbData.drinks.map((drink: any) => {
-          // Migration from `temperature` to `subCategory`
           if (drink.temperature && !drink.subCategory) {
             drink.subCategory = drink.temperature === 'hot' ? 'Panas' : 'Dingin';
             delete drink.temperature;
@@ -478,7 +442,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       if (restOfDbData.sales && Array.isArray(restOfDbData.sales)) {
         restOfDbData.sales = restOfDbData.sales.map((sale: any) => {
-          // Migration from `drinkId` to `productId`
           if (sale.drinkId && typeof sale.productId === 'undefined') {
             const { drinkId, ...rest } = sale;
             return { ...rest, productId: drinkId, productType: 'drink' };
@@ -495,21 +458,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       restOfDbData.sales = (restOfDbData.sales || []).sort((a: Sale, b: Sale) => new Date(b.date).getTime() - new Date(a.date).getTime());
       restOfDbData.operationalCosts = (restOfDbData.operationalCosts || []).sort((a: OperationalCost, b: OperationalCost) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
-      const migratedUser = user ? { ...user, subscriptionStatus: user.subscriptionStatus || 'free' } : null;
-
-      setDbData({ user: migratedUser, ...restOfDbData });
+      setDbData(restOfDbData);
 
     } catch (error) {
       console.error("Failed to fetch data", error);
-      setDbData({ user: null, drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
-    } finally {
-      setIsLoading(false);
+      setDbData({ appName: 'Petrichor', logoImageUri: null, marqueeText: '', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
     }
   }, [currentService, setAppName, setLogoImageUri, setMarqueeText, setInitialCapital, setCashExpenses]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (!isLoading) { // Only fetch data after initial auth check
+      fetchData();
+    }
+  }, [fetchData, isLoading]);
   
   const addToCart = useCallback((product: Drink | Food, type: 'drink' | 'food', quantity: number, selectedToppings: Ingredient[], selectedPackaging: PackagingInfo | undefined, finalUnitPrice: number) => {
     setCart(prevCart => {
@@ -614,7 +575,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [orderQueue, currentService, setOrderQueue, fetchData]);
 
   const importData = useCallback(async (data: any): Promise<{ ok: boolean, message: string }> => {
-    const { user, username, password, appName, logoImageUri, marqueeText, initialCapital, cashExpenses, ...dbDataToImport } = data;
+    const { appName, logoImageUri, marqueeText, initialCapital, cashExpenses, ...dbDataToImport } = data;
     const result = await currentService.importData(dbDataToImport);
     if (result.ok) {
       if (appName) setAppName(appName);
@@ -622,10 +583,61 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (marqueeText) setMarqueeText(marqueeText);
       if (typeof initialCapital === 'number') setInitialCapital(initialCapital);
       if (Array.isArray(cashExpenses)) setCashExpenses(cashExpenses);
-      setDbData({ user, ...dbDataToImport });
+      setDbData(dbDataToImport);
     }
     return result;
   }, [currentService, setAppName, setLogoImageUri, setMarqueeText, setInitialCapital, setCashExpenses]);
+
+  const register = async (details: {storeName: string; name: string; email: string; password: string;}) => {
+    if (!auth || !db) throw new Error("Firebase tidak dikonfigurasi. Autentikasi dinonaktifkan.");
+    
+    // Create user in Auth
+    const userCredential = await createUserWithEmailAndPassword(auth, details.email, details.password);
+    
+    // Update user profile in Auth
+    await updateProfile(userCredential.user, { displayName: details.name });
+
+    // Create user profile document in Firestore
+    await setDoc(doc(db, "user_profiles", userCredential.user.uid), {
+        name: details.name,
+        email: details.email,
+        subscriptionStatus: 'free',
+        createdAt: new Date().toISOString(),
+    });
+
+    // Update local app state
+    setAppName(details.storeName);
+  };
+  
+  const login = async (email: string, password: string) => {
+    if (!auth) throw new Error("Firebase tidak dikonfigurasi. Autentikasi dinonaktifkan.");
+    await signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const loginWithGoogle = async () => {
+    if (!auth || !db) throw new Error("Firebase tidak dikonfigurasi. Autentikasi dinonaktifkan.");
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    const firebaseUser = result.user;
+
+    // Check if user profile already exists. If not, create it.
+    const userProfileRef = doc(db, "user_profiles", firebaseUser.uid);
+    const userProfileSnap = await getDoc(userProfileRef);
+    if (!userProfileSnap.exists()) {
+       await setDoc(userProfileRef, {
+            name: firebaseUser.displayName,
+            email: firebaseUser.email,
+            subscriptionStatus: 'free',
+            createdAt: new Date().toISOString(),
+        });
+    }
+  };
+
+  const logout = async () => {
+    if (!auth) throw new Error("Firebase tidak dikonfigurasi. Autentikasi dinonaktifkan.");
+    await signOut(auth);
+  };
+
 
   const wrappedService = useMemo(() => {
     const wrap = <T extends (...args: any[]) => Promise<any>>(fn: T) => {
@@ -635,60 +647,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return result;
       };
     };
-    
-    const login = async (email?: string, password?: string) => {
-      const user = await currentService.login(email, password);
-      await fetchData();
-      return user;
-    }
-
-    const logout = async () => {
-      if (auth.currentUser) {
-        await signOut(auth);
-      }
-      await currentService.logout();
-      await fetchData();
-    }
-    
-    const register = async (details: {storeName: string, name: string, email: string, password: string}) => {
-        const user = await currentService.register(details);
-        await fetchData();
-        return user;
-    }
-
-    const loginWithGoogle = async (): Promise<User> => {
-        const provider = new GoogleAuthProvider();
-        try {
-            const result = await signInWithPopup(auth, provider);
-            const firebaseUser = result.user;
-            const appUser: User = {
-                name: firebaseUser.displayName || 'Pengguna Google',
-                email: firebaseUser.email || 'Tidak ada email',
-                avatar: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${firebaseUser.displayName?.charAt(0) || 'G'}`,
-                subscriptionStatus: 'free',
-            };
-    
-            // Overwrite the current simulated user with the Google user's details.
-            // This is consistent with the single-user simulation.
-            await register({
-                storeName: appName,
-                name: appUser.name,
-                email: appUser.email,
-                password: nanoid(), // dummy password as it's not used
-            });
-            return appUser;
-        } catch (error) {
-            console.error("Google Sign-In Error:", error);
-            throw new Error("Gagal login dengan Google.");
-        }
-    };
 
     return {
-      login,
-      logout,
-      register,
-      loginWithGoogle,
-      upgradeToPremium: wrap(currentService.upgradeToPremium),
       addDrink: wrap(currentService.addDrink),
       updateDrink: wrap(currentService.updateDrink),
       deleteDrink: wrap(currentService.deleteDrink),
@@ -707,7 +667,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       importRawMaterialsFromCsv: wrap(currentService.importRawMaterialsFromCsv),
       importOperationalCostsFromCsv: wrap(currentService.importOperationalCostsFromCsv),
     }
-  }, [currentService, fetchData, appName]);
+  }, [currentService, fetchData]);
 
   const addCashExpense = useCallback((expense: { description: string, amount: number }) => {
     const newExpense: CashExpense = { ...expense, id: nanoid(), date: new Date().toISOString() };
@@ -720,7 +680,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [setCashExpenses]);
 
   const contextValue = useMemo(() => ({
-    user: dbData.user,
+    user,
     drinks: dbData.drinks,
     foods: dbData.foods,
     sales: dbData.sales,
@@ -743,6 +703,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addCashExpense,
     deleteCashExpense,
     fetchData,
+    register,
+    login,
+    loginWithGoogle,
+    logout,
     ...wrappedService,
     importData,
     addToCart,
@@ -753,11 +717,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     updateQueuedOrderStatus,
     processQueuedOrder,
   }), [
-    dbData, cart, orderQueue, isLoading, storageMode, setStorageMode, appName, setAppName, 
+    user, dbData, cart, orderQueue, isLoading, storageMode, setStorageMode, appName, setAppName, 
     logoImageUri, setLogoImageUri, marqueeText, setMarqueeText, fetchData, 
     wrappedService, importData, addToCart, updateCartItemQuantity, removeFromCart, clearCart,
     submitCustomerOrder, updateQueuedOrderStatus, processQueuedOrder,
-    initialCapital, setInitialCapital, cashExpenses, addCashExpense, deleteCashExpense
+    initialCapital, setInitialCapital, cashExpenses, addCashExpense, deleteCashExpense,
+    register, login, loginWithGoogle, logout
   ]);
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

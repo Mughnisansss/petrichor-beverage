@@ -1,8 +1,5 @@
 
 {
-  "user": null,
-  "username": "admin@example.com",
-  "password": "password",
   "appName": "Petrichor",
   "logoImageUri": null,
   "marqueeText": "Selamat Datang di {appName}! Nikmati Kopi Terbaik di Kota!",
@@ -32,7 +29,7 @@
       "id": "drink01",
       "name": "Es Kopi Susu Gula Aren",
       "imageUri": "https://placehold.co/600x400.png",
-      "temperature": "cold",
+      "subCategory": "Dingin",
       "ingredients": [
         {
           "rawMaterialId": "rm001",
@@ -91,7 +88,7 @@
       "id": "drink02",
       "name": "Americano",
       "imageUri": "https://placehold.co/600x400.png",
-      "temperature": "hot",
+      "subCategory": "Panas",
       "ingredients": [
         {
           "rawMaterialId": "rm001",
@@ -127,7 +124,7 @@
       "id": "drink03",
       "name": "Es Cokelat Klasik",
       "imageUri": "https://placehold.co/600x400.png",
-      "temperature": "cold",
+      "subCategory": "Dingin",
       "ingredients": [
         {
           "rawMaterialId": "rm004",
@@ -166,7 +163,7 @@
       "id": "drink04",
       "name": "Matcha Latte",
       "imageUri": "https://placehold.co/600x400.png",
-      "temperature": "cold",
+      "subCategory": "Dingin",
       "ingredients": [
         {
           "rawMaterialId": "rm005",
@@ -205,7 +202,7 @@
       "id": "drink05",
       "name": "Vanilla Latte",
       "imageUri": "https://placehold.co/600x400.png",
-      "temperature": "cold",
+      "subCategory": "Dingin",
       "ingredients": [
         {
           "rawMaterialId": "rm001",
@@ -245,7 +242,7 @@
       "id": "drink06",
       "name": "Caramel Macchiato",
       "imageUri": "https://placehold.co/600x400.png",
-      "temperature": "cold",
+      "subCategory": "Dingin",
       "ingredients": [
         {
           "rawMaterialId": "rm001",
@@ -289,7 +286,7 @@
       "id": "drink07",
       "name": "Es Teh Leci",
       "imageUri": "https://placehold.co/600x400.png",
-      "temperature": "cold",
+      "subCategory": "Dingin",
       "ingredients": [
         {
           "rawMaterialId": "rm015",
@@ -331,7 +328,7 @@
       "id": "drink08",
       "name": "Mojito Mint",
       "imageUri": "https://placehold.co/600x400.png",
-      "temperature": "cold",
+      "subCategory": "Dingin",
       "ingredients": [
         {
           "rawMaterialId": "rm017",
@@ -371,7 +368,7 @@
       "id": "drink09",
       "name": "Kopi Hitam Tubruk",
       "imageUri": "https://placehold.co/600x400.png",
-      "temperature": "hot",
+      "subCategory": "Panas",
       "ingredients": [
         {
           "rawMaterialId": "rm001",
@@ -403,7 +400,7 @@
       "id": "drink10",
       "name": "Air Mineral",
       "imageUri": "https://placehold.co/600x400.png",
-      "temperature": "cold",
+      "subCategory": "Dingin",
       "ingredients": [],
       "costPrice": 3000,
       "sellingPrice": 5000,

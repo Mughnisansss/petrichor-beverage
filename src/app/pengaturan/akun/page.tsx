@@ -15,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/context/AppContext";
+import { loadStripe } from '@stripe/stripe-js';
 
 const loginSchema = z.object({
   email: z.string().email("Format email tidak valid"),
@@ -45,11 +46,14 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
+// Initialize Stripe.js with the publishable key.
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function AkunPengaturanPage() {
-    const { user, login, logout, register, isLoading, loginWithGoogle, upgradeToPremium } = useAppContext();
+    const { user, login, logout, register, isLoading } = useAppContext();
     const { toast } = useToast();
     const [isRegisterOpen, setRegisterOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const loginForm = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
@@ -61,53 +65,66 @@ export default function AkunPengaturanPage() {
         defaultValues: { storeName: "", name: "", email: "", password: "", confirmPassword: "" },
     });
 
-    const handleLogout = async () => {
+    const handleAction = async (action: () => Promise<any>, successTitle: string, successDesc: string, errorTitle: string) => {
+        if (isSubmitting) return;
+        setIsSubmitting(true);
         try {
-            await logout();
-            toast({ title: "Logout Berhasil", description: "Anda telah keluar dari akun." });
+            await action();
+            toast({ title: successTitle, description: successDesc });
         } catch(error) {
-            toast({ title: "Logout Gagal", description: (error as Error).message, variant: "destructive" });
+            toast({ title: errorTitle, description: (error as Error).message, variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
         }
     };
+    
+    const onLoginSubmit = (data: LoginFormValues) => handleAction(() => login(data.email, data.password), "Login Berhasil", "Selamat datang kembali!", "Login Gagal");
+    const onRegisterSubmit = (data: RegisterFormValues) => handleAction(() => register(data), "Registrasi Berhasil", "Akun Anda telah dibuat.", "Registrasi Gagal").then(() => setRegisterOpen(false));
+    const onGoogleLogin = () => handleAction(loginWithGoogle, "Login Berhasil", "Selamat datang kembali!", "Login Gagal");
+    const onLogout = () => handleAction(logout, "Logout Berhasil", "Anda telah keluar dari akun.", "Logout Gagal");
 
-    const handleGoogleLogin = async () => {
+    const handleUpgradeToPremium = async () => {
+        if (!user) {
+            toast({ title: "Login Diperlukan", description: "Anda harus login untuk melakukan upgrade.", variant: "destructive" });
+            return;
+        }
+        setIsSubmitting(true);
         try {
-            await loginWithGoogle();
-            toast({ title: "Login Berhasil", description: "Selamat datang kembali!" });
+            // 1. Get a Stripe instance
+            const stripe = await stripePromise;
+            if (!stripe) throw new Error("Gagal memuat Stripe.");
+
+            // 2. Call your backend to create a checkout session
+            const response = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    userId: user.uid, 
+                    userEmail: user.email, 
+                    userName: user.name 
+                }),
+            });
+
+            const { sessionId, message } = await response.json();
+
+            if (!response.ok) {
+                throw new Error(message || 'Gagal membuat sesi checkout.');
+            }
+
+            // 3. Redirect to Stripe Checkout
+            const { error } = await stripe.redirectToCheckout({ sessionId });
+
+            if (error) {
+                console.error("Stripe redirection error:", error);
+                throw new Error(error.message);
+            }
         } catch (error) {
-            toast({ title: "Login Gagal", description: (error as Error).message, variant: "destructive" });
-        }
-    };
-
-    const handleUpgrade = async () => {
-        try {
-            await upgradeToPremium();
-            toast({ title: "Upgrade Berhasil!", description: "Selamat! Anda kini adalah pengguna premium." });
-        } catch(error) {
              toast({ title: "Upgrade Gagal", description: (error as Error).message, variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
-    async function onLoginSubmit(data: LoginFormValues) {
-        try {
-            await login(data.email, data.password);
-            toast({ title: "Login Berhasil", description: "Selamat datang kembali!" });
-            loginForm.reset();
-        } catch (error) {
-             toast({ title: "Login Gagal", description: (error as Error).message, variant: "destructive" });
-        }
-    }
-
-    async function onRegisterSubmit(data: RegisterFormValues) {
-        try {
-            await register({ storeName: data.storeName, name: data.name, email: data.email, password: data.password });
-            toast({ title: "Registrasi Berhasil", description: "Akun Anda telah dibuat dan Anda berhasil login." });
-            setRegisterOpen(false);
-            registerForm.reset();
-        } catch (error) {
-            toast({ title: "Registrasi Gagal", description: (error as Error).message, variant: "destructive" });
-        }
-    }
 
     return (
         <div className="space-y-6">
@@ -115,11 +132,13 @@ export default function AkunPengaturanPage() {
                 <CardHeader>
                     <CardTitle>Akun & Autentikasi</CardTitle>
                     <CardDescription>
-                    Kelola sesi login Anda di sini. Login memungkinkan data Anda tersimpan secara persisten.
+                    Kelola sesi login Anda di sini. Gunakan akun untuk menyimpan data Anda secara permanen di cloud.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {user ? (
+                    {isLoading ? (
+                       <p>Memuat informasi pengguna...</p>
+                    ) : user ? (
                         <div className="space-y-4">
                             <h3 className="font-semibold">Informasi Pengguna</h3>
                             <div className="flex items-center justify-between rounded-lg border p-4">
@@ -133,7 +152,7 @@ export default function AkunPengaturanPage() {
                                         <p className="text-sm text-muted-foreground">{user.email}</p>
                                     </div>
                                 </div>
-                                <Button variant="ghost" onClick={handleLogout} disabled={isLoading}>
+                                <Button variant="ghost" onClick={onLogout} disabled={isSubmitting}>
                                     <LogOut className="mr-2 h-4 w-4" /> Logout
                                 </Button>
                             </div>
@@ -141,9 +160,9 @@ export default function AkunPengaturanPage() {
                     ) : (
                         <div>
                             <div className="space-y-4">
-                                <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
+                                <Button variant="outline" className="w-full" onClick={onGoogleLogin} disabled={isSubmitting}>
                                     <GoogleIcon className="mr-2" />
-                                    {isLoading ? "Memproses..." : "Masuk dengan Google"}
+                                    {isSubmitting ? "Memproses..." : "Masuk dengan Google"}
                                 </Button>
 
                                 <div className="relative">
@@ -167,7 +186,7 @@ export default function AkunPengaturanPage() {
                                         <FormItem><FormLabel>Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>
                                     )}/>
                                     <div className="flex items-center gap-2">
-                                    <Button type="submit" disabled={isLoading}>{isLoading ? "Memproses..." : "Login"}</Button>
+                                    <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Memproses..." : "Login"}</Button>
                                     
                                     <Dialog open={isRegisterOpen} onOpenChange={setRegisterOpen}>
                                         <DialogTrigger asChild>
@@ -186,11 +205,11 @@ export default function AkunPengaturanPage() {
                                                 <Form {...registerForm}>
                                                     <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
                                                         <FormField control={registerForm.control} name="storeName" render={({ field }) => (<FormItem><FormLabel>Nama Toko</FormLabel><FormControl><Input {...field} placeholder="Kedai Kopi Senja" /></FormControl><FormMessage /></FormItem>)} />
-                                                        <FormField control={registerForm.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nama Lengkap</FormLabel><FormControl><Input {...field} placeholder="John Doe" /></FormControl><FormMessage /></FormItem>)} />
+                                                        <FormField control={registerForm.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nama Lengkap Anda</FormLabel><FormControl><Input {...field} placeholder="Alex" /></FormControl><FormMessage /></FormItem>)} />
                                                         <FormField control={registerForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} placeholder="anda@email.com" /></FormControl><FormMessage /></FormItem>)} />
                                                         <FormField control={registerForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>)} />
                                                         <FormField control={registerForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Konfirmasi Kata Sandi</FormLabel><FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl><FormMessage /></FormItem>)} />
-                                                        <Button type="submit" disabled={isLoading} className="w-full">{isLoading ? "Mendaftarkan..." : "Buat Akun"}</Button>
+                                                        <Button type="submit" disabled={isSubmitting} className="w-full">{isSubmitting ? "Mendaftarkan..." : "Buat Akun"}</Button>
                                                     </form>
                                                 </Form>
                                             </div>
@@ -199,29 +218,9 @@ export default function AkunPengaturanPage() {
                                     </div>
                                 </form>
                             </Form>
-                            <Alert className="mt-6">
-                                <KeyRound className="h-4 w-4" />
-                                <AlertTitle>Kredensial Demo</AlertTitle>
-                                <AlertDescription>
-                                    Gunakan kredensial berikut untuk mencoba fitur login:
-                                    <ul className="list-disc pl-5 mt-2">
-                                        <li><strong>Email:</strong> admin@example.com</li>
-                                        <li><strong>Password:</strong> password</li>
-                                    </ul>
-                                </AlertDescription>
-                            </Alert>
                         </div>
                     )}
                 </CardContent>
-                <CardFooter>
-                    <Alert variant="destructive" className="w-full">
-                        <AlertTriangle className="h-4 w-4"/>
-                        <AlertTitle>Peringatan: Sistem Akun Simulasi</AlertTitle>
-                        <AlertDescription>
-                            Sistem ini mensimulasikan **satu akun tunggal**. Mendaftarkan akun baru atau masuk dengan Google akan **menimpa** kredensial login yang ada. Ini dirancang untuk pengembangan dan **tidak aman untuk penggunaan produksi**. Jangan gunakan kata sandi asli.
-                        </AlertDescription>
-                    </Alert>
-                </CardFooter>
             </Card>
 
             {user && (
@@ -251,13 +250,22 @@ export default function AkunPengaturanPage() {
                                     <h4 className="font-semibold">Akun Gratis</h4>
                                     <p className="text-sm text-muted-foreground">Akun gratis dibatasi hingga 10 resep produk.</p>
                                 </div>
-                                <Button onClick={handleUpgrade} disabled={isLoading} className="mt-2 sm:mt-0 bg-gradient-to-r from-primary to-blue-600 text-white">
+                                <Button onClick={handleUpgradeToPremium} disabled={isSubmitting} className="mt-2 sm:mt-0 bg-gradient-to-r from-primary to-blue-600 text-white">
                                     <Sparkles className="mr-2 h-4 w-4" />
-                                    {isLoading ? 'Memproses...' : 'Upgrade ke Premium'}
+                                    {isSubmitting ? 'Memproses...' : 'Upgrade ke Premium'}
                                 </Button>
                             </div>
                         )}
                     </CardContent>
+                     <CardFooter>
+                        <Alert variant="default" className="w-full border-blue-200 dark:border-blue-800">
+                            <AlertTriangle className="h-4 w-4 text-blue-600 dark:text-blue-400"/>
+                            <AlertTitle className="text-blue-700 dark:text-blue-300">Informasi Penting</AlertTitle>
+                            <AlertDescription>
+                                Proses upgrade akan mengarahkan Anda ke halaman pembayaran aman yang disediakan oleh Stripe. Pastikan Anda mengikuti semua langkah hingga selesai.
+                            </AlertDescription>
+                        </Alert>
+                    </CardFooter>
                 </Card>
             )}
         </div>
