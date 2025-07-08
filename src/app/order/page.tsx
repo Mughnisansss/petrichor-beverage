@@ -132,7 +132,7 @@ function ProductCustomizationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-background border-primary font-body max-h-[80vh] overflow-y-auto">
+      <DialogContent className="theme-order bg-background border-primary font-body max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-pacifico text-3xl text-primary">{product.name}</DialogTitle>
           <DialogDescription className="text-foreground/80">Pilih ukuran, tambahan, dan jumlah untuk pesanan Anda.</DialogDescription>
