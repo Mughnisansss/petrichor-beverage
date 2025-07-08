@@ -179,7 +179,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 </div>
             </div>
             <div className="flex items-center gap-2">
-                <ThemeToggle />
+                
                 <Link href={settingsHref} passHref>
                     <Button variant="ghost" size="icon">
                         <Settings className="h-5 w-5" />
