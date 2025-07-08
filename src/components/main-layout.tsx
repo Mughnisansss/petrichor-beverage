@@ -179,7 +179,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               <Logo />
               <span className="sr-only">{appName}</span>
             </Link>
-            <div className="flex-1 overflow-hidden flex items-center h-10 rounded-md bg-primary/10 text-primary">
+            <div className={cn(
+                "flex-1 overflow-hidden items-center h-10 rounded-md bg-primary/10 text-primary",
+                "hidden md:flex"
+              )}>
               <div className="relative flex overflow-x-hidden">
                   <div className="animate-marquee whitespace-nowrap">
                     <span className="mx-4 text-sm font-medium">{displayText}</span>
