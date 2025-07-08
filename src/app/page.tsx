@@ -2,12 +2,12 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowRight, BarChart2, ShoppingCart, CupSoda, Settings } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
-import { Logo } from "@/components/logo";
 
 const FeatureCard = ({ icon: Icon, title, description, href }: { icon: React.ElementType, title: string, description: string, href: string }) => (
   <Link href={href} className="group">
@@ -28,17 +28,30 @@ const FeatureCard = ({ icon: Icon, title, description, href }: { icon: React.Ele
 );
 
 export default function DashboardPage() {
-  const { appName, user } = useAppContext();
+  const { appName, user, logoImageUri } = useAppContext();
 
   return (
     <MainLayout>
       <div className="flex flex-col gap-12">
         <div className="text-center py-12 px-6 bg-muted/50 rounded-lg border">
           <div className="flex justify-center mb-6">
-            <Logo />
+            <div className="flex items-center gap-4 text-4xl font-bold text-primary">
+              {logoImageUri ? (
+                <Image
+                  src={logoImageUri}
+                  alt={`${appName} logo`}
+                  width={56}
+                  height={56}
+                  className="h-14 w-14 rounded-md object-cover"
+                />
+              ) : (
+                <CupSoda className="h-14 w-14" />
+              )}
+              <span>{appName}</span>
+            </div>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Selamat Datang di Dasbor {appName}
+            Selamat Datang di Dasbor Anda
           </h1>
           <p className="text-lg text-muted-foreground mt-4 max-w-2xl mx-auto">
             Ini adalah pusat kendali untuk bisnis Anda. Akses semua fitur utama dari sini untuk mengelola operasi kafe Anda dengan efisien.
