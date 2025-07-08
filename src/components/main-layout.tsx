@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from "react";
@@ -155,7 +156,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             </div>
           </>
         ) : (
-          <div className="w-full flex items-center justify-between gap-4">
+          <div className="w-full flex items-center gap-4">
             <Link
               href="/"
               className="flex items-center gap-2 text-lg font-semibold md:text-base text-primary"
