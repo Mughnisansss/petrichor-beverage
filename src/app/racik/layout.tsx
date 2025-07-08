@@ -58,7 +58,7 @@ export default function RacikLayout({ children }: RacikLayoutProps) {
             ))}
           </nav>
         </aside>
-        <div className="flex-1 lg:max-w-4xl">{children}</div>
+        <div className="flex-1 lg:max-w-5xl xl:max-w-7xl">{children}</div>
       </div>
     </MainLayout>
   )

@@ -125,12 +125,12 @@ function QuickSellDialog({
                     <RadioGroup value={selectedPackagingId} onValueChange={setSelectedPackagingId} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {packagingOptions.map((pack) => (
                             <Label key={pack.id} htmlFor={`qs-pack-${pack.id}`} className={cn(
-                                "flex flex-col items-center justify-center rounded-md border-2 p-3 hover:bg-accent/80 cursor-pointer",
+                                "flex flex-col items-center justify-center rounded-md border-2 p-4 text-center hover:bg-accent/80 cursor-pointer", // Increased padding
                                 selectedPackagingId === pack.id ? "bg-accent border-primary" : "border-input"
                             )}>
                                 <RadioGroupItem value={pack.id} id={`qs-pack-${pack.id}`} className="sr-only" />
-                                <span className="font-bold text-sm">{pack.name}</span>
-                                <span className="text-xs">+{formatCurrency(pack.additionalPrice)}</span>
+                                <span className="font-bold text-base">{pack.name}</span>
+                                <span className="text-sm">+{formatCurrency(pack.additionalPrice)}</span>
                             </Label>
                         ))}
                     </RadioGroup>
@@ -301,7 +301,7 @@ export default function PenjualanCepatPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
                         {renderProductGrid(filteredDrinks, 'drink')}
                     </div>
                 </div>
@@ -321,7 +321,7 @@ export default function PenjualanCepatPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
                         {renderProductGrid(filteredFoods, 'food')}
                     </div>
                 </div>
