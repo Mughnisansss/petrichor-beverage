@@ -25,7 +25,8 @@ import {
   format,
   differenceInDays,
   subMonths,
-  isSameDay
+  isSameDay,
+  getHours,
 } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import {
@@ -36,13 +37,12 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, LineChart, Line, Legend, Pie, PieChart, Cell } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, LineChart, Line, Legend } from "recharts";
 import { calculateSaleHpp, calculateOperationalCostForPeriod } from "@/lib/data-logic";
-import { DollarSign, LineChart as LineChartIcon, ShoppingCart, PieChart as PieChartIcon, AlertTriangle, PackageSearch, Coffee, PlusCircle, Edit, Trash2, TrendingDown, Coins, Target, Utensils, GlassWater, Lightbulb } from "lucide-react";
+import { DollarSign, LineChart as LineChartIcon, ShoppingCart, PieChart as PieChartIcon, AlertTriangle, PackageSearch, Coffee, PlusCircle, Edit, Trash2, TrendingDown, Coins, Target, Utensils, GlassWater, Lightbulb, TrendingUp, Clock, Award } from "lucide-react";
 import type { OperationalCost, RawMaterial } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -256,9 +256,10 @@ export default function AnalisaPage() {
     lowStockItems,
     periodMetrics,
     salesChartData,
-    topProducts,
+    peakHoursData,
+    topProfitableProducts,
   } = useMemo(() => {
-    if (!dateRange) return { todayMetrics: {}, lowStockItems: [], periodMetrics: {}, salesChartData: [], topProducts: [] };
+    if (!dateRange) return { todayMetrics: {}, lowStockItems: [], periodMetrics: {}, salesChartData: [], peakHoursData: [], topProfitableProducts: [] };
 
     // --- Today's Metrics ---
     const todayStart = startOfToday();
@@ -280,37 +281,52 @@ export default function AnalisaPage() {
       (m) => m.lowStockThreshold && m.totalQuantity < m.lowStockThreshold
     );
 
+    const currentPeriodSales = sales.filter(item => isWithinInterval(parseISO(item.date), { start: dateRange.current.from!, end: dateRange.current.to! }));
+
     // --- Period Metrics (for deep dive) ---
-    const calculateMetricsForPeriod = (period: DateRange) => {
-        const periodSales = sales.filter(item => isWithinInterval(parseISO(item.date), { start: period.from!, end: period.to! }));
+    const calculateMetricsForPeriod = (periodSales: typeof sales, periodRange: DateRange) => {
         let revenue = 0;
         let cost = 0;
         periodSales.forEach(sale => {
             revenue += sale.totalSalePrice || 0;
             cost += calculateSaleHpp(sale, drinks, foods, rawMaterials);
         });
-        const finalOperationalCost = calculateOperationalCostForPeriod(period, operationalCosts);
+        const finalOperationalCost = calculateOperationalCostForPeriod(periodRange, operationalCosts);
         const netProfit = revenue - cost - finalOperationalCost;
-        return { totalRevenue: revenue, netProfit };
+        return { totalRevenue: revenue, netProfit, totalHpp: cost };
     };
-    const periodMetrics = calculateMetricsForPeriod(dateRange.current);
+    const periodMetrics = calculateMetricsForPeriod(currentPeriodSales, dateRange.current);
 
-    // --- Chart Data ---
-    const salesByProduct: { [key: string]: { name: string; quantity: number; revenue: number; type: 'drink' | 'food' } } = {};
-    const currentPeriodSales = sales.filter(item => isWithinInterval(parseISO(item.date), { start: dateRange.current.from!, end: dateRange.current.to! }));
+    // --- Product Profitability Data ---
+    const salesByProduct: { [key: string]: { name: string; quantity: number; revenue: number; profit: number; type: 'drink' | 'food' } } = {};
     currentPeriodSales.forEach(sale => {
         const product = sale.productType === 'drink'
           ? drinks.find(d => d.id === sale.productId)
           : foods.find(f => f.id === sale.productId);
         if (product) {
           if (!salesByProduct[product.id]) {
-            salesByProduct[product.id] = { name: product.name, quantity: 0, revenue: 0, type: sale.productType };
+            salesByProduct[product.id] = { name: product.name, quantity: 0, revenue: 0, profit: 0, type: sale.productType };
           }
+          const hpp = calculateSaleHpp(sale, drinks, foods, rawMaterials);
           salesByProduct[product.id].quantity += sale.quantity || 0;
           salesByProduct[product.id].revenue += sale.totalSalePrice || 0;
+          salesByProduct[product.id].profit += (sale.totalSalePrice || 0) - hpp;
         }
     });
-    const topProducts = Object.values(salesByProduct).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+    const topProfitableProducts = Object.values(salesByProduct).sort((a, b) => b.profit - a.profit).slice(0, 5);
+    
+    // --- Peak Hours Data ---
+    const hourlySales: { [hour: number]: number } = {};
+    for (let i = 0; i < 24; i++) {
+        hourlySales[i] = 0;
+    }
+    currentPeriodSales.forEach(sale => {
+        const hour = getHours(parseISO(sale.date));
+        hourlySales[hour] += sale.totalSalePrice;
+    });
+    const peakHoursData = Object.entries(hourlySales)
+        .map(([hour, revenue]) => ({ hour: `${parseInt(hour, 10).toString().padStart(2, '0')}:00`, revenue }))
+        .filter(item => item.revenue > 0);
 
 
     // --- Comparison Chart Data ---
@@ -339,12 +355,13 @@ export default function AnalisaPage() {
       currentDate = addDays(currentDate, 1);
     }
 
-    return { todayMetrics, lowStockItems, periodMetrics, salesChartData: chartData, topProducts };
+    return { todayMetrics, lowStockItems, periodMetrics, salesChartData: chartData, topProfitableProducts, peakHoursData };
 
   }, [dateRange, sales, drinks, foods, operationalCosts, rawMaterials]);
 
 
   const lineChartConfig = { Pendapatan: { label: "Pendapatan", color: "hsl(var(--chart-1))" }, 'Periode Sebelumnya': { label: "Periode Sebelumnya", color: "hsl(var(--chart-2))" } } satisfies ChartConfig;
+  const barChartConfig = { revenue: { label: "Pendapatan", color: "hsl(var(--chart-1))" } } satisfies ChartConfig;
   
 
   return (
@@ -393,7 +410,7 @@ export default function AnalisaPage() {
 
       {/* Quick Insights & Deep Dive Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-3 space-y-8">
                <Card>
                   <CardHeader>
                       <CardTitle className="flex items-center gap-2"><Lightbulb />Analisis Mendalam</CardTitle>
@@ -410,9 +427,10 @@ export default function AnalisaPage() {
                       </div>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <StatCard title="Total Pendapatan" value={formatCurrency(periodMetrics.totalRevenue || 0)} icon={DollarSign} description={`Periode: ${formatDate(dateRange?.current.from?.toISOString() || '', 'dd MMM')} - ${formatDate(dateRange?.current.to?.toISOString() || '', 'dd MMM yyyy')}`}/>
-                          <StatCard title="Laba Bersih" value={formatCurrency(periodMetrics.netProfit || 0)} icon={TrendingDown} description="Setelah dikurangi HPP & biaya operasional."/>
+                          <StatCard title="Harga Pokok Penjualan" value={formatCurrency(periodMetrics.totalHpp || 0)} icon={TrendingDown} description="Total HPP dari produk terjual."/>
+                          <StatCard title="Laba Bersih" value={formatCurrency(periodMetrics.netProfit || 0)} icon={TrendingUp} description="Setelah dikurangi HPP & biaya operasional."/>
                       </div>
                        {salesChartData.length > 1 ? (
                           <ChartContainer config={lineChartConfig} className="min-h-[300px] w-full">
@@ -431,25 +449,51 @@ export default function AnalisaPage() {
                   </CardContent>
               </Card>
           </div>
+          <div className="lg:col-span-2">
+               <Card>
+                  <CardHeader>
+                      <CardTitle className="flex items-center gap-2"><Clock /> Analisis Waktu Sibuk</CardTitle>
+                      <CardDescription>Pendapatan per jam pada periode terpilih.</CardDescription>
+                  </CardHeader>
+                   <CardContent>
+                      {peakHoursData.length > 0 ? (
+                        <ChartContainer config={barChartConfig} className="min-h-[300px] w-full">
+                            <BarChart accessibilityLayer data={peakHoursData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                                <CartesianGrid vertical={false} />
+                                <XAxis dataKey="hour" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                                <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} tickFormatter={(value) => { const num = Number(value); if (num >= 1000000) return `${(num / 1000000).toFixed(1)}jt`; if (num >= 1000) return `${(num / 1000).toFixed(0)}rb`; return `${num}`; }} />
+                                <ChartTooltip cursor={false} content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />} />
+                                <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+                            </BarChart>
+                        </ChartContainer>
+                      ) : (
+                         <div className="h-[300px] flex flex-col items-center justify-center text-center text-muted-foreground p-4"><Clock className="w-12 h-12 mb-2"/><p className="font-semibold">Belum ada penjualan.</p><p className="text-sm">Data akan muncul di sini setelah ada transaksi.</p></div>
+                      )}
+                  </CardContent>
+              </Card>
+          </div>
           <div className="lg:col-span-1">
                <Card>
                   <CardHeader>
-                      <CardTitle>Produk Terlaris</CardTitle>
-                      <CardDescription>Berdasarkan pendapatan pada periode terpilih.</CardDescription>
+                      <CardTitle className="flex items-center gap-2"><Award /> Produk Paling Menguntungkan</CardTitle>
+                      <CardDescription>Berdasarkan laba bersih pada periode terpilih.</CardDescription>
                   </CardHeader>
                    <CardContent>
-                      {topProducts.length > 0 ? (
+                      {topProfitableProducts.length > 0 ? (
                       <ul className="space-y-4">
-                          {topProducts.map((product) => (
+                          {topProfitableProducts.map((product) => (
                               <li key={product.name} className="flex items-center gap-4">
                                   <div className="p-2 bg-muted rounded-md">
                                       {product.type === 'drink' ? <GlassWater className="h-5 w-5 text-primary"/> : <Utensils className="h-5 w-5 text-primary"/>}
                                   </div>
                                   <div className="flex-1">
                                       <p className="font-semibold">{product.name}</p>
-                                      <p className="text-sm text-muted-foreground">{product.quantity}x terjual</p>
+                                      <p className="text-sm text-muted-foreground">{formatCurrency(product.revenue)} pendapatan</p>
                                   </div>
-                                  <p className="font-bold">{formatCurrency(product.revenue)}</p>
+                                  <div className="text-right">
+                                    <p className="font-bold text-green-600">{formatCurrency(product.profit)}</p>
+                                    <p className="text-xs text-muted-foreground">Laba</p>
+                                  </div>
                               </li>
                           ))}
                       </ul>
