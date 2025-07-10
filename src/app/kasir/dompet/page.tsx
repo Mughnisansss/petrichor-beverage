@@ -20,10 +20,10 @@ export default function DompetPageMoved() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-6">
-              Fitur 'Dompet' kini memiliki halaman utamanya sendiri untuk akses yang lebih mudah.
+              Fitur 'Dompet' kini telah diintegrasikan ke dalam halaman Dasbor.
             </p>
             <Button asChild>
-                <Link href="/dompet">Buka Halaman Dompet</Link>
+                <Link href="/analisa">Buka Halaman Dasbor</Link>
             </Button>
           </CardContent>
         </Card>

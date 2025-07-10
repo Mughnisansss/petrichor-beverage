@@ -145,7 +145,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <div className="flex md:hidden">
                 <MobileNav />
             </div>
-            <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+            <div className="flex w-full items-center justify-end gap-4 md:ml-auto md:gap-2 lg:gap-4">
               <ThemeToggle />
               <Link href={settingsHref} passHref>
                 <Button variant="ghost" size="icon">
@@ -164,15 +164,12 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               <Logo />
               <span className="sr-only">{appName}</span>
             </Link>
-            <div className={cn(
-                "flex-1 overflow-hidden relative h-10 rounded-md bg-primary/10 text-primary",
-                "hidden md:flex"
-              )}>
+            <div className="flex-1 overflow-hidden relative h-10 rounded-md">
                 <div className="absolute whitespace-nowrap h-full flex items-center animate-marquee">
-                  <span className="mx-4 text-sm font-medium">{displayText}</span>
-                  <span className="mx-4 text-sm font-medium">{displayText}</span>
-                  <span className="mx-4 text-sm font-medium">{displayText}</span>
-                  <span className="mx-4 text-sm font-medium">{displayText}</span>
+                  <p className="mx-4 text-sm font-medium text-primary">{displayText}</p>
+                  <p className="mx-4 text-sm font-medium text-primary">{displayText}</p>
+                  <p className="mx-4 text-sm font-medium text-primary">{displayText}</p>
+                  <p className="mx-4 text-sm font-medium text-primary">{displayText}</p>
               </div>
             </div>
           </div>
