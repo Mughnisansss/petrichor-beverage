@@ -4,120 +4,155 @@
   "logoImageUri": null,
   "marqueeText": "Selamat datang di {appName}! Kesegaran dalam setiap tegukan.",
   "rawMaterials": [
-    { "id": "rm01", "name": "Stroberi", "unit": "gram", "totalQuantity": 1000, "totalCost": 50000, "costPerUnit": 50, "category": "main", "lowStockThreshold": 200 },
-    { "id": "rm02", "name": "Blueberry", "unit": "gram", "totalQuantity": 1000, "totalCost": 70000, "costPerUnit": 70, "category": "main", "lowStockThreshold": 200 },
-    { "id": "rm03", "name": "Pisang", "unit": "gram", "totalQuantity": 2000, "totalCost": 30000, "costPerUnit": 15, "category": "main", "lowStockThreshold": 500 },
-    { "id": "rm04", "name": "Susu Cair", "unit": "ml", "totalQuantity": 5000, "totalCost": 85000, "costPerUnit": 17, "category": "main", "lowStockThreshold": 1000 },
-    { "id": "rm05", "name": "Yogurt Plain", "unit": "ml", "totalQuantity": 2000, "totalCost": 50000, "costPerUnit": 25, "category": "main" },
-    { "id": "rm06", "name": "Daun Teh Hitam", "unit": "gram", "totalQuantity": 500, "totalCost": 60000, "costPerUnit": 120, "category": "main" },
-    { "id": "rm07", "name": "Gula Cair", "unit": "ml", "totalQuantity": 2000, "totalCost": 30000, "costPerUnit": 15, "category": "main" },
-    { "id": "rm08", "name": "Mangga Harum Manis", "unit": "gram", "totalQuantity": 2000, "totalCost": 50000, "costPerUnit": 25, "category": "main" },
-    { "id": "rm09", "name": "Nanas Madu", "unit": "gram", "totalQuantity": 1500, "totalCost": 45000, "costPerUnit": 30, "category": "main" },
-    { "id": "rm10", "name": "Air Mineral", "unit": "ml", "totalQuantity": 19000, "totalCost": 19000, "costPerUnit": 1, "category": "main" },
-    { "id": "tp01", "name": "Boba Pearl", "unit": "gram", "totalQuantity": 1000, "totalCost": 30000, "costPerUnit": 30, "category": "topping", "sellingPrice": 3000 },
-    { "id": "tp02", "name": "Nata de Coco", "unit": "gram", "totalQuantity": 1000, "totalCost": 20000, "costPerUnit": 20, "category": "topping", "sellingPrice": 2500 },
-    { "id": "tp03", "name": "Potongan Buah", "unit": "gram", "totalQuantity": 500, "totalCost": 25000, "costPerUnit": 50, "category": "topping", "sellingPrice": 4000 },
-    { "id": "pk01", "name": "Gelas Plastik 16oz", "unit": "pcs", "totalQuantity": 100, "totalCost": 70000, "costPerUnit": 700, "category": "packaging" },
-    { "id": "pk02", "name": "Tutup Gelas", "unit": "pcs", "totalQuantity": 100, "totalCost": 30000, "costPerUnit": 300, "category": "packaging" }
+    { "id": "rm-coffee-arabica", "name": "Biji Kopi Arabika", "unit": "gram", "totalQuantity": 2000, "totalCost": 400000, "costPerUnit": 200, "category": "main", "lowStockThreshold": 500 },
+    { "id": "rm-coffee-robusta", "name": "Biji Kopi Robusta", "unit": "gram", "totalQuantity": 1500, "totalCost": 225000, "costPerUnit": 150, "category": "main", "lowStockThreshold": 500 },
+    { "id": "rm-susu-cair", "name": "Susu Cair Full Cream", "unit": "ml", "totalQuantity": 10000, "totalCost": 170000, "costPerUnit": 17, "category": "main", "lowStockThreshold": 2000 },
+    { "id": "rm-gula-aren", "name": "Gula Aren Cair", "unit": "ml", "totalQuantity": 5000, "totalCost": 100000, "costPerUnit": 20, "category": "main", "lowStockThreshold": 1000 },
+    { "id": "rm-teh-hitam", "name": "Daun Teh Hitam", "unit": "gram", "totalQuantity": 500, "totalCost": 60000, "costPerUnit": 120, "category": "main" },
+    { "id": "rm-teh-hijau", "name": "Daun Teh Hijau", "unit": "gram", "totalQuantity": 500, "totalCost": 75000, "costPerUnit": 150, "category": "main" },
+    { "id": "rm-coklat-bubuk", "name": "Coklat Bubuk Premium", "unit": "gram", "totalQuantity": 1000, "totalCost": 120000, "costPerUnit": 120, "category": "main" },
+    { "id": "rm-stroberi", "name": "Buah Stroberi", "unit": "gram", "totalQuantity": 1000, "totalCost": 60000, "costPerUnit": 60, "category": "main" },
+    { "id": "rm-mangga", "name": "Buah Mangga", "unit": "gram", "totalQuantity": 2000, "totalCost": 50000, "costPerUnit": 25, "category": "main" },
+    { "id": "rm-lemon", "name": "Buah Lemon", "unit": "buah", "totalQuantity": 50, "totalCost": 75000, "costPerUnit": 1500, "category": "main" },
+    { "id": "rm-air-mineral", "name": "Air Mineral", "unit": "ml", "totalQuantity": 19000, "totalCost": 19000, "costPerUnit": 1, "category": "main" },
+    { "id": "rm-es-batu", "name": "Es Batu", "unit": "gram", "totalQuantity": 10000, "totalCost": 10000, "costPerUnit": 1, "category": "main" },
+    { "id": "rm-sirup-vanila", "name": "Sirup Vanila", "unit": "ml", "totalQuantity": 1000, "totalCost": 80000, "costPerUnit": 80, "category": "main" },
+    { "id": "rm-sirup-karamel", "name": "Sirup Karamel", "unit": "ml", "totalQuantity": 1000, "totalCost": 85000, "costPerUnit": 85, "category": "main" },
+    { "id": "rm-tepung-terigu", "name": "Tepung Terigu", "unit": "gram", "totalQuantity": 5000, "totalCost": 65000, "costPerUnit": 13, "category": "main" },
+    { "id": "rm-mentega", "name": "Mentega", "unit": "gram", "totalQuantity": 1000, "totalCost": 50000, "costPerUnit": 50, "category": "main" },
+    { "id": "rm-kentang", "name": "Kentang", "unit": "gram", "totalQuantity": 5000, "totalCost": 75000, "costPerUnit": 15, "category": "main" },
+    { "id": "rm-minyak-goreng", "name": "Minyak Goreng", "unit": "ml", "totalQuantity": 5000, "totalCost": 80000, "costPerUnit": 16, "category": "main" },
+
+    { "id": "tp-boba", "name": "Boba Pearl", "unit": "gram", "totalQuantity": 1000, "totalCost": 30000, "costPerUnit": 30, "category": "topping", "sellingPrice": 3000 },
+    { "id": "tp-jelly", "name": "Rainbow Jelly", "unit": "gram", "totalQuantity": 1000, "totalCost": 25000, "costPerUnit": 25, "category": "topping", "sellingPrice": 3000 },
+    { "id": "tp-cheese-foam", "name": "Cheese Foam", "unit": "ml", "totalQuantity": 2000, "totalCost": 60000, "costPerUnit": 30, "category": "topping", "sellingPrice": 4000 },
+    { "id": "tp-espresso-shot", "name": "Extra Espresso Shot", "unit": "gram", "totalQuantity": 500, "totalCost": 100000, "costPerUnit": 200, "category": "topping", "sellingPrice": 5000 },
+    
+    { "id": "pk-gelas-12oz", "name": "Gelas Plastik 12oz", "unit": "pcs", "totalQuantity": 100, "totalCost": 60000, "costPerUnit": 600, "category": "packaging" },
+    { "id": "pk-tutup-12oz", "name": "Tutup Gelas 12oz", "unit": "pcs", "totalQuantity": 100, "totalCost": 30000, "costPerUnit": 300, "category": "packaging" },
+    { "id": "pk-gelas-16oz", "name": "Gelas Plastik 16oz", "unit": "pcs", "totalQuantity": 100, "totalCost": 70000, "costPerUnit": 700, "category": "packaging" },
+    { "id": "pk-tutup-16oz", "name": "Tutup Gelas 16oz", "unit": "pcs", "totalQuantity": 100, "totalCost": 30000, "costPerUnit": 300, "category": "packaging" },
+    { "id": "pk-paper-box-m", "name": "Paper Box Medium", "unit": "pcs", "totalQuantity": 100, "totalCost": 150000, "costPerUnit": 1500, "category": "packaging" }
   ],
   "drinks": [
     {
-      "id": "drink01",
-      "name": "Berry Blast Smoothie",
-      "imageUri": "https://placehold.co/600x400.png",
-      "subCategory": "Smoothie",
-      "ingredients": [
-        { "rawMaterialId": "rm01", "quantity": 50 },
-        { "rawMaterialId": "rm02", "quantity": 30 },
-        { "rawMaterialId": "rm03", "quantity": 50 },
-        { "rawMaterialId": "rm04", "quantity": 100 },
-        { "rawMaterialId": "rm05", "quantity": 50 }
-      ],
-      "costPrice": 7350,
-      "sellingPrice": 25000,
-      "availableToppings": ["tp03"],
+      "id": "drink-cappuccino", "name": "Cappuccino", "subCategory": "Kopi", "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [ { "rawMaterialId": "rm-coffee-arabica", "quantity": 18 }, { "rawMaterialId": "rm-susu-cair", "quantity": 120 } ],
+      "sellingPrice": 22000, "costPrice": 5640,
+      "availableToppings": ["tp-espresso-shot"],
       "packagingOptions": [
-        { "id": "pack01", "name": "Reguler", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk01", "quantity": 1 }, { "rawMaterialId": "pk02", "quantity": 1 }] }
+        { "id": "pack-hot-12", "name": "Panas", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk-gelas-12oz", "quantity": 1 }] },
+        { "id": "pack-ice-16", "name": "Dingin", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk-gelas-16oz", "quantity": 1 }, { "rawMaterialId": "pk-tutup-16oz", "quantity": 1 }] }
       ]
     },
     {
-      "id": "drink02",
-      "name": "Classic Milk Tea",
-      "imageUri": "https://placehold.co/600x400.png",
-      "subCategory": "Milk Tea",
-      "ingredients": [
-        { "rawMaterialId": "rm06", "quantity": 10 },
-        { "rawMaterialId": "rm04", "quantity": 150 },
-        { "rawMaterialId": "rm07", "quantity": 20 }
-      ],
-      "costPrice": 4050,
-      "sellingPrice": 18000,
-      "availableToppings": ["tp01", "tp02"],
+      "id": "drink-latte", "name": "Caffe Latte", "subCategory": "Kopi", "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [ { "rawMaterialId": "rm-coffee-arabica", "quantity": 18 }, { "rawMaterialId": "rm-susu-cair", "quantity": 150 } ],
+      "sellingPrice": 23000, "costPrice": 6150,
+      "availableToppings": ["tp-espresso-shot"],
       "packagingOptions": [
-        { "id": "pack01", "name": "Reguler", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk01", "quantity": 1 }, { "rawMaterialId": "pk02", "quantity": 1 }] }
+        { "id": "pack-hot-12", "name": "Panas", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk-gelas-12oz", "quantity": 1 }] },
+        { "id": "pack-ice-16", "name": "Dingin", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk-gelas-16oz", "quantity": 1 }, { "rawMaterialId": "pk-tutup-16oz", "quantity": 1 }] }
       ]
     },
     {
-      "id": "drink03",
-      "name": "Mango Tango Juice",
-      "imageUri": "https://placehold.co/600x400.png",
-      "subCategory": "Juice",
-      "ingredients": [
-        { "rawMaterialId": "rm08", "quantity": 150 },
-        { "rawMaterialId": "rm09", "quantity": 50 },
-        { "rawMaterialId": "rm10", "quantity": 50 }
-      ],
-      "costPrice": 5300,
-      "sellingPrice": 22000,
-      "availableToppings": ["tp02", "tp03"],
-      "packagingOptions": [
-        { "id": "pack01", "name": "Reguler", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk01", "quantity": 1 }, { "rawMaterialId": "pk02", "quantity": 1 }] }
-      ]
+      "id": "drink-kopisusu", "name": "Es Kopi Susu Gula Aren", "subCategory": "Kopi", "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [ { "rawMaterialId": "rm-coffee-robusta", "quantity": 20 }, { "rawMaterialId": "rm-susu-cair", "quantity": 100 }, { "rawMaterialId": "rm-gula-aren", "quantity": 20 }, { "rawMaterialId": "rm-es-batu", "quantity": 100 } ],
+      "sellingPrice": 18000, "costPrice": 5200,
+      "availableToppings": ["tp-espresso-shot", "tp-boba"],
+      "packagingOptions": [ { "id": "pack-ice-16", "name": "Reguler", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk-gelas-16oz", "quantity": 1 }, { "rawMaterialId": "pk-tutup-16oz", "quantity": 1 }] } ]
+    },
+    {
+      "id": "drink-caramel-macchiato", "name": "Caramel Macchiato", "subCategory": "Kopi", "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [ { "rawMaterialId": "rm-coffee-arabica", "quantity": 18 }, { "rawMaterialId": "rm-susu-cair", "quantity": 120 }, { "rawMaterialId": "rm-sirup-vanila", "quantity": 15 }, { "rawMaterialId": "rm-sirup-karamel", "quantity": 10 } ],
+      "sellingPrice": 28000, "costPrice": 7730,
+      "availableToppings": [],
+      "packagingOptions": [ { "id": "pack-ice-16", "name": "Reguler", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk-gelas-16oz", "quantity": 1 }, { "rawMaterialId": "pk-tutup-16oz", "quantity": 1 }] } ]
+    },
+    {
+      "id": "drink-classic-milktea", "name": "Classic Milk Tea", "subCategory": "Milk Tea", "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [ { "rawMaterialId": "rm-teh-hitam", "quantity": 10 }, { "rawMaterialId": "rm-susu-cair", "quantity": 150 }, { "rawMaterialId": "rm-gula-aren", "quantity": 15 }, { "rawMaterialId": "rm-es-batu", "quantity": 100 } ],
+      "sellingPrice": 18000, "costPrice": 4150,
+      "availableToppings": ["tp-boba", "tp-jelly", "tp-cheese-foam"],
+      "packagingOptions": [ { "id": "pack-ice-16", "name": "Reguler", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk-gelas-16oz", "quantity": 1 }, { "rawMaterialId": "pk-tutup-16oz", "quantity": 1 }] } ]
+    },
+    {
+      "id": "drink-greentea-latte", "name": "Green Tea Latte", "subCategory": "Milk Tea", "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [ { "rawMaterialId": "rm-teh-hijau", "quantity": 10 }, { "rawMaterialId": "rm-susu-cair", "quantity": 150 }, { "rawMaterialId": "rm-gula-aren", "quantity": 15 }, { "rawMaterialId": "rm-es-batu", "quantity": 100 } ],
+      "sellingPrice": 22000, "costPrice": 4450,
+      "availableToppings": ["tp-boba", "tp-jelly"],
+      "packagingOptions": [ { "id": "pack-ice-16", "name": "Reguler", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk-gelas-16oz", "quantity": 1 }, { "rawMaterialId": "pk-tutup-16oz", "quantity": 1 }] } ]
+    },
+    {
+      "id": "drink-chocolate", "name": "Signature Chocolate", "subCategory": "Non-Kopi", "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [ { "rawMaterialId": "rm-coklat-bubuk", "quantity": 25 }, { "rawMaterialId": "rm-susu-cair", "quantity": 150 }, { "rawMaterialId": "rm-es-batu", "quantity": 100 } ],
+      "sellingPrice": 24000, "costPrice": 5650,
+      "availableToppings": ["tp-cheese-foam"],
+      "packagingOptions": [ { "id": "pack-ice-16", "name": "Reguler", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk-gelas-16oz", "quantity": 1 }, { "rawMaterialId": "pk-tutup-16oz", "quantity": 1 }] } ]
+    },
+    {
+      "id": "drink-lychee-tea", "name": "Iced Lychee Tea", "subCategory": "Teh", "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [ { "rawMaterialId": "rm-teh-hitam", "quantity": 8 }, { "rawMaterialId": "rm-air-mineral", "quantity": 150 }, { "rawMaterialId": "rm-es-batu", "quantity": 100 } ],
+      "sellingPrice": 16000, "costPrice": 1210,
+      "availableToppings": ["tp-jelly"],
+      "packagingOptions": [ { "id": "pack-ice-16", "name": "Reguler", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk-gelas-16oz", "quantity": 1 }, { "rawMaterialId": "pk-tutup-16oz", "quantity": 1 }] } ]
+    },
+    {
+      "id": "drink-strawberry-smoothie", "name": "Strawberry Smoothie", "subCategory": "Jus & Smoothie", "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [ { "rawMaterialId": "rm-stroberi", "quantity": 100 }, { "rawMaterialId": "rm-susu-cair", "quantity": 50 }, { "rawMaterialId": "rm-es-batu", "quantity": 50 } ],
+      "sellingPrice": 25000, "costPrice": 6900,
+      "availableToppings": [],
+      "packagingOptions": [ { "id": "pack-ice-16", "name": "Reguler", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk-gelas-16oz", "quantity": 1 }, { "rawMaterialId": "pk-tutup-16oz", "quantity": 1 }] } ]
+    },
+    {
+      "id": "drink-mango-juice", "name": "Mango Juice", "subCategory": "Jus & Smoothie", "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [ { "rawMaterialId": "rm-mangga", "quantity": 150 }, { "rawMaterialId": "rm-air-mineral", "quantity": 100 }, { "rawMaterialId": "rm-es-batu", "quantity": 50 } ],
+      "sellingPrice": 22000, "costPrice": 3900,
+      "availableToppings": [],
+      "packagingOptions": [ { "id": "pack-ice-16", "name": "Reguler", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk-gelas-16oz", "quantity": 1 }, { "rawMaterialId": "pk-tutup-16oz", "quantity": 1 }] } ]
+    }
+  ],
+  "foods": [
+     {
+      "id": "food-croissant", "name": "Butter Croissant", "subCategory": "Pastry", "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [ { "rawMaterialId": "rm-tepung-terigu", "quantity": 100 }, { "rawMaterialId": "rm-mentega", "quantity": 50 } ],
+      "sellingPrice": 18000, "costPrice": 3800,
+      "availableToppings": [], "packagingOptions": []
+    },
+    {
+      "id": "food-pain-au-chocolat", "name": "Pain au Chocolat", "subCategory": "Pastry", "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [ { "rawMaterialId": "rm-tepung-terigu", "quantity": 100 }, { "rawMaterialId": "rm-mentega", "quantity": 50 }, { "rawMaterialId": "rm-coklat-bubuk", "quantity": 20 } ],
+      "sellingPrice": 22000, "costPrice": 6200,
+      "availableToppings": [], "packagingOptions": []
+    },
+    {
+      "id": "food-french-fries", "name": "French Fries", "subCategory": "Cemilan", "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [ { "rawMaterialId": "rm-kentang", "quantity": 150 }, { "rawMaterialId": "rm-minyak-goreng", "quantity": 30 } ],
+      "sellingPrice": 15000, "costPrice": 2730,
+      "availableToppings": [],
+      "packagingOptions": [ { "id": "pack-box-m", "name": "Reguler", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk-paper-box-m", "quantity": 1 }] } ]
+    },
+    {
+      "id": "food-onion-rings", "name": "Onion Rings", "subCategory": "Cemilan", "imageUri": "https://placehold.co/600x400.png",
+      "ingredients": [ { "rawMaterialId": "rm-tepung-terigu", "quantity": 50 }, { "rawMaterialId": "rm-minyak-goreng", "quantity": 30 } ],
+      "sellingPrice": 16000, "costPrice": 1130,
+      "availableToppings": [],
+      "packagingOptions": [ { "id": "pack-box-m", "name": "Reguler", "additionalPrice": 0, "ingredients": [{ "rawMaterialId": "pk-paper-box-m", "quantity": 1 }] } ]
     }
   ],
   "sales": [
-    {
-      "id": "sale01",
-      "productId": "drink01",
-      "productType": "drink",
-      "quantity": 2,
-      "discount": 0,
-      "date": "2024-07-20T10:30:00Z",
-      "totalSalePrice": 50000,
-      "selectedToppings": [],
-      "selectedPackagingId": "pack01",
-      "selectedPackagingName": "Reguler"
-    },
-    {
-      "id": "sale02",
-      "productId": "drink02",
-      "productType": "drink",
-      "quantity": 1,
-      "discount": 10,
-      "date": "2024-07-20T11:00:00Z",
-      "totalSalePrice": 18900,
-      "selectedToppings": [
-        { "rawMaterialId": "tp01", "quantity": 1 }
-      ],
-      "selectedPackagingId": "pack01",
-      "selectedPackagingName": "Reguler"
-    }
+    { "id": "sale01", "productId": "drink-kopisusu", "productType": "drink", "quantity": 2, "discount": 0, "date": "2024-07-28T10:30:00Z", "totalSalePrice": 36000, "selectedToppings": [], "selectedPackagingId": "pack-ice-16", "selectedPackagingName": "Reguler" },
+    { "id": "sale02", "productId": "drink-classic-milktea", "productType": "drink", "quantity": 1, "discount": 10, "date": "2024-07-28T11:00:00Z", "totalSalePrice": 19800, "selectedToppings": [{ "rawMaterialId": "tp-boba", "quantity": 1 }], "selectedPackagingId": "pack-ice-16", "selectedPackagingName": "Reguler" },
+    { "id": "sale03", "productId": "food-french-fries", "productType": "food", "quantity": 1, "discount": 0, "date": "2024-07-28T12:15:00Z", "totalSalePrice": 15000, "selectedToppings": [], "selectedPackagingId": "pack-box-m", "selectedPackagingName": "Reguler" },
+    { "id": "sale04", "productId": "drink-cappuccino", "productType": "drink", "quantity": 1, "discount": 0, "date": "2024-07-27T14:00:00Z", "totalSalePrice": 22000, "selectedToppings": [], "selectedPackagingId": "pack-hot-12", "selectedPackagingName": "Panas" },
+    { "id": "sale05", "productId": "drink-kopisusu", "productType": "drink", "quantity": 3, "discount": 0, "date": "2024-07-27T19:30:00Z", "totalSalePrice": 54000, "selectedToppings": [], "selectedPackagingId": "pack-ice-16", "selectedPackagingName": "Reguler" },
+    { "id": "sale06", "productId": "food-croissant", "productType": "food", "quantity": 2, "discount": 0, "date": "2024-07-26T09:05:00Z", "totalSalePrice": 36000, "selectedToppings": [], "selectedPackagingId": null, "selectedPackagingName": null }
   ],
   "operationalCosts": [
-    {
-      "id": "op01",
-      "description": "Sewa Kios - Juli",
-      "amount": 1000000,
-      "date": "2024-07-01T00:00:00Z",
-      "recurrence": "bulanan"
-    },
-    {
-      "id": "op02",
-      "description": "Listrik & Air - Juni",
-      "amount": 300000,
-      "date": "2024-07-10T00:00:00Z",
-      "recurrence": "bulanan"
-    }
-  ],
-  "foods": []
+    { "id": "op01", "description": "Sewa Kios - Agustus", "amount": 1500000, "date": "2024-08-01T00:00:00Z", "recurrence": "bulanan" },
+    { "id": "op02", "description": "Gaji Karyawan - Juli", "amount": 2500000, "date": "2024-07-25T00:00:00Z", "recurrence": "bulanan" },
+    { "id": "op03", "description": "Listrik & Air - Juli", "amount": 500000, "date": "2024-08-10T00:00:00Z", "recurrence": "bulanan" },
+    { "id": "op04", "description": "Langganan Internet - Agustus", "amount": 350000, "date": "2024-08-05T00:00:00Z", "recurrence": "bulanan" },
+    { "id": "op05", "description": "Promosi Media Sosial", "amount": 200000, "date": "2024-07-15T00:00:00Z", "recurrence": "sekali" }
+  ]
 }
