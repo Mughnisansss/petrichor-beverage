@@ -35,13 +35,13 @@ export default function DonasiPage() {
                 
                 <div className="flex flex-col items-center gap-4 rounded-lg border p-6 max-w-sm w-full">
                     <h3 className="font-semibold text-xl">Donasi via DANA</h3>
-                    <p className="text-sm text-muted-foreground text-center pb-2">Scan QRIS di bawah ini menggunakan aplikasi DANA Anda.</p>
+                    <p className="text-sm text-muted-foreground text-center pb-2">Scan QR code di bawah ini menggunakan aplikasi DANA Anda.</p>
                     <Image
-                        src="/donasi.jpg"
-                        alt="QR Code DANA untuk MUGNI SANTOSO"
-                        width={200}
-                        height={200}
-                        className="rounded-lg"
+                    src="/images/donasi.jpg" // <-- Path absolut dari folder public
+                    alt="QR Code DANA untuk MUGNI SANTOSO"
+                    width={250}
+                    height={250}
+                    className="rounded-lg mx-auto"
                     />
                     <div className="w-full space-y-2 pt-2">
                         {accountInfo.map((info, index) => (
