@@ -25,11 +25,9 @@ import {
   format,
   differenceInDays,
   subMonths,
-  getHours,
   isSameDay
 } from "date-fns";
 import type { DateRange } from "react-day-picker";
-import { MainLayout } from "@/components/main-layout";
 import {
   ChartContainer,
   ChartTooltip,
@@ -40,14 +38,11 @@ import {
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, LineChart, Line, Legend, Pie, PieChart, Cell } from "recharts";
 import { calculateSaleHpp, calculateOperationalCostForPeriod } from "@/lib/data-logic";
-import { ArrowDown, ArrowUp, BarChartHorizontal, DollarSign, LineChart as LineChartIcon, ShoppingCart, Clock, PieChart as PieChartIcon, Receipt, AlertTriangle, PackageX, Wallet, ArrowDownCircle, ArrowUpCircle, Plus, PlusCircle, Edit, Trash2, TrendingDown, Coins, Target, Utensils, GlassWater, Lightbulb, PackageSearch, Coffee } from "lucide-react";
-import type { OperationalCost, Sale, CashExpense, RawMaterial } from "@/lib/types";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DollarSign, LineChart as LineChartIcon, ShoppingCart, PieChart as PieChartIcon, AlertTriangle, PackageSearch, Coffee, PlusCircle, Edit, Trash2, TrendingDown, Coins, Target, Utensils, GlassWater, Lightbulb } from "lucide-react";
+import type { OperationalCost, RawMaterial } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -56,6 +51,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 
 // --- KPI Card Component ---
@@ -83,113 +79,6 @@ const costSchema = z.object({
 type CostFormValues = z.infer<typeof costSchema>;
 const recurrenceLabels: Record<OperationalCost['recurrence'], string> = {
   sekali: 'Sekali Bayar', harian: 'Harian', mingguan: 'Mingguan', bulanan: 'Bulanan',
-};
-
-// Kas Harian Component
-const KasHarianManager = () => {
-    const { sales, initialCapital, setInitialCapital, cashExpenses, addCashExpense, deleteCashExpense } = useAppContext();
-    const { toast } = useToast();
-
-    const [newCapital, setNewCapital] = useState(initialCapital.toString());
-    const [expenseDesc, setExpenseDesc] = useState('');
-    const [expenseAmount, setExpenseAmount] = useState('');
-
-    useEffect(() => {
-        setNewCapital(initialCapital.toString());
-    }, [initialCapital]);
-
-    const today = startOfToday();
-    const todaysSales = sales.filter(s => isSameDay(parseISO(s.date), today));
-    const todaysCashExpenses = cashExpenses.filter(e => isSameDay(parseISO(e.date), today));
-
-    const totalRevenue = todaysSales.reduce((sum, s) => sum + s.totalSalePrice, 0);
-    const totalExpenses = todaysCashExpenses.reduce((sum, e) => sum + e.amount, 0);
-    const cashInDrawer = initialCapital + totalRevenue - totalExpenses;
-
-    const handleSetCapital = () => {
-        const amount = parseFloat(newCapital);
-        if (isNaN(amount) || amount < 0) {
-        toast({ title: 'Error', description: 'Modal awal tidak valid.', variant: 'destructive' });
-        return;
-        }
-        setInitialCapital(amount);
-        toast({ title: 'Sukses', description: 'Modal awal berhasil diatur.' });
-    }
-
-    const handleAddExpense = () => {
-        const amount = parseFloat(expenseAmount);
-        if (!expenseDesc.trim() || isNaN(amount) || amount <= 0) {
-        toast({ title: 'Error', description: 'Deskripsi atau jumlah pengeluaran tidak valid.', variant: 'destructive' });
-        return;
-        }
-        addCashExpense({ description: expenseDesc, amount });
-        toast({ title: 'Sukses', description: 'Pengeluaran tunai berhasil dicatat.' });
-        setExpenseDesc('');
-        setExpenseAmount('');
-    }
-
-    const handleDeleteExpense = (id: string) => {
-        if (window.confirm("Yakin ingin menghapus pengeluaran ini?")) {
-        deleteCashExpense(id);
-        toast({ title: 'Sukses', description: 'Pengeluaran berhasil dihapus.' });
-        }
-    }
-
-    return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-6">
-                 <Card className="bg-muted/30">
-                    <CardHeader>
-                        <CardTitle>Ringkasan Kas Hari Ini</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-4 sm:grid-cols-2">
-                        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Modal Awal</CardTitle><Wallet className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(initialCapital)}</div></CardContent></Card>
-                        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Penjualan Tunai</CardTitle><ArrowUpCircle className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div></CardContent></Card>
-                        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Pengeluaran Tunai</CardTitle><ArrowDownCircle className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(totalExpenses)}</div></CardContent></Card>
-                        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Uang di Laci</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold text-primary">{formatCurrency(cashInDrawer)}</div></CardContent></Card>
-                    </CardContent>
-                </Card>
-            </div>
-            <div className="space-y-6">
-                <div className="space-y-2">
-                    <Label htmlFor="initialCapital">Modal Awal</Label>
-                    <div className="flex gap-2">
-                    <Input id="initialCapital" type="number" value={newCapital} onChange={(e) => setNewCapital(e.target.value)} placeholder="Jumlah modal awal" />
-                    <Button onClick={handleSetCapital}>Atur</Button>
-                    </div>
-                </div>
-                <Separator />
-                <div className="space-y-4">
-                    <h4 className="font-medium">Catat Pengeluaran Tunai Harian</h4>
-                     <p className="text-sm text-muted-foreground">Catat pengeluaran kecil yang dibayar tunai (cth: beli es batu, parkir). Biaya operasional besar seperti gaji atau sewa harus dicatat di tab "Biaya Operasional".</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <Input value={expenseDesc} onChange={(e) => setExpenseDesc(e.target.value)} placeholder="Deskripsi (cth: Beli es batu)" className="sm:col-span-2" />
-                    <Input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} type="number" placeholder="Jumlah (Rp)" />
-                    </div>
-                    <Button onClick={handleAddExpense}><Plus className="mr-2" /> Tambah Pengeluaran</Button>
-                </div>
-                <div className="space-y-2">
-                    <h4 className="font-medium">Riwayat Pengeluaran Hari Ini</h4>
-                    <div className="border rounded-md">
-                    <Table>
-                        <TableHeader><TableRow><TableHead>Deskripsi</TableHead><TableHead className="text-right">Jumlah</TableHead><TableHead className="w-[50px]"></TableHead></TableRow></TableHeader>
-                        <TableBody>
-                        {todaysCashExpenses.length > 0 ? todaysCashExpenses.map(exp => (
-                            <TableRow key={exp.id}>
-                                <TableCell>{exp.description}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(exp.amount)}</TableCell>
-                                <TableCell><Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(exp.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button></TableCell>
-                            </TableRow>
-                        )) : (
-                            <TableRow><TableCell colSpan={3} className="text-center h-24">Belum ada pengeluaran hari ini.</TableCell></TableRow>
-                        )}
-                        </TableBody>
-                    </Table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
 };
 
 // Operasional Manager Component
@@ -252,7 +141,7 @@ const OperasionalManager = () => {
         <div className="space-y-6">
             <Card className="bg-muted/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Biaya Operasional</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Biaya Operasional Tercatat</CardTitle>
                 <TrendingDown className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -578,21 +467,10 @@ export default function AnalisaPage() {
       <Card>
           <CardHeader>
               <CardTitle className="flex items-center gap-2"><Coins className="h-6 w-6 text-primary" /> Manajemen Keuangan</CardTitle>
-              <CardDescription>Kelola semua arus kas dan biaya bisnis. Gunakan 'Kas Harian' untuk pengeluaran tunai kecil (parkir, es batu) dan 'Biaya Operasional' untuk semua biaya besar lainnya (gaji, sewa, listrik).</CardDescription>
+              <CardDescription>Kelola semua arus kas dan biaya bisnis. Gunakan fitur ini untuk mencatat semua biaya besar seperti gaji, sewa, listrik, dll.</CardDescription>
           </CardHeader>
-          <CardContent>
-               <Tabs defaultValue="kas_harian">
-                  <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="kas_harian">Kas Harian</TabsTrigger>
-                      <TabsTrigger value="operasional">Biaya Operasional</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="kas_harian" className="pt-6">
-                      <KasHarianManager />
-                  </TabsContent>
-                  <TabsContent value="operasional" className="pt-6">
-                      <OperasionalManager />
-                  </TabsContent>
-              </Tabs>
+          <CardContent className="pt-6">
+               <OperasionalManager />
           </CardContent>
       </Card>
 

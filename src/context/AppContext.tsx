@@ -4,7 +4,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { nanoid } from 'nanoid';
-import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem, Ingredient, QueuedOrder, PackagingInfo, CashExpense } from '@/lib/types';
+import type { Drink, Sale, OperationalCost, RawMaterial, DbData, Food, CartItem, Ingredient, QueuedOrder, PackagingInfo } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { 
   isRawMaterialInUse, 
@@ -72,7 +72,7 @@ const LOCAL_STORAGE_KEY = 'petrichor_data';
 
 const getLocalData = (): DbData => {
   if (typeof window === 'undefined') {
-    return { appName: 'Petrichor', logoImageUri: null, marqueeText: 'Welcome!', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
+    return { appName: 'Petrichor', logoImageUri: null, marqueeText: 'Welcome!', drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
   }
   const data = window.localStorage.getItem(LOCAL_STORAGE_KEY);
   try {
@@ -87,7 +87,7 @@ const getLocalData = (): DbData => {
     
     return parsedData as DbData;
   } catch {
-    return { appName: 'Petrichor', logoImageUri: null, marqueeText: 'Welcome!', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
+    return { appName: 'Petrichor', logoImageUri: null, marqueeText: 'Welcome!', drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] };
   }
 };
 
@@ -307,11 +307,6 @@ interface AppContextType {
   setLogoImageUri: (uri: string | null) => void;
   marqueeText: string;
   setMarqueeText: (text: string) => void;
-  initialCapital: number;
-  setInitialCapital: (value: number | ((val: number) => number)) => void;
-  cashExpenses: CashExpense[];
-  addCashExpense: (expense: { description: string, amount: number }) => void;
-  deleteCashExpense: (id: string) => void;
   fetchData: () => Promise<void>;
   importData: (data: DbData) => Promise<{ ok: boolean, message: string }>;
   addDrink: (drink: Omit<Drink, 'id' | 'costPrice'>) => Promise<Drink>;
@@ -350,10 +345,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useLocalStorage<CartItem[]>('petrichor_customer_cart', []);
   const [orderQueue, setOrderQueue] = useLocalStorage<QueuedOrder[]>('petrichor_order_queue', []);
   const [lastQueueNumber, setLastQueueNumber] = useLocalStorage<number>('petrichor_last_queue_number', 0);
-  const [dbData, setDbData] = useState<DbData>({ appName: 'Petrichor', logoImageUri: null, marqueeText: '', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
+  const [dbData, setDbData] = useState<DbData>({ appName: 'Petrichor', logoImageUri: null, marqueeText: '', drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
   const [isLoading, setIsLoading] = useState(true);
-  const [initialCapital, setInitialCapital] = useLocalStorage<number>('petrichor_initial_capital', 0);
-  const [cashExpenses, setCashExpenses] = useLocalStorage<CashExpense[]>('petrichor_cash_expenses', []);
 
   const currentService = useMemo(() => {
     return storageMode === 'local' ? localStorageService : apiService;
@@ -364,13 +357,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await currentService.getData();
       
-      const { appName, logoImageUri, marqueeText, initialCapital, cashExpenses, ...restOfDbData } = data;
+      const { appName, logoImageUri, marqueeText, ...restOfDbData } = data;
 
       if (appName) setAppName(appName);
       if (logoImageUri !== undefined) setLogoImageUri(logoImageUri);
       if (marqueeText) setMarqueeText(marqueeText);
-      if (typeof initialCapital === 'number') setInitialCapital(initialCapital);
-      if (Array.isArray(cashExpenses)) setCashExpenses(cashExpenses);
 
       // --- Data Migrations ---
       if (restOfDbData.drinks && Array.isArray(restOfDbData.drinks)) {
@@ -405,11 +396,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     } catch (error) {
       console.error("Failed to fetch data", error);
-      setDbData({ appName: 'Petrichor', logoImageUri: null, marqueeText: '', initialCapital: 0, cashExpenses: [], drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
+      setDbData({ appName: 'Petrichor', logoImageUri: null, marqueeText: '', drinks: [], foods: [], sales: [], operationalCosts: [], rawMaterials: [] });
     } finally {
         setIsLoading(false);
     }
-  }, [currentService, setAppName, setLogoImageUri, setMarqueeText, setInitialCapital, setCashExpenses]);
+  }, [currentService, setAppName, setLogoImageUri, setMarqueeText]);
 
   useEffect(() => {
     fetchData();
@@ -518,18 +509,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [orderQueue, currentService, setOrderQueue, fetchData]);
 
   const importData = useCallback(async (data: any): Promise<{ ok: boolean, message: string }> => {
-    const { appName, logoImageUri, marqueeText, initialCapital, cashExpenses, ...dbDataToImport } = data;
+    const { appName, logoImageUri, marqueeText, ...dbDataToImport } = data;
     const result = await currentService.importData(dbDataToImport);
     if (result.ok) {
       if (appName) setAppName(appName);
       if (logoImageUri !== undefined) setLogoImageUri(logoImageUri);
       if (marqueeText) setMarqueeText(marqueeText);
-      if (typeof initialCapital === 'number') setInitialCapital(initialCapital);
-      if (Array.isArray(cashExpenses)) setCashExpenses(cashExpenses);
       setDbData(dbDataToImport);
     }
     return result;
-  }, [currentService, setAppName, setLogoImageUri, setMarqueeText, setInitialCapital, setCashExpenses]);
+  }, [currentService, setAppName, setLogoImageUri, setMarqueeText]);
 
   const wrappedService = useMemo(() => {
     const wrap = <T extends (...args: any[]) => Promise<any>>(fn: T) => {
@@ -561,15 +550,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentService, fetchData]);
 
-  const addCashExpense = useCallback((expense: { description: string, amount: number }) => {
-    const newExpense: CashExpense = { ...expense, id: nanoid(), date: new Date().toISOString() };
-    const updatedExpenses = [...cashExpenses, newExpense].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    setCashExpenses(updatedExpenses);
-  }, [cashExpenses, setCashExpenses]);
-
-  const deleteCashExpense = useCallback((id: string) => {
-    setCashExpenses(prev => prev.filter(exp => exp.id !== id));
-  }, [setCashExpenses]);
 
   const contextValue = useMemo(() => ({
     drinks: dbData.drinks,
@@ -588,11 +568,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setLogoImageUri,
     marqueeText,
     setMarqueeText,
-    initialCapital,
-    setInitialCapital,
-    cashExpenses,
-    addCashExpense,
-    deleteCashExpense,
     fetchData,
     ...wrappedService,
     importData,
@@ -608,7 +583,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     logoImageUri, setLogoImageUri, marqueeText, setMarqueeText, fetchData, 
     wrappedService, importData, addToCart, updateCartItemQuantity, removeFromCart, clearCart,
     submitCustomerOrder, updateQueuedOrderStatus, processQueuedOrder,
-    initialCapital, setInitialCapital, cashExpenses, addCashExpense, deleteCashExpense,
   ]);
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

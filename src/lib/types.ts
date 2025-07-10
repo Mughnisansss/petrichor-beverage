@@ -86,8 +86,6 @@ export interface DbData {
   appName: string;
   logoImageUri: string | null;
   marqueeText: string;
-  initialCapital: number;
-  cashExpenses: CashExpense[];
   drinks: Drink[];
   foods: Food[];
   sales: Sale[];
@@ -113,11 +111,4 @@ export interface QueuedOrder {
   items: CartItem[];
   createdAt: string;
   status: 'pending' | 'ready';
-}
-
-export interface CashExpense {
-  id: string;
-  description: string;
-  amount: number;
-  date: string;
 }

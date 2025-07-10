@@ -19,7 +19,7 @@ export default function DataPengaturanPage() {
     const { 
         drinks, foods, sales, rawMaterials, operationalCosts, 
         isLoading, storageMode, setStorageMode, appName,
-        importData, initialCapital, cashExpenses, logoImageUri, marqueeText,
+        importData, logoImageUri, marqueeText,
         importRawMaterialsFromCsv, importOperationalCostsFromCsv
     } = useAppContext();
 
@@ -59,7 +59,7 @@ export default function DataPengaturanPage() {
             toast({ title: "Harap tunggu", description: "Data sedang dimuat." });
             return;
         }
-        const allData = { appName, logoImageUri, marqueeText, initialCapital, cashExpenses, drinks, foods, sales, rawMaterials, operationalCosts };
+        const allData = { appName, logoImageUri, marqueeText, drinks, foods, sales, rawMaterials, operationalCosts };
         const filename = `${appName.toLowerCase().replace(/\s/g, '_')}_backup_${new Date().toISOString().split('T')[0]}.json`;
         downloadFile(JSON.stringify(allData, null, 2), filename, "application/json");
     };
@@ -247,7 +247,6 @@ export default function DataPengaturanPage() {
                              description="Tambah / Ekspor biaya rutin."
                              onImport={() => handleImportCsv(operasionalCsv, importOperationalCostsFromCsv, 'Biaya Operasional')}
                              onExport={() => exportDataAsCsv(operationalCosts, 'biaya_operasional.csv')}
-                             onFileChange={(e: any) => setOperasionalCsv(e.target.files?.[0] || null)}
                               isExportDisabled={isLoading || operationalCosts.length === 0}
                            />
                            <Separator />

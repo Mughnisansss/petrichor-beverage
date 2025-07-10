@@ -3,8 +3,6 @@
   "appName": "Petrichor",
   "logoImageUri": null,
   "marqueeText": "Selamat datang di {appName}! Kesegaran dalam setiap tegukan.",
-  "initialCapital": 0,
-  "cashExpenses": [],
   "drinks": [],
   "sales": [],
   "operationalCosts": [],
