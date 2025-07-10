@@ -37,7 +37,7 @@ export default function DonasiPage() {
                     <h3 className="font-semibold text-xl">Donasi via DANA</h3>
                     <p className="text-sm text-muted-foreground text-center pb-2">Scan QRIS di bawah ini menggunakan aplikasi DANA Anda.</p>
                     <Image
-                        src="/qris-dana.png"
+                        src="/donasi.jpg"
                         alt="QR Code DANA untuk MUGNI SANTOSO"
                         width={200}
                         height={200}
