@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Drink, Food, RawMaterial, PackagingInfo } from "@/lib/types";
-import { PlusCircle, Edit, Trash2, X, ImageIcon, Upload, Sparkles } from "lucide-react";
+import { PlusCircle, Edit, Trash2, X, ImageIcon, Upload, Sparkles, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
@@ -152,7 +152,7 @@ interface ProductFormProps {
 type Product = Drink | Food;
 
 const ProductForm = React.forwardRef<
-    { handleEdit: (product: Product) => void; handleNew: (subCategory?: string) => void; },
+    { handleEdit: (product: Product, isDuplicating?: boolean) => void; handleNew: (subCategory?: string) => void; },
     ProductFormProps
 >(({ productType, onFinished }, ref) => {
     const { 
@@ -225,15 +225,24 @@ const ProductForm = React.forwardRef<
     }
     
     React.useImperativeHandle(ref, () => ({
-        handleEdit: (product: Product) => {
-            setEditingProduct(product);
-            setPreview(product.imageUri || null);
-            form.reset({
-                ...product,
-                subCategory: product.subCategory || "",
-                availableToppings: product.availableToppings || [],
-                packagingOptions: product.packagingOptions || [],
-            });
+        handleEdit: (product: Product, isDuplicating = false) => {
+            if (isDuplicating) {
+                setEditingProduct(null); // This is a new product
+                setPreview(product.imageUri || null);
+                form.reset({
+                    ...product,
+                    name: `Salinan dari ${product.name}`,
+                });
+            } else {
+                setEditingProduct(product);
+                setPreview(product.imageUri || null);
+                form.reset({
+                    ...product,
+                    subCategory: product.subCategory || "",
+                    availableToppings: product.availableToppings || [],
+                    packagingOptions: product.packagingOptions || [],
+                });
+            }
         },
         handleNew: (subCategory?: string) => {
             setEditingProduct(null);
@@ -474,7 +483,7 @@ export function ProductManager({ productType }: ProductManagerProps) {
 
     const { toast } = useToast();
     const [isFormVisible, setFormVisible] = useState(false);
-    const formRef = useRef<{ handleEdit: (product: Product) => void; handleNew: (subCategory?: string) => void; }>(null);
+    const formRef = useRef<{ handleEdit: (product: Product, isDuplicating?: boolean) => void; handleNew: (subCategory?: string) => void; }>(null);
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [isAddCategoryOpen, setAddCategoryOpen] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
@@ -519,6 +528,14 @@ export function ProductManager({ productType }: ProductManagerProps) {
         setTimeout(() => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
             formRef.current?.handleEdit(product);
+        }, 50);
+    }
+
+    const handleDuplicateClick = (product: Product) => {
+        setFormVisible(true);
+        setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            formRef.current?.handleEdit(product, true);
         }, 50);
     }
     
@@ -652,6 +669,9 @@ export function ProductManager({ productType }: ProductManagerProps) {
                                     <TableCell>{formatCurrency(product.costPrice)}</TableCell>
                                     <TableCell>{formatCurrency(product.sellingPrice)}</TableCell>
                                     <TableCell className="flex gap-2 justify-end">
+                                        <Button variant="outline" size="icon" onClick={() => handleDuplicateClick(product)}>
+                                            <Copy className="h-4 w-4" />
+                                        </Button>
                                         <Button variant="outline" size="icon" onClick={() => handleEditClick(product)}>
                                             <Edit className="h-4 w-4" />
                                         </Button>

@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
 import type { RawMaterial } from "@/lib/types";
-import { PlusCircle, Edit, Trash2, PackagePlus, Store, LinkIcon, AlertTriangle } from "lucide-react";
+import { PlusCircle, Edit, Trash2, PackagePlus, Store, LinkIcon, AlertTriangle, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
@@ -170,8 +170,23 @@ export default function BahanBakuPage() {
     }
   }
   
-  const openFormForNew = () => {
-    form.reset(defaultFormValues);
+  const openFormForNew = (materialToCopy?: RawMaterial) => {
+    if (materialToCopy) {
+      form.reset({
+        name: `Salinan dari ${materialToCopy.name}`,
+        unit: materialToCopy.unit,
+        category: materialToCopy.category,
+        purchaseQuantity: 1, // Reset purchase quantity for copy
+        purchaseCost: 0,    // Reset purchase cost for copy
+        sellingPrice: materialToCopy.sellingPrice,
+        storeName: materialToCopy.purchaseSource?.storeName || "",
+        storeAddress: materialToCopy.purchaseSource?.storeAddress || "",
+        purchaseLink: materialToCopy.purchaseSource?.purchaseLink || "",
+        lowStockThreshold: materialToCopy.lowStockThreshold,
+      });
+    } else {
+      form.reset(defaultFormValues);
+    }
     setFormOpen(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -220,7 +235,7 @@ export default function BahanBakuPage() {
                   <div className="text-sm font-medium text-muted-foreground">Total Nilai Stok</div>
                   <div className="text-xl font-bold">{formatCurrency(totalInventoryValue)}</div>
               </div>
-              <Button onClick={openFormForNew} className="shrink-0">
+              <Button onClick={() => openFormForNew()} className="shrink-0">
                   <PlusCircle className="mr-2 h-4 w-4" /> 
                   Tambah
               </Button>
@@ -459,6 +474,9 @@ export default function BahanBakuPage() {
                         <TableCell>{formatCurrency(material.costPerUnit)} / {material.unit}</TableCell>
                         <TableCell className="text-right">
                            <div className="flex gap-2 justify-end">
+                                <Button variant="outline" size="icon" onClick={() => openFormForNew(material)}>
+                                    <Copy className="h-4 w-4" />
+                                </Button>
                                 <Button variant="outline" size="icon" onClick={() => handleEditDetails(material)}>
                                     <Edit className="h-4 w-4" />
                                 </Button>
