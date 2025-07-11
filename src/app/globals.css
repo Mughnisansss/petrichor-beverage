@@ -71,33 +71,6 @@
     --chart-2: 217.2 32.6% 17.5%;
   }
 
-  /* ACCENT COLORS */
-  .theme-blue {
-    --primary: 207 90% 54%;
-    --primary-foreground: 210 40% 98%;
-  }
-  .theme-yellow {
-    --primary: 48 96% 53%;
-    --primary-foreground: 48 96% 13%;
-  }
-  .theme-pink {
-    --primary: 322 80% 55%;
-    --primary-foreground: 210 40% 98%;
-  }
-  .theme-purple {
-    --primary: 264 82% 62%;
-    --primary-foreground: 210 40% 98%;
-  }
-  .theme-orange {
-    --primary: 25 95% 53%;
-    --primary-foreground: 210 40% 98%;
-  }
-  .theme-green {
-    --primary: 142 71% 45%;
-    --primary-foreground: 210 40% 98%;
-  }
-
-
   /* This is the class for the customer order page */
   .theme-order {
     --background: 26 100% 97%; /* #FFF8F0 */
@@ -121,6 +94,12 @@
 }
 
 @layer base {
+  body {
+    /* Define default accent colors here */
+    --primary: 207 90% 54%;
+    --primary-foreground: 210 40% 98%;
+  }
+
   * {
     @apply border-border;
   }

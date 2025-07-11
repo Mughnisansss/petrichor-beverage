@@ -26,15 +26,6 @@ export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   const [accent, setAccent] = useLocalStorage("accent-color", "blue")
 
-  React.useEffect(() => {
-    document.body.classList.forEach((className) => {
-      if (className.startsWith("theme-")) {
-        document.body.classList.remove(className)
-      }
-    })
-    document.body.classList.add(`theme-${accent}`)
-  }, [accent])
-
   return (
     <Popover>
       <PopoverTrigger asChild>
