@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
 import type { RawMaterial } from "@/lib/types";
-import { PlusCircle, Edit, Trash2, PackagePlus, Store, LinkIcon, AlertTriangle, Copy } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Store, LinkIcon, AlertTriangle, Copy, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
@@ -25,11 +25,19 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 const purchaseSchema = z.object({
   name: z.string().min(1, "Nama bahan tidak boleh kosong"),
-  unit: z.string().min(1, "Satuan untuk resep tidak boleh kosong"),
+  recipeUnit: z.string().min(1, "Satuan untuk resep tidak boleh kosong"),
   category: z.enum(['main', 'packaging', 'topping'], { required_error: "Kategori harus dipilih" }),
-  purchaseQuantity: z.coerce.number().min(0.001, "Jumlah pembelian harus lebih dari 0"),
+  
+  // Purchase unit info
+  purchaseUnitName: z.string().min(1, "Satuan pembelian tidak boleh kosong"),
+  purchaseUnitQuantity: z.coerce.number().min(0.001, "Jumlah unit beli harus lebih dari 0"),
   purchaseCost: z.coerce.number().min(0, "Total biaya tidak boleh negatif"),
+  
+  // Conversion info
+  recipeUnitsPerPurchaseUnit: z.coerce.number().min(0.001, "Nilai konversi harus lebih dari 0"),
+
   sellingPrice: z.coerce.number().min(0, "Harga jual tidak boleh negatif").optional(),
+  
   // Professional feature fields
   storeName: z.string().optional(),
   storeAddress: z.string().optional(),
@@ -41,9 +49,11 @@ type PurchaseFormValues = z.infer<typeof purchaseSchema>;
 
 const defaultFormValues: PurchaseFormValues = { 
   name: "", 
-  unit: "", 
-  purchaseQuantity: 1, 
-  purchaseCost: 0, 
+  recipeUnit: "", 
+  purchaseUnitName: "",
+  purchaseUnitQuantity: 1,
+  purchaseCost: 0,
+  recipeUnitsPerPurchaseUnit: 1,
   category: 'main', 
   sellingPrice: 0,
   storeName: "",
@@ -55,9 +65,8 @@ const defaultFormValues: PurchaseFormValues = {
 // Schema for editing details only
 const detailsSchema = z.object({
   name: z.string().min(1, "Nama tidak boleh kosong."),
-  unit: z.string().min(1, "Satuan tidak boleh kosong."),
+  recipeUnit: z.string().min(1, "Satuan tidak boleh kosong."),
   category: z.enum(['main', 'packaging', 'topping']),
-  // Professional feature fields
   storeName: z.string().optional(),
   storeAddress: z.string().optional(),
   purchaseLink: z.string().url({ message: "Link tidak valid." }).or(z.literal('')).optional(),
@@ -85,53 +94,57 @@ export default function BahanBakuPage() {
     return rawMaterials.filter(m => m.category === categoryFilter);
   }, [rawMaterials, categoryFilter]);
 
-  // Form for new material
   const form = useForm<PurchaseFormValues>({
     resolver: zodResolver(purchaseSchema),
     defaultValues: defaultFormValues,
   });
   
-  // Form for editing details
   const detailsForm = useForm<DetailsFormValues>({
     resolver: zodResolver(detailsSchema),
   });
   
-  const watchedPurchaseQuantity = form.watch("purchaseQuantity");
-  const watchedPurchaseCost = form.watch("purchaseCost");
-  const watchedCategory = form.watch("category");
+  const watchedFormValues = form.watch();
 
-  const newPurchaseHpp = useMemo(() => 
-    (watchedPurchaseCost && watchedPurchaseQuantity > 0) ? watchedPurchaseCost / watchedPurchaseQuantity : 0,
-    [watchedPurchaseQuantity, watchedPurchaseCost]
-  );
+  const {
+    totalStockInRecipeUnits,
+    costPerRecipeUnit
+  } = useMemo(() => {
+      const { purchaseUnitQuantity, purchaseCost, recipeUnitsPerPurchaseUnit } = watchedFormValues;
+      const totalUnits = purchaseUnitQuantity * recipeUnitsPerPurchaseUnit;
+      if (totalUnits > 0) {
+          return {
+              totalStockInRecipeUnits: totalUnits,
+              costPerRecipeUnit: purchaseCost / totalUnits
+          }
+      }
+      return { totalStockInRecipeUnits: 0, costPerRecipeUnit: 0 };
+  }, [watchedFormValues]);
   
   useEffect(() => {
-    if (isFormOpen && (watchedCategory === 'packaging' || watchedCategory === 'main')) {
-      form.setValue('sellingPrice', newPurchaseHpp, { shouldValidate: true });
+    if (isFormOpen && (watchedFormValues.category === 'packaging' || watchedFormValues.category === 'main')) {
+      form.setValue('sellingPrice', costPerRecipeUnit, { shouldValidate: true });
     }
-  }, [newPurchaseHpp, form, isFormOpen, watchedCategory]);
+  }, [costPerRecipeUnit, form, isFormOpen, watchedFormValues.category]);
 
-  // Submit handler for new material
   async function onSubmit(values: PurchaseFormValues) {
     try {
       let finalSellingPrice = values.sellingPrice;
       if (values.category === 'main' || values.category === 'packaging') {
-          finalSellingPrice = newPurchaseHpp;
+          finalSellingPrice = costPerRecipeUnit;
       }
       
       const purchaseSource = (values.storeName || values.storeAddress || values.purchaseLink)
         ? { storeName: values.storeName, storeAddress: values.storeAddress, purchaseLink: values.purchaseLink }
         : undefined;
 
-      // --- ADD NEW MATERIAL LOGIC ---
       const newMaterialPayload: Omit<RawMaterial, 'id'> = {
         name: values.name,
-        unit: values.unit,
+        unit: values.recipeUnit,
         category: values.category,
-        totalQuantity: values.purchaseQuantity,
+        totalQuantity: totalStockInRecipeUnits,
         totalCost: values.purchaseCost,
-        costPerUnit: newPurchaseHpp,
-        lastPurchaseQuantity: values.purchaseQuantity,
+        costPerUnit: costPerRecipeUnit,
+        lastPurchaseQuantity: values.purchaseUnitQuantity,
         lastPurchaseCost: values.purchaseCost,
         sellingPrice: finalSellingPrice,
         purchaseSource,
@@ -146,7 +159,6 @@ export default function BahanBakuPage() {
     }
   }
 
-  // Submit handler for Editing Details
   async function onDetailsSubmit(values: DetailsFormValues) {
     if (!editingDetailsMaterial) return;
     try {
@@ -155,10 +167,10 @@ export default function BahanBakuPage() {
         ? { storeName, storeAddress, purchaseLink }
         : undefined;
       
-      // Combine old financial data with new detail data
       const payload = {
           ...editingDetailsMaterial,
           ...restValues,
+          unit: values.recipeUnit, // map recipeUnit to unit
           purchaseSource,
       };
       const { id, ...updateData } = payload;
@@ -174,10 +186,12 @@ export default function BahanBakuPage() {
     if (materialToCopy) {
       form.reset({
         name: `Salinan dari ${materialToCopy.name}`,
-        unit: materialToCopy.unit,
+        recipeUnit: materialToCopy.unit,
         category: materialToCopy.category,
-        purchaseQuantity: 1, // Reset purchase quantity for copy
-        purchaseCost: 0,    // Reset purchase cost for copy
+        purchaseUnitName: "pcs", // Default for copy
+        purchaseUnitQuantity: 1,
+        purchaseCost: 0,
+        recipeUnitsPerPurchaseUnit: 1,
         sellingPrice: materialToCopy.sellingPrice,
         storeName: materialToCopy.purchaseSource?.storeName || "",
         storeAddress: materialToCopy.purchaseSource?.storeAddress || "",
@@ -195,7 +209,7 @@ export default function BahanBakuPage() {
     setEditingDetailsMaterial(material);
     detailsForm.reset({
         name: material.name,
-        unit: material.unit,
+        recipeUnit: material.unit, // map unit to recipeUnit
         category: material.category,
         storeName: material.purchaseSource?.storeName || '',
         storeAddress: material.purchaseSource?.storeAddress || '',
@@ -247,44 +261,81 @@ export default function BahanBakuPage() {
                 <CardHeader>
                 <CardTitle>Tambah Bahan Baku Baru</CardTitle>
                 <CardDescription>
-                    Gunakan form ini untuk menambah bahan baku yang belum pernah ada di sistem.
+                    Gunakan form ini untuk menambah bahan baku baru dengan konversi satuan yang fleksibel.
                 </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <FormField control={form.control} name="name" render={({ field }) => (
-                                <FormItem><FormLabel>Nama Bahan</FormLabel><FormControl><Input {...field} placeholder="cth: Biji Kopi Arabika" /></FormControl><FormMessage /></FormItem>
-                            )}/>
-                             <FormField control={form.control} name="unit" render={({ field }) => (
-                                <FormItem><FormLabel>Satuan Resep</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih satuan..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="gram">gram</SelectItem><SelectItem value="ml">ml</SelectItem><SelectItem value="liter">liter</SelectItem><SelectItem value="kg">kg</SelectItem><SelectItem value="pcs">pcs</SelectItem><SelectItem value="buah">buah</SelectItem><SelectItem value="botol">botol</SelectItem></SelectContent></Select><FormMessage /></FormItem>
-                            )}/>
-                             <FormField control={form.control} name="category" render={({ field }) => (
-                                <FormItem><FormLabel>Kategori Bahan</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih kategori..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="main">Bahan Utama</SelectItem><SelectItem value="topping">Topping / Tambahan</SelectItem><SelectItem value="packaging">Kemasan / Packaging</SelectItem></SelectContent></Select><FormMessage /></FormItem>
-                            )}/>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                        
+                        {/* Section 1: Basic Info */}
+                        <div className="p-4 border rounded-lg">
+                          <h4 className="font-semibold text-foreground mb-4">1. Informasi Dasar & Resep</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <FormField control={form.control} name="name" render={({ field }) => (
+                                  <FormItem><FormLabel>Nama Bahan</FormLabel><FormControl><Input {...field} placeholder="cth: Tepung Terigu" /></FormControl><FormMessage /></FormItem>
+                              )}/>
+                               <FormField control={form.control} name="recipeUnit" render={({ field }) => (
+                                  <FormItem><FormLabel>Satuan untuk Resep</FormLabel><FormControl><Input {...field} placeholder="cth: sendok, jumput, gram" /></FormControl><FormDescription>Satuan yang akan Anda gunakan saat membuat resep.</FormDescription><FormMessage /></FormItem>
+                              )}/>
+                               <FormField control={form.control} name="category" render={({ field }) => (
+                                  <FormItem><FormLabel>Kategori Bahan</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih kategori..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="main">Bahan Utama</SelectItem><SelectItem value="topping">Topping / Tambahan</SelectItem><SelectItem value="packaging">Kemasan / Packaging</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                              )}/>
+                          </div>
+                        </div>
+
+                        {/* Section 2: Purchase Info */}
+                        <div className="p-4 border rounded-lg">
+                           <h4 className="font-semibold text-foreground mb-4">2. Informasi Pembelian (Grosir)</h4>
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <FormField control={form.control} name="purchaseUnitName" render={({ field }) => (
+                                    <FormItem><FormLabel>Satuan Pembelian</FormLabel><FormControl><Input {...field} placeholder="cth: bungkus, botol, pack" /></FormControl><FormDescription>Satuan saat Anda membeli barang.</FormDescription><FormMessage /></FormItem>
+                                )}/>
+                                 <FormField control={form.control} name="purchaseUnitQuantity" render={({ field }) => (
+                                    <FormItem><FormLabel>Jumlah Beli</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormDescription>Berapa {watchedFormValues.purchaseUnitName || 'unit'} yang dibeli.</FormDescription><FormMessage /></FormItem>
+                                )}/>
+                                <FormField control={form.control} name="purchaseCost" render={({ field }) => (
+                                    <FormItem><FormLabel>Total Biaya (Rp)</FormLabel><FormControl><Input type="number" {...field} placeholder="cth: 10000" /></FormControl><FormDescription>Harga total untuk pembelian ini.</FormDescription><FormMessage /></FormItem>
+                                )}/>
+                           </div>
                         </div>
                         
-                        <Separator />
-                        <h4 className="font-semibold text-foreground">Detail Pembelian Baru</h4>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
-                            <FormField control={form.control} name="purchaseQuantity" render={({ field }) => (
-                                <FormItem><FormLabel>Jumlah Pembelian</FormLabel><FormControl><Input type="number" step="any" {...field} placeholder="cth: 1000" /></FormControl><FormMessage /></FormItem>
-                            )}/>
-                            <FormField control={form.control} name="purchaseCost" render={({ field }) => (
-                                <FormItem><FormLabel>Total Biaya (Rp)</FormLabel><FormControl><Input type="number" {...field} placeholder="cth: 200000" /></FormControl><FormMessage /></FormItem>
-                            )}/>
-                            <div className="p-4 rounded-md bg-muted">
-                                <Label className="text-xs">HPP dari Pembelian Ini</Label>
-                                <p className="font-bold text-lg text-primary">{formatCurrency(newPurchaseHpp || 0)}</p>
-                            </div>
-                            {watchedCategory === 'topping' && (
-                                <FormField control={form.control} name="sellingPrice" render={({ field }) => (
-                                    <FormItem><FormLabel>Harga Jual Topping (Rp)</FormLabel><FormControl><Input type="number" {...field} placeholder="cth: 3000" /></FormControl><FormMessage /></FormItem>
+                        {/* Section 3: Conversion */}
+                        <div className="p-4 border rounded-lg">
+                            <h4 className="font-semibold text-foreground mb-4">3. Konversi Satuan</h4>
+                            <div className="flex flex-col md:flex-row items-center gap-4">
+                                <FormField control={form.control} name="recipeUnitsPerPurchaseUnit" render={({ field }) => (
+                                    <FormItem className="flex-grow">
+                                      <FormLabel>Ada berapa <span className="font-bold text-primary">{watchedFormValues.recipeUnit || '(satuan resep)'}</span> dalam 1 <span className="font-bold text-primary">{watchedFormValues.purchaseUnitName || '(satuan beli)'}</span>?</FormLabel>
+                                      <FormControl><Input type="number" step="any" {...field} /></FormControl>
+                                      <FormDescription>Contoh: 1 bungkus tepung = 50 sendok, maka isi '50'.</FormDescription>
+                                      <FormMessage />
+                                    </FormItem>
                                 )}/>
-                            )}
+
+                                <div className="p-4 rounded-md bg-muted flex-grow md:flex-grow-0 w-full md:w-auto">
+                                    <Label className="text-xs">Total Stok (dikonversi)</Label>
+                                    <p className="font-bold text-lg text-primary">{totalStockInRecipeUnits.toLocaleString()} {watchedFormValues.recipeUnit || ''}</p>
+                                </div>
+                                <div className="p-4 rounded-md bg-muted flex-grow md:flex-grow-0 w-full md:w-auto">
+                                    <Label className="text-xs">HPP per {watchedFormValues.recipeUnit || 'Satuan'}</Label>
+                                    <p className="font-bold text-lg text-primary">{formatCurrency(costPerRecipeUnit || 0)}</p>
+                                </div>
+                            </div>
                         </div>
+
+                         {watchedFormValues.category === 'topping' && (
+                            <div className="p-4 border rounded-lg">
+                                <h4 className="font-semibold text-foreground mb-4">4. Harga Jual (Untuk Topping)</h4>
+                                <FormField control={form.control} name="sellingPrice" render={({ field }) => (
+                                    <FormItem className="max-w-xs">
+                                        <FormLabel>Harga Jual per {watchedFormValues.recipeUnit || 'Satuan'}</FormLabel>
+                                        <FormControl><Input type="number" {...field} placeholder="cth: 3000" /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}/>
+                            </div>
+                        )}
 
                         <Collapsible>
                           <CollapsibleTrigger asChild>
@@ -307,7 +358,7 @@ export default function BahanBakuPage() {
                             )}/>
                              <FormField control={form.control} name="lowStockThreshold" render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Batas Stok Minimum</FormLabel>
+                                  <FormLabel>Batas Stok Minimum (dalam <span className="font-bold">{watchedFormValues.recipeUnit || 'satuan resep'}</span>)</FormLabel>
                                   <FormControl><Input type="number" {...field} placeholder="cth: 100" /></FormControl>
                                   <FormDescription>Aplikasi akan memberi tanda jika stok di bawah batas ini.</FormDescription>
                                   <FormMessage />
@@ -337,8 +388,8 @@ export default function BahanBakuPage() {
                             <FormField control={detailsForm.control} name="name" render={({ field }) => (
                                 <FormItem><FormLabel>Nama Bahan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                             )}/>
-                            <FormField control={detailsForm.control} name="unit" render={({ field }) => (
-                                <FormItem><FormLabel>Satuan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormField control={detailsForm.control} name="recipeUnit" render={({ field }) => (
+                                <FormItem><FormLabel>Satuan Resep</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                             )}/>
                             <FormField control={detailsForm.control} name="category" render={({ field }) => (
                                 <FormItem><FormLabel>Kategori</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="main">Bahan Utama</SelectItem><SelectItem value="topping">Topping / Tambahan</SelectItem><SelectItem value="packaging">Kemasan / Packaging</SelectItem></SelectContent></Select><FormMessage /></FormItem>
@@ -501,3 +552,4 @@ export default function BahanBakuPage() {
     </div>
   );
 }
+
