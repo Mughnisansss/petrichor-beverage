@@ -70,7 +70,6 @@ export default function BahanBakuPage() {
   const { rawMaterials, addRawMaterial, updateRawMaterial, deleteRawMaterial } = useAppContext();
   const [isFormOpen, setFormOpen] = useState(false);
   const [isEditDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
   const [editingDetailsMaterial, setEditingDetailsMaterial] = useState<RawMaterial | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const { toast } = useToast();
@@ -86,7 +85,7 @@ export default function BahanBakuPage() {
     return rawMaterials.filter(m => m.category === categoryFilter);
   }, [rawMaterials, categoryFilter]);
 
-  // Form for new/restock
+  // Form for new material
   const form = useForm<PurchaseFormValues>({
     resolver: zodResolver(purchaseSchema),
     defaultValues: defaultFormValues,
@@ -112,7 +111,7 @@ export default function BahanBakuPage() {
     }
   }, [newPurchaseHpp, form, isFormOpen, watchedCategory]);
 
-  // Submit handler for Restock/New
+  // Submit handler for new material
   async function onSubmit(values: PurchaseFormValues) {
     try {
       let finalSellingPrice = values.sellingPrice;
@@ -124,47 +123,23 @@ export default function BahanBakuPage() {
         ? { storeName: values.storeName, storeAddress: values.storeAddress, purchaseLink: values.purchaseLink }
         : undefined;
 
-      if (editingMaterial) {
-        // --- RESTOCK LOGIC (Weighted Average) ---
-        const newTotalQuantity = (editingMaterial.totalQuantity || 0) + values.purchaseQuantity;
-        const newTotalCost = (editingMaterial.totalCost || 0) + values.purchaseCost;
-        const newWeightedAverageCost = newTotalQuantity > 0 ? newTotalCost / newTotalQuantity : 0;
-
-        const materialUpdatePayload = {
-          ...editingMaterial,
-          name: values.name,
-          unit: values.unit,
-          category: values.category,
-          totalQuantity: newTotalQuantity,
-          totalCost: newTotalCost,
-          costPerUnit: newWeightedAverageCost,
-          lastPurchaseQuantity: values.purchaseQuantity,
-          lastPurchaseCost: values.purchaseCost,
-          sellingPrice: finalSellingPrice,
-          purchaseSource,
-          lowStockThreshold: values.lowStockThreshold,
-        };
-        const { id, ...updateData } = materialUpdatePayload;
-        await updateRawMaterial(id, updateData);
-        toast({ title: "Sukses", description: "Bahan baku diperbarui dan stok ditambahkan." });
-      } else {
-        // --- ADD NEW MATERIAL LOGIC ---
-        const newMaterialPayload: Omit<RawMaterial, 'id'> = {
-          name: values.name,
-          unit: values.unit,
-          category: values.category,
-          totalQuantity: values.purchaseQuantity,
-          totalCost: values.purchaseCost,
-          costPerUnit: newPurchaseHpp,
-          lastPurchaseQuantity: values.purchaseQuantity,
-          lastPurchaseCost: values.purchaseCost,
-          sellingPrice: finalSellingPrice,
-          purchaseSource,
-          lowStockThreshold: values.lowStockThreshold,
-        };
-        await addRawMaterial(newMaterialPayload);
-        toast({ title: "Sukses", description: "Bahan baku berhasil ditambahkan." });
-      }
+      // --- ADD NEW MATERIAL LOGIC ---
+      const newMaterialPayload: Omit<RawMaterial, 'id'> = {
+        name: values.name,
+        unit: values.unit,
+        category: values.category,
+        totalQuantity: values.purchaseQuantity,
+        totalCost: values.purchaseCost,
+        costPerUnit: newPurchaseHpp,
+        lastPurchaseQuantity: values.purchaseQuantity,
+        lastPurchaseCost: values.purchaseCost,
+        sellingPrice: finalSellingPrice,
+        purchaseSource,
+        lowStockThreshold: values.lowStockThreshold,
+      };
+      await addRawMaterial(newMaterialPayload);
+      toast({ title: "Sukses", description: "Bahan baku berhasil ditambahkan." });
+      
       setFormOpen(false);
     } catch (error) {
       toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
@@ -196,26 +171,7 @@ export default function BahanBakuPage() {
   }
   
   const openFormForNew = () => {
-    setEditingMaterial(null);
     form.reset(defaultFormValues);
-    setFormOpen(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  
-  const openFormForRestock = (material: RawMaterial) => {
-    setEditingMaterial(material);
-    form.reset({
-      name: material.name,
-      unit: material.unit,
-      category: material.category || 'main',
-      purchaseQuantity: material.lastPurchaseQuantity || 1,
-      purchaseCost: material.lastPurchaseCost || material.costPerUnit,
-      sellingPrice: material.sellingPrice || 0,
-      storeName: material.purchaseSource?.storeName || "",
-      storeAddress: material.purchaseSource?.storeAddress || "",
-      purchaseLink: material.purchaseSource?.purchaseLink || "",
-      lowStockThreshold: material.lowStockThreshold || 0,
-    });
     setFormOpen(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -236,7 +192,6 @@ export default function BahanBakuPage() {
   
   const closeForm = () => {
       setFormOpen(false);
-      setEditingMaterial(null);
       form.reset(defaultFormValues);
   }
 
@@ -275,11 +230,9 @@ export default function BahanBakuPage() {
         {isFormOpen && (
             <Card>
                 <CardHeader>
-                <CardTitle>{editingMaterial ? "Restock Bahan Baku" : "Tambah Bahan Baku Baru"}</CardTitle>
+                <CardTitle>Tambah Bahan Baku Baru</CardTitle>
                 <CardDescription>
-                    {editingMaterial 
-                        ? `Isi detail pembelian baru untuk "${editingMaterial.name}". Ini akan menambah stok yang ada dan menghitung ulang HPP.` 
-                        : "Gunakan form ini untuk menambah bahan baku yang belum pernah ada di sistem."}
+                    Gunakan form ini untuk menambah bahan baku yang belum pernah ada di sistem.
                 </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -349,7 +302,7 @@ export default function BahanBakuPage() {
                         </Collapsible>
                         
                         <div className="flex items-center gap-2 pt-4">
-                            <Button type="submit">{editingMaterial ? "Simpan & Restock" : "Tambah Bahan Baru"}</Button>
+                            <Button type="submit">Tambah Bahan Baru</Button>
                             <Button variant="ghost" type="button" onClick={closeForm}>Batal</Button>
                         </div>
                     </form>
@@ -407,7 +360,7 @@ export default function BahanBakuPage() {
                 <div className="flex justify-between items-center">
                     <div>
                         <CardTitle>Daftar Inventaris Bahan Baku</CardTitle>
-                        <CardDescription>Klik "Restock" untuk menambah stok, atau "Edit" untuk mengubah detail nama/kategori/sumber.</CardDescription>
+                        <CardDescription>Klik "Edit" untuk mengubah detail nama/kategori/sumber.</CardDescription>
                     </div>
                     <div className="w-full max-w-[200px]">
                         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -506,10 +459,6 @@ export default function BahanBakuPage() {
                         <TableCell>{formatCurrency(material.costPerUnit)} / {material.unit}</TableCell>
                         <TableCell className="text-right">
                            <div className="flex gap-2 justify-end">
-                                <Button variant="secondary" size="sm" onClick={() => openFormForRestock(material)}>
-                                    <PackagePlus className="h-4 w-4 mr-2" />
-                                    Restock
-                                </Button>
                                 <Button variant="outline" size="icon" onClick={() => handleEditDetails(material)}>
                                     <Edit className="h-4 w-4" />
                                 </Button>
