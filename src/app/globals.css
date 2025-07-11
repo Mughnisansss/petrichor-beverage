@@ -78,7 +78,7 @@
     --ring: 13 25% 34%;
   }
 
-  .theme-pastel {
+  .theme-rose {
     --background: 355 100% 97%; /* Soft Pinkish White */
     --foreground: 255 15% 35%;  /* Soft Deep Purple */
     --card: 355 100% 99%;       /* Almost White with a hint of Pink */
@@ -105,6 +105,53 @@
     --chart-5: 50 90% 85%;
     --radius: 0.75rem;
   }
+  
+  .theme-sky {
+    --background: 208 100% 97%;
+    --foreground: 215 28% 17%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 17%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 17%;
+    --primary: 207 44% 49%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 197 71% 90%;
+    --secondary-foreground: 207 44% 49%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 197 71% 73%;
+    --accent-foreground: 215 28% 17%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 207 44% 88%;
+    --input: 207 44% 88%;
+    --ring: 207 44% 49%;
+    --radius: 0.5rem;
+  }
+  
+  .theme-mint {
+    --background: 140 30% 97%;
+    --foreground: 140 20% 15%;
+    --card: 140 25% 100%;
+    --card-foreground: 140 20% 15%;
+    --popover: 140 25% 100%;
+    --popover-foreground: 140 20% 15%;
+    --primary: 150 50% 45%;
+    --primary-foreground: 150 40% 98%;
+    --secondary: 150 40% 92%;
+    --secondary-foreground: 150 50% 45%;
+    --muted: 150 30% 96%;
+    --muted-foreground: 150 15% 45%;
+    --accent: 150 50% 85%;
+    --accent-foreground: 150 20% 15%;
+    --destructive: 0 70% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 150 30% 90%;
+    --input: 150 30% 90%;
+    --ring: 150 50% 45%;
+    --radius: 0.5rem;
+  }
+
 }
 
 @layer base {
