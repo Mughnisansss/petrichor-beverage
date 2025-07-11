@@ -102,6 +102,18 @@
     --primary: 142 71% 45%;
     --primary-foreground: 210 40% 98%;
   }
+  .theme-red {
+    --primary: 0 84.2% 60.2%;
+    --primary-foreground: 210 40% 98%;
+  }
+  .theme-navy {
+    --primary: 222 47% 21%;
+    --primary-foreground: 210 40% 98%;
+  }
+  .theme-army {
+    --primary: 88 38% 42%;
+    --primary-foreground: 210 40% 98%;
+  }
 
   /* This is the class for the customer order page */
   .theme-order {

@@ -15,11 +15,14 @@ import { cn } from "@/lib/utils"
 
 const ACCENT_COLORS = [
   { name: "blue", color: "hsl(207, 90%, 54%)" },
+  { name: "green", color: "hsl(142, 71%, 45%)" },
   { name: "yellow", color: "hsl(48, 96%, 53%)" },
+  { name: "orange", color: "hsl(25, 95%, 53%)" },
+  { name: "red", color: "hsl(0, 84.2%, 60.2%)" },
   { name: "pink", color: "hsl(322, 80%, 55%)" },
   { name: "purple", color: "hsl(264, 82%, 62%)" },
-  { name: "orange", color: "hsl(25, 95%, 53%)" },
-  { name: "green", color: "hsl(142, 71%, 45%)" },
+  { name: "navy", color: "hsl(222, 47%, 21%)" },
+  { name: "army", color: "hsl(88, 38%, 42%)" },
 ] as const
 
 type AccentColor = (typeof ACCENT_COLORS)[number]["name"];
@@ -40,7 +43,7 @@ export function ThemeToggle() {
         <div className="grid gap-6">
           <div className="space-y-2">
             <h3 className="font-medium">Color</h3>
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               {ACCENT_COLORS.map(({ name, color }) => (
                 <Button
                   key={name}
