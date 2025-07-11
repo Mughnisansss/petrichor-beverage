@@ -8,9 +8,7 @@ import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
@@ -28,12 +26,20 @@ export function ThemeToggle() {
   React.useEffect(() => {
     const storedColor = localStorage.getItem("ui-color") || "theme-sky";
     setCurrentColor(storedColor);
-    document.documentElement.classList.add(storedColor);
+    // Ensure the class is added on mount
+    if (!document.documentElement.classList.contains(storedColor)) {
+      document.documentElement.classList.add(storedColor);
+    }
   }, []);
 
   const handleColorChange = (newColor: string) => {
-    document.documentElement.classList.remove(currentColor);
+    // Remove the old color class
+    THEME_OPTIONS.forEach(option => {
+      document.documentElement.classList.remove(option.value);
+    });
+    // Add the new color class
     document.documentElement.classList.add(newColor);
+    // Persist the new color
     localStorage.setItem("ui-color", newColor);
     setCurrentColor(newColor);
   };
@@ -47,17 +53,14 @@ export function ThemeToggle() {
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuLabel>Mode</DropdownMenuLabel>
-        <div className="grid grid-cols-2 gap-2 px-2 py-1">
-            <Button variant={resolvedTheme === 'light' ? 'secondary' : 'outline'} size="sm" onClick={() => setMode('light')}>Light</Button>
-            <Button variant={resolvedTheme === 'dark' ? 'secondary' : 'outline'} size="sm" onClick={() => setMode('dark')}>Dark</Button>
-        </div>
-        
-        <DropdownMenuSeparator />
-        
-        <DropdownMenuLabel>Warna</DropdownMenuLabel>
-        <div className="flex justify-around items-center px-2 py-1">
+      <DropdownMenuContent align="end" className="w-auto">
+        <DropdownMenuLabel>Tema</DropdownMenuLabel>
+        <div className="flex items-center gap-2 px-2 py-1">
+          {/* Light/Dark Mode Buttons */}
+          <Button variant={resolvedTheme === 'light' ? 'secondary' : 'outline'} size="sm" onClick={() => setMode('light')}>Light</Button>
+          <Button variant={resolvedTheme === 'dark' ? 'secondary' : 'outline'} size="sm" onClick={() => setMode('dark')}>Dark</Button>
+          
+          {/* Color Theme Buttons */}
           {THEME_OPTIONS.map((option) => (
              <Button
               key={option.value}
@@ -75,12 +78,6 @@ export function ThemeToggle() {
             </Button>
           ))}
         </div>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem onClick={() => setMode("system")}>
-          System
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
