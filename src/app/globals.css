@@ -24,6 +24,8 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
+    --chart-1: 222.2 47.4% 11.2%;
+    --chart-2: 210 40% 96.1%;
   }
 
   .dark {
@@ -46,6 +48,8 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    --chart-1: 210 40% 98%;
+    --chart-2: 217.2 32.6% 17.5%;
   }
 
   .theme-sky-light {
@@ -117,6 +121,8 @@
     --input: 355 50% 92%;
     --ring: 340 50% 50%;
     --radius: 0.75rem;
+    --chart-1: 340 50% 50%;
+    --chart-2: 345 80% 90%;
   }
   
   .theme-rose-dark {
@@ -139,6 +145,8 @@
     --border: 355 15% 25%;
     --input: 355 15% 28%;
     --ring: 340 60% 70%;
+    --chart-1: 340 60% 70%;
+    --chart-2: 345 30% 25%;
   }
 
   .theme-mint-light {
@@ -162,6 +170,8 @@
     --input: 150 30% 90%;
     --ring: 150 50% 45%;
     --radius: 0.5rem;
+    --chart-1: 150 50% 45%;
+    --chart-2: 150 40% 92%;
   }
   
   .theme-mint-dark {
@@ -184,6 +194,8 @@
     --border: 150 30% 25%;
     --input: 150 30% 28%;
     --ring: 150 50% 55%;
+    --chart-1: 150 50% 55%;
+    --chart-2: 150 30% 22%;
   }
 
   /* This is the class for the customer order page */
