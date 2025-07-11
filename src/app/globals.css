@@ -3,15 +3,13 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
+  :root, .light {
+    --background: 0 0% 98%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
@@ -28,6 +26,28 @@
     --chart-2: 210 40% 96.1%;
   }
 
+  .dim {
+    --background: 215 28% 17%;
+    --foreground: 210 40% 98%;
+    --card: 215 28% 22%;
+    --card-foreground: 210 40% 98%;
+    --popover: 215 28% 17%;
+    --popover-foreground: 210 40% 98%;
+    --secondary: 217 32% 25%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 32% 25%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 32% 25%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 217 32% 25%;
+    --input: 217 32% 25%;
+    --ring: 197 71% 73%;
+    --chart-1: 210 40% 98%;
+    --chart-2: 217 32% 25%;
+  }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -35,8 +55,6 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
@@ -52,151 +70,32 @@
     --chart-2: 217.2 32.6% 17.5%;
   }
 
-  .theme-sky-light {
-    --background: 208 100% 97%;
-    --foreground: 215 28% 17%;
-    --card: 0 0% 100%;
-    --card-foreground: 215 28% 17%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 28% 17%;
-    --primary: 207 44% 49%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 197 71% 90%;
-    --secondary-foreground: 207 44% 49%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 197 71% 73%;
-    --accent-foreground: 215 28% 17%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 207 44% 88%;
-    --input: 207 44% 88%;
-    --ring: 207 44% 49%;
-    --chart-1: 207 44% 49%;
-    --chart-2: 197 71% 73%;
+  /* ACCENT COLORS */
+  .theme-blue {
+    --primary: 207 90% 54%;
+    --primary-foreground: 210 40% 98%;
+  }
+  .theme-yellow {
+    --primary: 48 96% 53%;
+    --primary-foreground: 48 96% 13%;
+  }
+  .theme-pink {
+    --primary: 322 80% 55%;
+    --primary-foreground: 210 40% 98%;
+  }
+  .theme-purple {
+    --primary: 264 82% 62%;
+    --primary-foreground: 210 40% 98%;
+  }
+  .theme-orange {
+    --primary: 25 95% 53%;
+    --primary-foreground: 210 40% 98%;
+  }
+  .theme-green {
+    --primary: 142 71% 45%;
+    --primary-foreground: 210 40% 98%;
   }
 
-  .theme-sky-dark {
-    --background: 215 28% 17%;
-    --foreground: 210 40% 98%;
-    --card: 215 28% 17%;
-    --card-foreground: 210 40% 98%;
-    --popover: 215 28% 17%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 197 71% 73%;
-    --primary-foreground: 215 28% 17%;
-    --secondary: 217 32% 25%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 32% 25%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 32% 25%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 217 32% 25%;
-    --input: 217 32% 25%;
-    --ring: 197 71% 73%;
-    --chart-1: 197 71% 73%;
-    --chart-2: 207 44% 49%;
-  }
-
-  .theme-rose-light {
-    --background: 355 100% 97%;
-    --foreground: 355 15% 35%;
-    --card: 355 100% 99%;
-    --card-foreground: 355 15% 35%;
-    --popover: 355 100% 99%;
-    --popover-foreground: 355 15% 35%;
-    --primary: 340 50% 50%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 345 80% 90%;
-    --secondary-foreground: 340 40% 30%;
-    --muted: 355 40% 96%;
-    --muted-foreground: 355 20% 50%;
-    --accent: 350 90% 85%;
-    --accent-foreground: 350 40% 30%;
-    --destructive: 0 70% 60%;
-    --destructive-foreground: 0 50% 20%;
-    --border: 355 50% 90%;
-    --input: 355 50% 92%;
-    --ring: 340 50% 50%;
-    --radius: 0.75rem;
-    --chart-1: 340 50% 50%;
-    --chart-2: 345 80% 90%;
-  }
-  
-  .theme-rose-dark {
-    --background: 355 15% 15%;
-    --foreground: 355 100% 97%;
-    --card: 355 15% 18%;
-    --card-foreground: 355 100% 97%;
-    --popover: 355 15% 18%;
-    --popover-foreground: 355 100% 97%;
-    --primary: 340 60% 70%;
-    --primary-foreground: 340 30% 10%;
-    --secondary: 345 30% 25%;
-    --secondary-foreground: 345 80% 90%;
-    --muted: 355 15% 25%;
-    --muted-foreground: 355 10% 65%;
-    --accent: 350 40% 30%;
-    --accent-foreground: 350 90% 95%;
-    --destructive: 0 50% 40%;
-    --destructive-foreground: 0 70% 90%;
-    --border: 355 15% 25%;
-    --input: 355 15% 28%;
-    --ring: 340 60% 70%;
-    --chart-1: 340 60% 70%;
-    --chart-2: 345 30% 25%;
-  }
-
-  .theme-mint-light {
-    --background: 140 30% 97%;
-    --foreground: 140 20% 15%;
-    --card: 140 25% 100%;
-    --card-foreground: 140 20% 15%;
-    --popover: 140 25% 100%;
-    --popover-foreground: 140 20% 15%;
-    --primary: 150 50% 45%;
-    --primary-foreground: 150 40% 98%;
-    --secondary: 150 40% 92%;
-    --secondary-foreground: 150 50% 45%;
-    --muted: 150 30% 96%;
-    --muted-foreground: 150 15% 45%;
-    --accent: 150 50% 85%;
-    --accent-foreground: 150 20% 15%;
-    --destructive: 0 70% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 150 30% 90%;
-    --input: 150 30% 90%;
-    --ring: 150 50% 45%;
-    --radius: 0.5rem;
-    --chart-1: 150 50% 45%;
-    --chart-2: 150 40% 92%;
-  }
-  
-  .theme-mint-dark {
-    --background: 140 20% 12%;
-    --foreground: 140 30% 97%;
-    --card: 140 20% 15%;
-    --card-foreground: 140 30% 97%;
-    --popover: 140 20% 15%;
-    --popover-foreground: 140 30% 97%;
-    --primary: 150 50% 55%;
-    --primary-foreground: 150 30% 10%;
-    --secondary: 150 30% 22%;
-    --secondary-foreground: 150 40% 95%;
-    --muted: 150 30% 20%;
-    --muted-foreground: 150 15% 65%;
-    --accent: 150 40% 30%;
-    --accent-foreground: 150 50% 90%;
-    --destructive: 0 60% 40%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 150 30% 25%;
-    --input: 150 30% 28%;
-    --ring: 150 50% 55%;
-    --chart-1: 150 50% 55%;
-    --chart-2: 150 30% 22%;
-  }
 
   /* This is the class for the customer order page */
   .theme-order {
