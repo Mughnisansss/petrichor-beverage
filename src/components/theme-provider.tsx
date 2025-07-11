@@ -6,32 +6,44 @@ import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
 import type { ThemeProviderProps } from "next-themes/dist/types"
 import { useLocalStorage } from "@/hooks/use-local-storage"
 
-const ACCENT_COLORS = [
-  { name: "blue", value: "207 90% 54%", foreground: "210 40% 98%" },
-  { name: "yellow", value: "48 96% 53%", foreground: "48 96% 13%" },
-  { name: "pink", value: "322 80% 55%", foreground: "210 40% 98%" },
-  { name: "purple", value: "264 82% 62%", foreground: "210 40% 98%" },
-  { name: "orange", value: "25 95% 53%", foreground: "210 40% 98%" },
-  { name: "green", value: "142 71% 45%", foreground: "210 40% 98%" },
-]
+const ACCENT_COLOR_CLASS_NAME_MAP = {
+  blue: "theme-blue",
+  yellow: "theme-yellow",
+  pink: "theme-pink",
+  purple: "theme-purple",
+  orange: "theme-orange",
+  green: "theme-green",
+} as const;
 
-export function AccentColorProvider({ children }: { children: React.ReactNode }) {
-  const [accent, setAccent] = useLocalStorage("accent-color", "blue")
+type AccentColor = keyof typeof ACCENT_COLOR_CLASS_NAME_MAP;
+
+type CustomThemeProviderProps = ThemeProviderProps & {
+  children: React.ReactNode;
+};
+
+// This component now only manages the accent color class on the <html> tag.
+const AccentColorProvider = ({ children }: { children: React.ReactNode }) => {
+  const [accentColor] = useLocalStorage<AccentColor>("accent-color", "blue");
 
   React.useEffect(() => {
-    const color = ACCENT_COLORS.find(c => c.name === accent) || ACCENT_COLORS[0];
-    const body = document.body;
-    body.style.setProperty("--primary", color.value);
-    body.style.setProperty("--primary-foreground", color.foreground);
-  }, [accent])
+    const newClassName = ACCENT_COLOR_CLASS_NAME_MAP[accentColor] || ACCENT_COLOR_CLASS_NAME_MAP.blue;
+    
+    // Remove any existing theme- class
+    Object.values(ACCENT_COLOR_CLASS_NAME_MAP).forEach((className) => {
+      document.documentElement.classList.remove(className);
+    });
+    
+    // Add the new class
+    document.documentElement.classList.add(newClassName);
+  }, [accentColor]);
 
-  return <>{children}</>
-}
+  return <>{children}</>;
+};
 
-export function ThemeProvider({ children, ...props }: Omit<ThemeProviderProps, 'attribute' | 'defaultTheme'>) {
+export function ThemeProvider({ children, ...props }: Omit<CustomThemeProviderProps, 'attribute' | 'defaultTheme'>) {
   return (
     <NextThemesProvider
-      attribute="class"
+      attribute="class" // This will manage 'light', 'dim', 'dark' classes
       defaultTheme="dim"
       enableSystem={false}
       disableTransitionOnChange

@@ -20,11 +20,13 @@ const ACCENT_COLORS = [
   { name: "purple", color: "hsl(264, 82%, 62%)" },
   { name: "orange", color: "hsl(25, 95%, 53%)" },
   { name: "green", color: "hsl(142, 71%, 45%)" },
-]
+] as const
+
+type AccentColor = (typeof ACCENT_COLORS)[number]["name"];
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
-  const [accent, setAccent] = useLocalStorage("accent-color", "blue")
+  const [accent, setAccent] = useLocalStorage<AccentColor>("accent-color", "blue")
 
   return (
     <Popover>
