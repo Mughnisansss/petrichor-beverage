@@ -77,6 +77,34 @@
     --input: 13 25% 70%;
     --ring: 13 25% 34%;
   }
+
+  .theme-pastel {
+    --background: 355 100% 97%; /* Soft Pinkish White */
+    --foreground: 255 15% 35%;  /* Soft Deep Purple */
+    --card: 355 100% 99%;       /* Almost White with a hint of Pink */
+    --card-foreground: 255 15% 35%;
+    --popover: 355 100% 99%;
+    --popover-foreground: 255 15% 35%;
+    --primary: 160 50% 70%;     /* Pastel Mint Green */
+    --primary-foreground: 160 30% 20%;
+    --secondary: 30 80% 80%;    /* Pastel Peach */
+    --secondary-foreground: 30 40% 30%;
+    --muted: 210 40% 96%;       /* Light Gray-Blue */
+    --muted-foreground: 210 20% 50%;
+    --accent: 50 90% 85%;       /* Pastel Yellow */
+    --accent-foreground: 50 40% 30%;
+    --destructive: 0 70% 80%;         /* Soft Pastel Red */
+    --destructive-foreground: 0 50% 30%;
+    --border: 355 50% 90%;
+    --input: 355 50% 92%;
+    --ring: 160 50% 70%;
+    --chart-1: 160 50% 70%;
+    --chart-2: 30 80% 80%;
+    --chart-3: 200 70% 75%; /* Pastel Sky Blue */
+    --chart-4: 270 60% 80%; /* Pastel Lavender */
+    --chart-5: 50 90% 85%;
+    --radius: 0.75rem;
+  }
 }
 
 @layer base {
