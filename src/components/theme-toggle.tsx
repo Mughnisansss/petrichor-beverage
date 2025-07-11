@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils"
 
 const THEME_OPTIONS = [
   { value: "sky", label: "Sky (Default)", color: "hsl(207 44% 49%)" },
-  { value: "rose", label: "Rose", color: "hsl(30 80% 80%)" },
+  { value: "rose", label: "Rose", color: "hsl(160 50% 70%)" },
   { value: "mint", label: "Mint", color: "hsl(150 50% 45%)" },
 ];
 
@@ -50,11 +50,11 @@ export function ThemeToggle() {
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
+      <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuLabel>Mode</DropdownMenuLabel>
         <div className="grid grid-cols-2 gap-2 px-2 py-1">
-            <Button variant={currentMode === 'light' ? 'secondary' : 'outline'} onClick={() => handleModeChange('light')}>Light</Button>
-            <Button variant={currentMode === 'dark' ? 'secondary' : 'outline'} onClick={() => handleModeChange('dark')}>Dark</Button>
+            <Button variant={currentMode === 'light' ? 'secondary' : 'outline'} size="sm" onClick={() => handleModeChange('light')}>Light</Button>
+            <Button variant={currentMode === 'dark' ? 'secondary' : 'outline'} size="sm" onClick={() => handleModeChange('dark')}>Dark</Button>
         </div>
         
         <DropdownMenuSeparator />
@@ -68,7 +68,7 @@ export function ThemeToggle() {
               size="icon"
               onClick={() => handleColorChange(option.value)}
               className={cn(
-                "h-10 w-10 rounded-full",
+                "h-8 w-8 rounded-full",
                 currentColor === option.value && "ring-2 ring-ring ring-offset-2 ring-offset-background"
               )}
               style={{ backgroundColor: option.color }}

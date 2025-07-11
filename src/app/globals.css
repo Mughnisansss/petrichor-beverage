@@ -79,29 +79,29 @@
   }
 
   .theme-rose {
-    --background: 355 100% 97%; /* Soft Pinkish White */
-    --foreground: 255 15% 35%;  /* Soft Deep Purple */
-    --card: 355 100% 99%;       /* Almost White with a hint of Pink */
+    --background: 355 100% 97%;
+    --foreground: 255 15% 35%;
+    --card: 355 100% 99%;
     --card-foreground: 255 15% 35%;
     --popover: 355 100% 99%;
     --popover-foreground: 255 15% 35%;
-    --primary: 160 50% 70%;     /* Pastel Mint Green */
+    --primary: 160 50% 70%;
     --primary-foreground: 160 30% 20%;
-    --secondary: 30 80% 80%;    /* Pastel Peach */
+    --secondary: 30 80% 80%;
     --secondary-foreground: 30 40% 30%;
-    --muted: 210 40% 96%;       /* Light Gray-Blue */
+    --muted: 210 40% 96%;
     --muted-foreground: 210 20% 50%;
-    --accent: 50 90% 85%;       /* Pastel Yellow */
+    --accent: 50 90% 85%;
     --accent-foreground: 50 40% 30%;
-    --destructive: 0 70% 80%;         /* Soft Pastel Red */
+    --destructive: 0 70% 80%;
     --destructive-foreground: 0 50% 30%;
     --border: 355 50% 90%;
     --input: 355 50% 92%;
     --ring: 160 50% 70%;
     --chart-1: 160 50% 70%;
     --chart-2: 30 80% 80%;
-    --chart-3: 200 70% 75%; /* Pastel Sky Blue */
-    --chart-4: 270 60% 80%; /* Pastel Lavender */
+    --chart-3: 200 70% 75%;
+    --chart-4: 270 60% 80%;
     --chart-5: 50 90% 85%;
     --radius: 0.75rem;
   }
