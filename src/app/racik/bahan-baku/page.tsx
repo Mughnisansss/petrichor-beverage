@@ -25,7 +25,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 const materialSchema = z.object({
   name: z.string().min(1, "Nama bahan tidak boleh kosong"),
-  recipeUnit: z.string().min(1, "Satuan untuk resep tidak boleh kosong"),
+  recipeUnit: z.string().min(1, "Satuan untuk resep harus dipilih"),
   category: z.enum(['main', 'packaging', 'topping'], { required_error: "Kategori harus dipilih" }),
   
   purchaseCost: z.coerce.number().min(0, "Total biaya tidak boleh negatif"),
@@ -44,7 +44,7 @@ type MaterialFormValues = z.infer<typeof materialSchema>;
 
 const defaultFormValues: MaterialFormValues = { 
   name: "", 
-  recipeUnit: "", 
+  recipeUnit: "gram", 
   category: 'main', 
   purchaseCost: 0,
   totalUnits: 1,
@@ -221,6 +221,18 @@ export default function BahanBakuPage() {
     }
   };
   
+  const unitOptions = (
+    <>
+        <SelectItem value="gram">gram (g)</SelectItem>
+        <SelectItem value="ml">mililiter (ml)</SelectItem>
+        <SelectItem value="pcs">buah / pcs</SelectItem>
+        <SelectItem value="sdm">sendok makan (sdm)</SelectItem>
+        <SelectItem value="sdt">sendok teh (sdt)</SelectItem>
+        <SelectItem value="lembar">lembar</SelectItem>
+        <SelectItem value="slice">slice / irisan</SelectItem>
+    </>
+  );
+
   return (
     <div className="flex flex-col gap-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -261,7 +273,10 @@ export default function BahanBakuPage() {
                                <FormField control={form.control} name="recipeUnit" render={({ field }) => (
                                   <FormItem>
                                     <FormLabel>Satuan Resep</FormLabel>
-                                    <FormControl><Input {...field} placeholder="cth: gram, ml, sendok" /></FormControl>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Pilih satuan..." /></SelectTrigger></FormControl>
+                                        <SelectContent>{unitOptions}</SelectContent>
+                                    </Select>
                                     <FormDescription>Satuan yang akan Anda pakai di resep.</FormDescription>
                                     <FormMessage />
                                   </FormItem>
@@ -362,8 +377,15 @@ export default function BahanBakuPage() {
                             <FormField control={detailsForm.control} name="name" render={({ field }) => (
                                 <FormItem><FormLabel>Nama Bahan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                             )}/>
-                            <FormField control={detailsForm.control} name="recipeUnit" render={({ field }) => (
-                                <FormItem><FormLabel>Satuan Resep</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                             <FormField control={detailsForm.control} name="recipeUnit" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Satuan Resep</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Pilih satuan..." /></SelectTrigger></FormControl>
+                                        <SelectContent>{unitOptions}</SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
                             )}/>
                             <FormField control={detailsForm.control} name="category" render={({ field }) => (
                                 <FormItem><FormLabel>Kategori</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="main">Bahan Utama</SelectItem><SelectItem value="topping">Topping / Tambahan</SelectItem><SelectItem value="packaging">Kemasan / Packaging</SelectItem></SelectContent></Select><FormMessage /></FormItem>
@@ -526,6 +548,3 @@ export default function BahanBakuPage() {
     </div>
   );
 }
-
-
-
