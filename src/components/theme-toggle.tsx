@@ -16,31 +16,28 @@ import {
 import { cn } from "@/lib/utils"
 
 const THEME_OPTIONS = [
-  { value: "sky", label: "Sky (Default)", color: "hsl(207 44% 49%)" },
-  { value: "rose", label: "Rose", color: "hsl(160 50% 70%)" },
-  { value: "mint", label: "Mint", color: "hsl(150 50% 45%)" },
+  { value: "theme-sky", label: "Sky (Default)", color: "hsl(207 44% 49%)" },
+  { value: "theme-rose", label: "Rose", color: "hsl(160 50% 70%)" },
+  { value: "theme-mint", label: "Mint", color: "hsl(150 50% 45%)" },
 ];
 
 export function ThemeToggle() {
-  const { setTheme, theme } = useTheme()
+  const { setTheme: setMode, resolvedTheme } = useTheme()
+  const [currentColor, setCurrentColor] = React.useState("theme-sky");
 
-  const handleModeChange = (newMode: string) => {
-    // Logic to preserve the color when switching between light/dark
-    const currentColorTheme = THEME_OPTIONS.find(opt => theme?.includes(opt.value))?.value || 'sky';
-    if (newMode === 'light') {
-      setTheme(currentColorTheme);
-    } else {
-      setTheme('dark');
-    }
-  };
+  React.useEffect(() => {
+    const storedColor = localStorage.getItem("ui-color") || "theme-sky";
+    setCurrentColor(storedColor);
+    document.documentElement.classList.add(storedColor);
+  }, []);
 
   const handleColorChange = (newColor: string) => {
-    setTheme(newColor);
+    document.documentElement.classList.remove(currentColor);
+    document.documentElement.classList.add(newColor);
+    localStorage.setItem("ui-color", newColor);
+    setCurrentColor(newColor);
   };
   
-  const currentMode = theme === 'dark' ? 'dark' : 'light';
-  const currentColor = THEME_OPTIONS.find(opt => theme?.includes(opt.value))?.value || 'sky';
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -53,8 +50,8 @@ export function ThemeToggle() {
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuLabel>Mode</DropdownMenuLabel>
         <div className="grid grid-cols-2 gap-2 px-2 py-1">
-            <Button variant={currentMode === 'light' ? 'secondary' : 'outline'} size="sm" onClick={() => handleModeChange('light')}>Light</Button>
-            <Button variant={currentMode === 'dark' ? 'secondary' : 'outline'} size="sm" onClick={() => handleModeChange('dark')}>Dark</Button>
+            <Button variant={resolvedTheme === 'light' ? 'secondary' : 'outline'} size="sm" onClick={() => setMode('light')}>Light</Button>
+            <Button variant={resolvedTheme === 'dark' ? 'secondary' : 'outline'} size="sm" onClick={() => setMode('dark')}>Dark</Button>
         </div>
         
         <DropdownMenuSeparator />
@@ -81,7 +78,7 @@ export function ThemeToggle() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={() => setTheme("system")}>
+        <DropdownMenuItem onClick={() => setMode("system")}>
           System
         </DropdownMenuItem>
       </DropdownMenuContent>
