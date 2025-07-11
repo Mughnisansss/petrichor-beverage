@@ -276,7 +276,12 @@ export default function BahanBakuPage() {
                                   <FormItem><FormLabel>Nama Bahan</FormLabel><FormControl><Input {...field} placeholder="cth: Tepung Terigu" /></FormControl><FormMessage /></FormItem>
                               )}/>
                                <FormField control={form.control} name="recipeUnit" render={({ field }) => (
-                                  <FormItem><FormLabel>Satuan untuk Resep</FormLabel><FormControl><Input {...field} placeholder="cth: sendok, jumput, gram" /></FormControl><FormDescription>Satuan yang akan Anda gunakan saat membuat resep.</FormDescription><FormMessage /></FormItem>
+                                  <FormItem>
+                                    <FormLabel>Satuan untuk Resep</FormLabel>
+                                    <FormControl><Input {...field} placeholder="cth: gram, ml, sendok" /></FormControl>
+                                    <FormDescription>Gunakan satuan yang dapat dibagi (gram, ml) untuk bahan yang dipakai sebagian.</FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
                               )}/>
                                <FormField control={form.control} name="category" render={({ field }) => (
                                   <FormItem><FormLabel>Kategori Bahan</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih kategori..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="main">Bahan Utama</SelectItem><SelectItem value="topping">Topping / Tambahan</SelectItem><SelectItem value="packaging">Kemasan / Packaging</SelectItem></SelectContent></Select><FormMessage /></FormItem>
@@ -308,7 +313,7 @@ export default function BahanBakuPage() {
                                     <FormItem className="flex-grow">
                                       <FormLabel>Ada berapa <span className="font-bold text-primary">{watchedFormValues.recipeUnit || '(satuan resep)'}</span> dalam 1 <span className="font-bold text-primary">{watchedFormValues.purchaseUnitName || '(satuan beli)'}</span>?</FormLabel>
                                       <FormControl><Input type="number" step="any" {...field} /></FormControl>
-                                      <FormDescription>Contoh: 1 bungkus tepung = 50 sendok, maka isi '50'.</FormDescription>
+                                      <FormDescription>Contoh: 1 bungkus tepung (satuan beli) = 50 sendok (satuan resep), maka isi '50'.</FormDescription>
                                       <FormMessage />
                                     </FormItem>
                                 )}/>
@@ -552,4 +557,5 @@ export default function BahanBakuPage() {
     </div>
   );
 }
+
 
