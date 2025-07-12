@@ -12,13 +12,13 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
+    --primary: 198 93% 42%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
+    --accent: 210 40% 88.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -26,10 +26,9 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --chart-1: 222.2 47.4% 11.2%;
-    --chart-2: 221.2 83.2% 53.3%;
+    --chart-2: 198 93% 42%;
   }
 
-  .dark,
   .theme-default-dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -37,21 +36,21 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
+    --primary: 198 83% 53%;
     --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 217.2 32.6% 27.5%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 217.2 91.2% 59.8%;
+    --ring: 198 83% 53%;
     --chart-1: 210 40% 98%;
-    --chart-2: 217.2 91.2% 59.8%;
+    --chart-2: 198 83% 53%;
   }
 
   .theme-sakura-light {
@@ -245,6 +244,28 @@
     --chart-1: 260 40% 96%;
     --chart-2: 265 80% 70%;
   }
+
+  .theme-order {
+    --background: 200 100% 99%;
+    --foreground: 200 25% 25%;
+    --card: 200 100% 100%;
+    --card-foreground: 200 25% 25%;
+    --popover: 200 100% 100%;
+    --popover-foreground: 200 25% 25%;
+    --primary: 200 85% 45%;
+    --primary-foreground: 200 100% 98%;
+    --secondary: 10 80% 55%;
+    --secondary-foreground: 10 50% 98%;
+    --muted: 200 50% 95%;
+    --muted-foreground: 200 25% 55%;
+    --accent: 200 60% 90%;
+    --accent-foreground: 200 25% 25%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 200 30% 90%;
+    --input: 200 30% 90%;
+    --ring: 200 85% 45%;
+  }
 }
 
 @layer base {
@@ -253,5 +274,15 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  
+  .font-body {
+    font-family: 'Inter', sans-serif;
+  }
+  .font-headline {
+    font-family: 'Inter', sans-serif;
+  }
+  .font-pacifico {
+    font-family: 'Pacifico', cursive;
   }
 }
