@@ -38,6 +38,24 @@ export function ThemeToggle() {
         <DropdownMenuItem onClick={() => setTheme("theme-sakura-dark")}>
           Sakura Dark
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("theme-mint-light")}>
+          Minty Light
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("theme-mint-dark")}>
+          Minty Dark
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("theme-sunset-light")}>
+          Sunset Light
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("theme-sunset-dark")}>
+          Sunset Dark
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("theme-royal-light")}>
+          Royal Light
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("theme-royal-dark")}>
+          Royal Dark
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
