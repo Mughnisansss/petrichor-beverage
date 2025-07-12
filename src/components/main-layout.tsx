@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, Settings } from "lucide-react";
@@ -29,6 +29,11 @@ const topNavItems = [
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isLoading, appName, orderQueue, marqueeText } = useAppContext();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   
   const settingsHref = "/pengaturan";
   const isOrderPage = pathname === '/order';
@@ -138,7 +143,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               ))}
             </nav>
             <div className="flex md:hidden">
-                <MobileNav />
+                {isClient && <MobileNav />}
             </div>
             <div className="flex w-full items-center justify-end gap-4 md:ml-auto md:gap-2 lg:gap-4">
               <Link href={settingsHref} passHref>
