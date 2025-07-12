@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
@@ -439,8 +440,8 @@ export default function AnalisaPage() {
                               <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} tickFormatter={(value) => { const num = Number(value); if (num >= 1000000) return `${(num / 1000000).toFixed(1)}jt`; if (num >= 1000) return `${(num / 1000).toFixed(0)}rb`; return `${num}`; }} />
                               <ChartTooltip cursor={false} content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />} />
                               <Legend content={<ChartLegendContent />} />
-                              <Line dataKey="Pendapatan" type="monotone" stroke="var(--color-Pendapatan)" strokeWidth={2} dot={false} />
-                              <Line dataKey="Periode Sebelumnya" type="monotone" stroke="var(--color-Periode Sebelumnya)" strokeWidth={2} strokeDasharray="3 3" dot={false} />
+                              <Line dataKey="Pendapatan" type="monotone" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={false} />
+                              <Line dataKey="Periode Sebelumnya" type="monotone" stroke="hsl(var(--chart-2))" strokeWidth={2} strokeDasharray="3 3" dot={false} />
                               </LineChart>
                           </ChartContainer>
                           ) : (
@@ -463,7 +464,7 @@ export default function AnalisaPage() {
                                 <XAxis dataKey="hour" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
                                 <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} tickFormatter={(value) => { const num = Number(value); if (num >= 1000000) return `${(num / 1000000).toFixed(1)}jt`; if (num >= 1000) return `${(num / 1000).toFixed(0)}rb`; return `${num}`; }} />
                                 <ChartTooltip cursor={false} content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />} />
-                                <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+                                <Bar dataKey="revenue" fill="hsl(var(--chart-1))" radius={4} />
                             </BarChart>
                         </ChartContainer>
                       ) : (
@@ -491,7 +492,7 @@ export default function AnalisaPage() {
                                       <p className="text-sm text-muted-foreground">{formatCurrency(product.revenue)} pendapatan</p>
                                   </div>
                                   <div className="text-right">
-                                    <p className="font-bold text-green-600">{formatCurrency(product.profit)}</p>
+                                    <p className="font-bold text-green-500">{formatCurrency(product.profit)}</p>
                                     <p className="text-xs text-muted-foreground">Laba</p>
                                   </div>
                               </li>
