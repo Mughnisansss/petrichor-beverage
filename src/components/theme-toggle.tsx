@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Moon, Sun, Palette, Check } from "lucide-react"
+import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
@@ -11,19 +11,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
-import { useLocalStorage } from "@/hooks/use-local-storage"
 
 export function ThemeToggle() {
   const { setTheme } = useTheme()
-  const [accent, setAccent] = useLocalStorage('accent-color', '');
-
-  const accentColors = [
-    { name: 'Biru', value: '', color: '#3b82f6' }, // Default blue
-    { name: 'Pink', value: 'theme-pink', color: '#ec4899' },
-  ];
 
   return (
     <DropdownMenu>
@@ -35,25 +26,18 @@ export function ThemeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Mode</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          Terang
+        <DropdownMenuItem onClick={() => setTheme("theme-default-light")}>
+          SipSavvy Light
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Gelap
+        <DropdownMenuItem onClick={() => setTheme("theme-default-dark")}>
+          SipSavvy Dark
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel>Warna Aksen</DropdownMenuLabel>
-        {accentColors.map((color) => (
-          <DropdownMenuItem key={color.name} onClick={() => setAccent(color.value)}>
-            <div
-                className="mr-2 h-5 w-5 rounded-full border"
-                style={{ backgroundColor: color.color }}
-            />
-            <span>{color.name}</span>
-            {accent === color.value && <Check className="ml-auto h-4 w-4" />}
-          </DropdownMenuItem>
-        ))}
+        <DropdownMenuItem onClick={() => setTheme("theme-sakura-light")}>
+          Sakura Light
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("theme-sakura-dark")}>
+          Sakura Dark
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

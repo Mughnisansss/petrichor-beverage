@@ -4,83 +4,98 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
+  :root,
+  .theme-default-light {
+    --background: 210 40% 98%; /* Off-white */
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
+    --primary: 195 91% 65%; /* Sky Blue - Primary */
+    --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 210 60% 56%; /* Deep Blue - Accent */
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    --ring: 195 91% 65%;
     --chart-1: 222.2 47.4% 11.2%;
-    --chart-2: 210 40% 96.1%;
-
-    /* Default Accent Color (Blue) */
-    --primary: 202 85% 48%;
-    --primary-foreground: 210 40% 98%;
+    --chart-2: 195 91% 65%;
   }
 
-  .dark {
+  .dark,
+  .theme-default-dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
+    --primary: 195 91% 65%; /* Sky Blue - Primary */
+    --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 210 60% 56%; /* Deep Blue - Accent */
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 195 91% 65%;
     --chart-1: 210 40% 98%;
-    --chart-2: 217.2 32.6% 17.5%;
-
-    /* Default Accent Color (Blue) */
-    --primary: 202 85% 48%;
-    --primary-foreground: 210 40% 98%;
+    --chart-2: 195 91% 65%;
   }
 
-  .theme-pink {
+  .theme-sakura-light {
+    --background: 345 60% 98%;
+    --foreground: 345 50% 15%;
+    --card: 345 30% 100%;
+    --card-foreground: 345 50% 15%;
+    --popover: 345 30% 100%;
+    --popover-foreground: 345 50% 15%;
     --primary: 346.8 77.2% 49.8%;
     --primary-foreground: 355.7 100% 97.3%;
+    --secondary: 345 60% 95%;
+    --secondary-foreground: 345 50% 15%;
+    --muted: 345 60% 95%;
+    --muted-foreground: 345 30% 45%;
+    --accent: 345 60% 90%;
+    --accent-foreground: 345 50% 15%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 345 40% 90%;
+    --input: 345 40% 90%;
+    --ring: 346.8 77.2% 49.8%;
   }
 
-  /* This is the class for the customer order page */
-  .theme-order {
-    --background: 240 50% 98%; /* Alice Blue background */
-    --foreground: 210 22% 28%; /* Dark Slate Blue */
-    --card: 0 0% 100% / 0.8;
-    --card-foreground: 210 22% 28%;
-    --popover: 240 50% 98%;
-    --popover-foreground: 210 22% 28%;
-    --primary: 211 75% 55%; /* Steel Blue */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 196 90% 48%; /* Sky Blue from main theme */
-    --secondary-foreground: 210 40% 98%;
-    --muted: 210 40% 90%;
-    --muted-foreground: 210 22% 48%;
-    --accent: 211 75% 85%; /* Light Steel Blue */
-    --accent-foreground: 210 22% 28%;
-    --border: 210 40% 85%;
-    --input: 210 40% 75%;
-    --ring: 211 75% 55%;
+  .theme-sakura-dark {
+    --background: 345 30% 10%;
+    --foreground: 345 30% 95%;
+    --card: 345 30% 14%;
+    --card-foreground: 345 30% 95%;
+    --popover: 345 30% 14%;
+    --popover-foreground: 345 30% 95%;
+    --primary: 346.8 77.2% 59.8%;
+    --primary-foreground: 355.7 100% 97.3%;
+    --secondary: 345 30% 20%;
+    --secondary-foreground: 345 30% 95%;
+    --muted: 345 30% 20%;
+    --muted-foreground: 345 20% 65%;
+    --accent: 345 30% 25%;
+    --accent-foreground: 345 30% 95%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 345 30% 25%;
+    --input: 345 30% 25%;
+    --ring: 346.8 77.2% 59.8%;
   }
 }
 
