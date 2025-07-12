@@ -3,7 +3,7 @@ import { readDb, writeDb } from '@/lib/db';
 import type { OperationalCost } from '@/lib/types';
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+  const id = params.id;
   const updatedCostData: Omit<OperationalCost, 'id' | 'date'> = await request.json();
   const data = await readDb();
   
@@ -20,7 +20,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+  const id = params.id;
   const data = await readDb();
   
   const initialLength = data.operationalCosts.length;

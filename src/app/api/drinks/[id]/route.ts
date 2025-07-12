@@ -4,7 +4,7 @@ import { hasDrinkAssociatedSales, calculateItemCostPrice } from '@/lib/data-logi
 import type { Drink } from '@/lib/types';
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+  const id = params.id;
   const updatedDrinkData: Partial<Omit<Drink, 'id'>> = await request.json();
   const data = await readDb();
   
@@ -29,7 +29,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+  const id = params.id;
   const data = await readDb();
 
   // Use centralized logic to check for sales records

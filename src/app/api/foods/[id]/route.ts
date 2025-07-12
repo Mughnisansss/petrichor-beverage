@@ -4,7 +4,7 @@ import { hasFoodAssociatedSales, calculateItemCostPrice } from '@/lib/data-logic
 import type { Food } from '@/lib/types';
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+  const id = params.id;
   const updatedFoodData: Partial<Omit<Food, 'id'>> = await request.json();
   const data = await readDb();
   
@@ -31,7 +31,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+  const id = params.id;
   const data = await readDb();
 
   if (!data.foods) {
