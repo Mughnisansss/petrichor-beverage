@@ -4,21 +4,21 @@
 @tailwind utilities;
 
 @layer base {
-  .theme-default-light,
-  :root {
+  /* Default Theme (Light) */
+  .theme-default-light {
     --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 198 93% 42%;
+    --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 88.1%;
+    --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -29,6 +29,7 @@
     --chart-2: 198 93% 42%;
   }
 
+  /* Default Theme (Dark) */
   .theme-default-dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -36,23 +37,24 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 198 83% 53%;
+    --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 27.5%;
+    --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 198 83% 53%;
+    --ring: 210 40% 98%;
     --chart-1: 210 40% 98%;
     --chart-2: 198 83% 53%;
   }
 
+  /* Sakura Theme (Light) */
   .theme-sakura-light {
     --background: 345 60% 98%;
     --foreground: 345 50% 15%;
@@ -77,6 +79,7 @@
     --chart-2: 346.8 77.2% 49.8%;
   }
 
+  /* Sakura Theme (Dark) */
   .theme-sakura-dark {
     --background: 345 30% 10%;
     --foreground: 345 30% 95%;
@@ -101,6 +104,7 @@
     --chart-2: 346.8 77.2% 59.8%;
   }
 
+  /* Minty Theme (Light) */
   .theme-mint-light {
     --background: 150 70% 97%;
     --foreground: 150 40% 10%;
@@ -125,6 +129,7 @@
     --chart-2: 160 80% 40%;
   }
 
+  /* Minty Theme (Dark) */
   .theme-mint-dark {
     --background: 160 30% 12%;
     --foreground: 150 30% 94%;
@@ -149,6 +154,7 @@
     --chart-2: 160 70% 55%;
   }
 
+  /* Sunset Theme (Light) */
   .theme-sunset-light {
     --background: 35 100% 97%;
     --foreground: 25 50% 15%;
@@ -173,6 +179,7 @@
     --chart-2: 22 95% 55%;
   }
 
+  /* Sunset Theme (Dark) */
   .theme-sunset-dark {
     --background: 20 40% 8%;
     --foreground: 30 50% 95%;
@@ -197,6 +204,7 @@
     --chart-2: 28 90% 60%;
   }
 
+  /* Royal Theme (Light) */
   .theme-royal-light {
     --background: 255 60% 97%;
     --foreground: 260 50% 15%;
@@ -221,6 +229,7 @@
     --chart-2: 265 85% 60%;
   }
 
+  /* Royal Theme (Dark) */
   .theme-royal-dark {
     --background: 265 40% 10%;
     --foreground: 260 40% 96%;
@@ -244,7 +253,8 @@
     --chart-1: 260 40% 96%;
     --chart-2: 265 80% 70%;
   }
-
+  
+  /* Order Page Specific Theme */
   .theme-order {
     --background: 200 100% 99%;
     --foreground: 200 25% 25%;
@@ -266,14 +276,14 @@
     --input: 200 30% 90%;
     --ring: 200 85% 45%;
   }
-}
 
-@layer base {
+  /* Base styles that use the variables */
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
   
   .font-body {
