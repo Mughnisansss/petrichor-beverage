@@ -4,6 +4,27 @@
 @tailwind utilities;
 
 @layer base {
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  .font-body {
+    font-family: 'Inter', sans-serif;
+  }
+  .font-headline {
+    font-family: 'Inter', sans-serif;
+  }
+  .font-pacifico {
+    font-family: 'Pacifico', cursive;
+  }
+  
+  * {
+    @apply border-border;
+  }
+
+  /* --- THEME DEFINITIONS --- */
+
   /* Default Theme (Light) */
   .theme-default-light {
     --background: 210 40% 98%;
@@ -253,7 +274,7 @@
     --chart-1: 260 40% 96%;
     --chart-2: 265 80% 70%;
   }
-  
+
   /* Order Page Specific Theme */
   .theme-order {
     --background: 200 100% 99%;
@@ -275,24 +296,5 @@
     --border: 200 30% 90%;
     --input: 200 30% 90%;
     --ring: 200 85% 45%;
-  }
-
-  /* Base styles that use the variables */
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-  
-  .font-body {
-    font-family: 'Inter', sans-serif;
-  }
-  .font-headline {
-    font-family: 'Inter', sans-serif;
-  }
-  .font-pacifico {
-    font-family: 'Pacifico', cursive;
   }
 }
