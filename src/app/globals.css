@@ -24,8 +24,7 @@
   }
 
   /* --- THEME DEFINITIONS --- */
-  /* Remove all variables from :root or body to prevent inheritance issues. */
-  /* Each theme class will be self-contained. */
+  /* Each theme class is self-contained to prevent style conflicts. */
 
   .theme-default-light {
     --background: 210 40% 98%;
