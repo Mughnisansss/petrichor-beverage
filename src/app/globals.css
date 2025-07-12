@@ -24,8 +24,9 @@
   }
 
   /* --- THEME DEFINITIONS --- */
+  /* Remove all variables from :root or body to prevent inheritance issues. */
+  /* Each theme class will be self-contained. */
 
-  /* Default Theme (Light) */
   .theme-default-light {
     --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
@@ -50,7 +51,6 @@
     --chart-2: 198 93% 42%;
   }
 
-  /* Default Theme (Dark) */
   .theme-default-dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -75,7 +75,6 @@
     --chart-2: 198 83% 53%;
   }
 
-  /* Sakura Theme (Light) */
   .theme-sakura-light {
     --background: 345 60% 98%;
     --foreground: 345 50% 15%;
@@ -100,7 +99,6 @@
     --chart-2: 346.8 77.2% 49.8%;
   }
 
-  /* Sakura Theme (Dark) */
   .theme-sakura-dark {
     --background: 345 30% 10%;
     --foreground: 345 30% 95%;
@@ -125,7 +123,6 @@
     --chart-2: 346.8 77.2% 59.8%;
   }
 
-  /* Minty Theme (Light) */
   .theme-mint-light {
     --background: 150 70% 97%;
     --foreground: 150 40% 10%;
@@ -150,7 +147,6 @@
     --chart-2: 160 80% 40%;
   }
 
-  /* Minty Theme (Dark) */
   .theme-mint-dark {
     --background: 160 30% 12%;
     --foreground: 150 30% 94%;
@@ -175,7 +171,6 @@
     --chart-2: 160 70% 55%;
   }
 
-  /* Sunset Theme (Light) */
   .theme-sunset-light {
     --background: 35 100% 97%;
     --foreground: 25 50% 15%;
@@ -200,7 +195,6 @@
     --chart-2: 22 95% 55%;
   }
 
-  /* Sunset Theme (Dark) */
   .theme-sunset-dark {
     --background: 20 40% 8%;
     --foreground: 30 50% 95%;
@@ -225,7 +219,6 @@
     --chart-2: 28 90% 60%;
   }
 
-  /* Royal Theme (Light) */
   .theme-royal-light {
     --background: 255 60% 97%;
     --foreground: 260 50% 15%;
@@ -250,7 +243,6 @@
     --chart-2: 265 85% 60%;
   }
 
-  /* Royal Theme (Dark) */
   .theme-royal-dark {
     --background: 265 40% 10%;
     --foreground: 260 40% 96%;
@@ -275,7 +267,6 @@
     --chart-2: 265 80% 70%;
   }
 
-  /* Order Page Specific Theme */
   .theme-order {
     --background: 200 100% 99%;
     --foreground: 200 25% 25%;

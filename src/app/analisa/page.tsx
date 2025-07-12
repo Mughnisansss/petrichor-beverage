@@ -97,13 +97,15 @@ export default function AnalisaPage() {
     const todaySales = sales.filter(s => isSameDay(parseISO(s.date), todayStart));
     const todayRevenue = todaySales.reduce((sum, s) => sum + s.totalSalePrice, 0);
     const todayTransactions = todaySales.length;
-    const soldProductIdsToday = new Set(todaySales.map(s => s.productId));
-    const todayNewItemsSoldCount = todaySales.filter(s => !soldProductIdsToday.has(s.productId)).length;
+    
+    // Correct logic for unique items sold today
+    const soldProductIdsToday = new Set();
+    todaySales.forEach(s => soldProductIdsToday.add(s.productId));
 
     const todayMetrics = {
         revenue: todayRevenue,
         transactions: todayTransactions,
-        newItemsSoldCount: todayNewItemsSoldCount,
+        newItemsSoldCount: soldProductIdsToday.size,
         goalProgress: (todayRevenue / DAILY_REVENUE_GOAL) * 100
     };
     
@@ -124,7 +126,7 @@ export default function AnalisaPage() {
         });
         const finalOperationalCost = calculateOperationalCostForPeriod(periodRange, operationalCosts);
         const netProfit = revenue - cost - finalOperationalCost;
-        return { totalRevenue: revenue, netProfit, totalHpp: cost };
+        return { totalRevenue: revenue, netProfit, totalHpp: cost, operationalCost: finalOperationalCost };
     };
     const periodMetrics = calculateMetricsForPeriod(currentPeriodSales, dateRange.current);
 
