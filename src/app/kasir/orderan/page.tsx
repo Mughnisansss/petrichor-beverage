@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -60,14 +61,14 @@ export default function OrderanPage() {
                             return (
                                 <AccordionItem value={order.id} key={order.id} className={cn(
                                 "rounded-lg border",
-                                order.status === 'ready' && "bg-green-100 dark:bg-green-900/40 border-green-400"
+                                order.status === 'ready' && "bg-accent border-primary"
                                 )}>
                                     <AccordionTrigger className="p-4 hover:no-underline">
                                         <div className="flex justify-between w-full items-center">
                                             <div className="flex items-center gap-4">
                                                 <span className={cn(
                                                 "flex h-8 w-8 items-center justify-center rounded-full text-white font-bold",
-                                                order.status === 'ready' ? 'bg-green-600' : 'bg-primary'
+                                                order.status === 'ready' ? 'bg-destructive' : 'bg-primary'
                                                 )}>
                                                 {order.queueNumber}
                                                 </span>
