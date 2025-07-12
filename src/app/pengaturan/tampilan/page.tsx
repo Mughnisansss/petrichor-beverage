@@ -13,11 +13,11 @@ export default function TampilanPage() {
             <CardHeader>
                 <CardTitle>Tampilan & Tema</CardTitle>
                 <CardDescription>
-                    Personalisasi tampilan visual aplikasi sesuai selera Anda.
+                    Personalisasi tampilan visual aplikasi sesuai selera Anda. Pilih salah satu tema di bawah ini untuk diterapkan di seluruh aplikasi.
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex items-center justify-between">
+                <div className="space-y-4">
                    <div className="flex items-center gap-2">
                      <Palette className="h-5 w-5 text-muted-foreground" />
                      <Label>Pilih Tema</Label>

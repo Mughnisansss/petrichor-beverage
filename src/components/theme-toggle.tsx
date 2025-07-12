@@ -1,61 +1,58 @@
+
 "use client"
 
 import * as React from "react"
-import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
-
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
+import { Check } from "lucide-react"
+
+const themes = [
+  { name: "SipSavvy Light", value: "theme-default-light", colors: ["#f8fafc", "#0f172a", "#1e40af"] },
+  { name: "SipSavvy Dark", value: "theme-default-dark", colors: ["#0f172a", "#f8fafc", "#60a5fa"] },
+  { name: "Sakura Light", value: "theme-sakura-light", colors: ["#fdf2f8", "#9f1239", "#f43f5e"] },
+  { name: "Sakura Dark", value: "theme-sakura-dark", colors: ["#26020d", "#fecdd3", "#fb7185"] },
+  { name: "Minty Light", value: "theme-mint-light", colors: ["#f0fdf4", "#14532d", "#22c55e"] },
+  { name: "Minty Dark", value: "theme-mint-dark", colors: ["#052e16", "#dcfce7", "#4ade80"] },
+  { name: "Sunset Light", value: "theme-sunset-light", colors: ["#fff7ed", "#9a3412", "#f97316"] },
+  { name: "Sunset Dark", value: "theme-sunset-dark", colors: ["#2c1507", "#fed7aa", "#fb923c"] },
+  { name: "Royal Light", value: "theme-royal-light", colors: ["#f5f3ff", "#5b21b6", "#8b5cf6"] },
+  { name: "Royal Dark", value: "theme-royal-dark", colors: ["#1b0b36", "#ddd6fe", "#a78bfa"] },
+]
 
 export function ThemeToggle() {
-  const { setTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("theme-default-light")}>
-          SipSavvy Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("theme-default-dark")}>
-          SipSavvy Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("theme-sakura-light")}>
-          Sakura Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("theme-sakura-dark")}>
-          Sakura Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("theme-mint-light")}>
-          Minty Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("theme-mint-dark")}>
-          Minty Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("theme-sunset-light")}>
-          Sunset Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("theme-sunset-dark")}>
-          Sunset Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("theme-royal-light")}>
-          Royal Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("theme-royal-dark")}>
-          Royal Dark
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+      {themes.map((t) => (
+        <div key={t.value}>
+          <Button
+            variant="outline"
+            className={cn(
+              "w-full justify-start h-auto",
+              theme === t.value && "border-primary border-2"
+            )}
+            onClick={() => setTheme(t.value)}
+          >
+            <div className="flex flex-col items-start gap-2 p-2 w-full">
+              <div className="flex items-center justify-between w-full">
+                <span className="text-sm font-semibold">{t.name}</span>
+                {theme === t.value && <Check className="h-4 w-4" />}
+              </div>
+              <div className="flex gap-1">
+                {t.colors.map((color) => (
+                  <div
+                    key={color}
+                    className="h-5 w-5 rounded-full border"
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </div>
+          </Button>
+        </div>
+      ))}
+    </div>
   )
 }
