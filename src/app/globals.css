@@ -7,90 +7,80 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
-
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
- 
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
- 
-    --primary: 196 90% 48%;
-    --primary-foreground: 210 40% 98%;
- 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
- 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
- 
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
- 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
- 
     --radius: 0.5rem;
-
     --chart-1: 222.2 47.4% 11.2%;
     --chart-2: 210 40% 96.1%;
+
+    /* Default Accent Color (Blue) */
+    --primary: 202 85% 48%;
+    --primary-foreground: 210 40% 98%;
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
- 
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
- 
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
- 
-    --primary: 196 90% 48%;
-    --primary-foreground: 210 40% 98%;
- 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
- 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
- 
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
- 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
- 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-
     --chart-1: 210 40% 98%;
     --chart-2: 217.2 32.6% 17.5%;
+
+    /* Default Accent Color (Blue) */
+    --primary: 202 85% 48%;
+    --primary-foreground: 210 40% 98%;
+  }
+
+  .theme-pink {
+    --primary: 346.8 77.2% 49.8%;
+    --primary-foreground: 355.7 100% 97.3%;
   }
 
   /* This is the class for the customer order page */
   .theme-order {
-    --background: 26 100% 97%; /* #FFF8F0 */
-    --foreground: 30 31% 25%; /* #4E342E */
-    --card: 0 0% 100% / 0.8; /* white with alpha */
-    --card-foreground: 30 31% 25%;
-    --popover: 26 100% 97%;
-    --popover-foreground: 30 31% 25%;
-    --primary: 13 25% 34%; /* #6D4C41 */
+    --background: 240 50% 98%; /* Alice Blue background */
+    --foreground: 210 22% 28%; /* Dark Slate Blue */
+    --card: 0 0% 100% / 0.8;
+    --card-foreground: 210 22% 28%;
+    --popover: 240 50% 98%;
+    --popover-foreground: 210 22% 28%;
+    --primary: 211 75% 55%; /* Steel Blue */
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 72% 67%; /* #E57373 */
-    --secondary-foreground: 0 0% 100%;
-    --muted: 13 25% 90%;
-    --muted-foreground: 13 25% 45%;
-    --accent: 30 100% 65%; /* #FFB74D */
-    --accent-foreground: 30 31% 25%;
-    --border: 13 25% 80%;
-    --input: 13 25% 70%;
-    --ring: 13 25% 34%;
+    --secondary: 196 90% 48%; /* Sky Blue from main theme */
+    --secondary-foreground: 210 40% 98%;
+    --muted: 210 40% 90%;
+    --muted-foreground: 210 22% 48%;
+    --accent: 211 75% 85%; /* Light Steel Blue */
+    --accent-foreground: 210 22% 28%;
+    --border: 210 40% 85%;
+    --input: 210 40% 75%;
+    --ring: 211 75% 55%;
   }
 }
 
