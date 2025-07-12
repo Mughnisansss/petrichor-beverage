@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -7,9 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/context/AppContext";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { ImageIcon, Upload, Trash2 } from "lucide-react";
+import { ImageIcon, Upload, Trash2, Palette } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function ProfilPengaturanPage() {
     const { toast } = useToast();
@@ -71,43 +73,62 @@ export default function ProfilPengaturanPage() {
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Profil & Tampilan</CardTitle>
-                <CardDescription>
-                Atur informasi dasar dan tampilan toko Anda.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-8">
-                <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Informasi Toko</h3>
-                    <div className="space-y-2">
-                        <Label htmlFor="appName">Nama Aplikasi</Label>
-                        <Input id="appName" value={localAppName} onChange={(e) => setLocalAppName(e.target.value)} placeholder="Masukkan nama aplikasi/toko Anda" />
-                        <p className="text-sm text-muted-foreground">Nama ini akan muncul di logo, pesan selamat datang, teks berjalan, dan beberapa bagian lain di aplikasi.</p>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="marqueeText">Teks Berjalan</Label>
-                        <Input id="marqueeText" value={localMarqueeText} onChange={(e) => setLocalMarqueeText(e.target.value)} placeholder="Pesan selamat datang atau promosi" />
-                        <p className="text-sm text-muted-foreground">Gunakan `&#123;appName&#125;` untuk menampilkan nama aplikasi secara dinamis.</p>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="logoUpload">Logo Aplikasi (1:1)</Label>
-                        <div className="flex items-center gap-4">
-                            {preview ? <Image src={preview} alt="Logo preview" width={64} height={64} className="h-16 w-16 rounded-md object-cover border" /> : <div className="h-16 w-16 rounded-md border bg-muted flex items-center justify-center"><ImageIcon className="h-8 w-8 text-muted-foreground" /></div>}
-                            <div className="flex flex-col gap-2">
-                                <Label htmlFor="logoUpload" className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer")}><Upload className="mr-2 h-4 w-4" /> Unggah Gambar</Label>
-                                <Input id="logoUpload" type="file" accept="image/png, image/jpeg, image/webp" onChange={handleLogoChange} className="hidden" />
-                                {preview && <Button variant="ghost" size="sm" onClick={handleRemoveLogo} className="justify-start"><Trash2 className="mr-2 h-4 w-4" /> Hapus Logo</Button>}
-                            </div>
+        <div className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Profil Toko</CardTitle>
+                    <CardDescription>
+                    Atur informasi dasar toko Anda yang akan ditampilkan di seluruh aplikasi.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-8">
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="appName">Nama Aplikasi</Label>
+                            <Input id="appName" value={localAppName} onChange={(e) => setLocalAppName(e.target.value)} placeholder="Masukkan nama aplikasi/toko Anda" />
+                            <p className="text-sm text-muted-foreground">Nama ini akan muncul di logo, pesan selamat datang, teks berjalan, dan beberapa bagian lain di aplikasi.</p>
                         </div>
-                        <p className="text-sm text-muted-foreground">Rasio 1:1 direkomendasikan. Maks 5MB.</p>
+                        <div className="space-y-2">
+                            <Label htmlFor="marqueeText">Teks Berjalan</Label>
+                            <Input id="marqueeText" value={localMarqueeText} onChange={(e) => setLocalMarqueeText(e.target.value)} placeholder="Pesan selamat datang atau promosi" />
+                            <p className="text-sm text-muted-foreground">Gunakan `&#123;appName&#125;` untuk menampilkan nama aplikasi secara dinamis.</p>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="logoUpload">Logo Aplikasi (1:1)</Label>
+                            <div className="flex items-center gap-4">
+                                {preview ? <Image src={preview} alt="Logo preview" width={64} height={64} className="h-16 w-16 rounded-md object-cover border" /> : <div className="h-16 w-16 rounded-md border bg-muted flex items-center justify-center"><ImageIcon className="h-8 w-8 text-muted-foreground" /></div>}
+                                <div className="flex flex-col gap-2">
+                                    <Label htmlFor="logoUpload" className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer")}><Upload className="mr-2 h-4 w-4" /> Unggah Gambar</Label>
+                                    <Input id="logoUpload" type="file" accept="image/png, image/jpeg, image/webp" onChange={handleLogoChange} className="hidden" />
+                                    {preview && <Button variant="ghost" size="sm" onClick={handleRemoveLogo} className="justify-start"><Trash2 className="mr-2 h-4 w-4" /> Hapus Logo</Button>}
+                                </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground">Rasio 1:1 direkomendasikan. Maks 5MB.</p>
+                        </div>
                     </div>
-                </div>
-            </CardContent>
-             <CardFooter>
-                <Button onClick={handleSaveSettings} disabled={!hasChanges}>Simpan Perubahan</Button>
-            </CardFooter>
-        </Card>
+                </CardContent>
+                 <CardFooter>
+                    <Button onClick={handleSaveSettings} disabled={!hasChanges}>Simpan Perubahan</Button>
+                </CardFooter>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Tampilan & Tema</CardTitle>
+                    <CardDescription>
+                        Personalisasi tampilan visual aplikasi sesuai selera Anda.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-2">
+                         <Palette className="h-5 w-5 text-muted-foreground" />
+                         <Label>Pilih Tema</Label>
+                       </div>
+                       <ThemeToggle />
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     )
 }

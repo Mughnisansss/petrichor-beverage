@@ -10,7 +10,6 @@ import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/AppContext";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -96,10 +95,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     <Settings className="h-5 w-5" />
                     <span>Pengaturan</span>
                 </Link>
-                <div className="flex items-center justify-between">
-                    <span className="text-lg font-medium text-muted-foreground">Tema</span>
-                    <ThemeToggle />
-                </div>
             </div>
           </div>
         </SheetContent>
@@ -146,7 +141,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <MobileNav />
             </div>
             <div className="flex w-full items-center justify-end gap-4 md:ml-auto md:gap-2 lg:gap-4">
-              <ThemeToggle />
               <Link href={settingsHref} passHref>
                 <Button variant="ghost" size="icon">
                   <Settings className="h-5 w-5" />
