@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -8,16 +7,16 @@ import { cn } from "@/lib/utils"
 import { Check } from "lucide-react"
 
 const themes = [
-  { name: "SipSavvy Light", value: "theme-default-light", colors: ["#FFFFFF", "#020817", "#3B82F6"] },
-  { name: "SipSavvy Dark", value: "theme-default-dark", colors: ["#020817", "#FFFFFF", "#3B82F6"] },
-  { name: "Sakura Light", value: "theme-sakura-light", colors: ["#FFF1F2", "#881337", "#F43F5E"] },
-  { name: "Sakura Dark", value: "theme-sakura-dark", colors: ["#26020d", "#fecdd3", "#fb7185"] },
-  { name: "Minty Light", value: "theme-mint-light", colors: ["#F0FDF4", "#14532D", "#22C55E"] },
-  { name: "Minty Dark", value: "theme-mint-dark", colors: ["#052e16", "#dcfce7", "#4ade80"] },
-  { name: "Sunset Light", value: "theme-sunset-light", colors: ["#FFF7ED", "#7C2D12", "#F97316"] },
-  { name: "Sunset Dark", value: "theme-sunset-dark", colors: ["#2c1507", "#fed7aa", "#fb923c"] },
-  { name: "Royal Light", value: "theme-royal-light", colors: ["#F5F3FF", "#4C1D95", "#7C3AED"] },
-  { name: "Royal Dark", value: "theme-royal-dark", colors: ["#1b0b36", "#ddd6fe", "#a78bfa"] },
+  { name: "SipSavvy Light", value: "theme-default-light", colors: ["hsl(var(--card))", "hsl(var(--foreground))", "hsl(var(--primary))"] },
+  { name: "SipSavvy Dark", value: "theme-default-dark", colors: ["hsl(var(--card))", "hsl(var(--foreground))", "hsl(var(--primary))"] },
+  { name: "Sakura Light", value: "theme-sakura-light", colors: ["hsl(var(--card))", "hsl(var(--foreground))", "hsl(var(--primary))"] },
+  { name: "Sakura Dark", value: "theme-sakura-dark", colors: ["hsl(var(--card))", "hsl(var(--foreground))", "hsl(var(--primary))"] },
+  { name: "Minty Light", value: "theme-mint-light", colors: ["hsl(var(--card))", "hsl(var(--foreground))", "hsl(var(--primary))"] },
+  { name: "Minty Dark", value: "theme-mint-dark", colors: ["hsl(var(--card))", "hsl(var(--foreground))", "hsl(var(--primary))"] },
+  { name: "Sunset Light", value: "theme-sunset-light", colors: ["hsl(var(--card))", "hsl(var(--foreground))", "hsl(var(--primary))"] },
+  { name: "Sunset Dark", value: "theme-sunset-dark", colors: ["hsl(var(--card))", "hsl(var(--foreground))", "hsl(var(--primary))"] },
+  { name: "Royal Light", value: "theme-royal-light", colors: ["hsl(var(--card))", "hsl(var(--foreground))", "hsl(var(--primary))"] },
+  { name: "Royal Dark", value: "theme-royal-dark", colors: ["hsl(var(--card))", "hsl(var(--foreground))", "hsl(var(--primary))"] },
 ]
 
 export function ThemeToggle() {
@@ -41,13 +40,18 @@ export function ThemeToggle() {
                 {theme === t.value && <Check className="h-4 w-4" />}
                 </div>
                 <div className="flex gap-1">
-                {t.colors.map((color) => (
-                    <div
-                    key={color}
+                <div
                     className="h-5 w-5 rounded-full border"
-                    style={{ backgroundColor: color }}
+                    style={{ backgroundColor: t.colors[0] }}
                     />
-                ))}
+                 <div
+                    className="h-5 w-5 rounded-full border"
+                    style={{ backgroundColor: t.colors[1] }}
+                    />
+                 <div
+                    className="h-5 w-5 rounded-full border"
+                    style={{ backgroundColor: t.colors[2] }}
+                    />
                 </div>
             </div>
         </Button>
