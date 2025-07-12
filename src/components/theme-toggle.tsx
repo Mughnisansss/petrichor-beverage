@@ -5,8 +5,8 @@ import { useTheme } from "next-themes"
 import { ThemeButton } from "./theme-button"
 
 const themes = [
-  { name: "SipSavvy Light", value: "theme-default-light", colors: ["#87CEEB", "#F0F8FF", "#4682B4"] },
-  { name: "SipSavvy Dark", value: "theme-default-dark", colors: ["#4682B4", "#F0F8FF", "#87CEEB"] },
+  { name: "Petrichor Light", value: "theme-default-light", colors: ["#87CEEB", "#F0F8FF", "#4682B4"] },
+  { name: "Petrichor Dark", value: "theme-default-dark", colors: ["#4682B4", "#F0F8FF", "#87CEEB"] },
   { name: "Sakura Light", value: "theme-sakura-light", colors: ["#FFF0F5", "#592330", "#DB2777"] },
   { name: "Sakura Dark", value: "theme-sakura-dark", colors: ["#290f18", "#FDE8EF", "#F472B6"] },
   { name: "Minty Light", value: "theme-mint-light", colors: ["#F0FFF4", "#164E3B", "#10B981"] },
@@ -23,14 +23,14 @@ export function ThemeToggle() {
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
       <ThemeButton
-        name="SipSavvy Light"
+        name="Petrichor Light"
         value="theme-default-light"
         colors={["#87CEEB", "#F0F8FF", "#4682B4"]}
         isActive={theme === "theme-default-light"}
         onSelect={() => setTheme("theme-default-light")}
       />
       <ThemeButton
-        name="SipSavvy Dark"
+        name="Petrichor Dark"
         value="theme-default-dark"
         colors={["#4682B4", "#F0F8FF", "#87CEEB"]}
         isActive={theme === "theme-default-dark"}
