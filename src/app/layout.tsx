@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AppProvider } from '@/context/AppContext';
 
 export const metadata: Metadata = {
-  title: 'SipSavvy',
+  title: 'Petrichor',
   description: 'Aplikasi pelacak penjualan dan laba untuk bisnis minuman.',
 };
 
