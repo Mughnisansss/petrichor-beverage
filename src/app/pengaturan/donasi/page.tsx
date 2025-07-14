@@ -3,13 +3,11 @@
 
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { ExternalLink, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 
 export default function DonasiPage() {
-    // Anda bisa mengganti link ini dengan link Saweria, Trakteer, atau platform donasi Anda.
-    const donationLink = "https://saweria.co/example";
+    const danaName = "MUGNI SANTOSO";
+    const danaNumber = "085340458336";
 
     return (
         <Card>
@@ -26,15 +24,18 @@ export default function DonasiPage() {
             </CardHeader>
             <CardContent>
                 <div className="flex flex-col items-start gap-4 p-6 border rounded-lg bg-muted/50">
-                    <h3 className="font-semibold">Terima Kasih!</h3>
-                    <p className="text-sm text-muted-foreground">
-                        Setiap dukungan, berapapun jumlahnya, sangat berarti dan membantu saya untuk terus menjaga dan meningkatkan kualitas aplikasi ini.
+                    <h3 className="font-semibold">Donasi via DANA</h3>
+                    <div className="space-y-1 text-sm">
+                        <p className="text-muted-foreground">Nama Penerima:</p>
+                        <p className="font-semibold text-lg">{danaName}</p>
+                    </div>
+                     <div className="space-y-1 text-sm">
+                        <p className="text-muted-foreground">Nomor DANA:</p>
+                        <p className="font-semibold text-lg">{danaNumber}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground pt-4">
+                        Setiap dukungan, berapapun jumlahnya, sangat berarti dan membantu saya untuk terus menjaga dan meningkatkan kualitas aplikasi ini. Terima kasih!
                     </p>
-                    <Button asChild>
-                        <Link href={donationLink} target="_blank" rel="noopener noreferrer">
-                            Donasi Sekarang <ExternalLink className="ml-2 h-4 w-4" />
-                        </Link>
-                    </Button>
                 </div>
             </CardContent>
         </Card>
