@@ -69,37 +69,37 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               <Logo />
             </Link>
           </SheetHeader>
-          <nav className="grid gap-4 py-4 text-lg font-medium flex-1 overflow-y-auto">
-            {topNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "hover:text-foreground flex items-center gap-2",
-                  isActive(item.href, pathname) ? "text-foreground" : "text-muted-foreground"
-                )}
-              >
-                {item.label}
-                 {item.href === '/kasir' && orderQueue.length > 0 && (
-                  <span className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
-                    {orderQueue.length}
-                  </span>
-                )}
-              </Link>
-            ))}
-          </nav>
-          <div className="mt-auto border-t pt-4">
-             <div className="flex flex-col gap-4">
+          <div className="flex-1 flex flex-col justify-between py-4">
+            <nav className="grid gap-4 text-lg font-medium">
+              {topNavItems.map((item) => (
                 <Link
-                    href={settingsHref}
-                    className={cn(
-                      "flex items-center gap-2 text-lg font-medium hover:text-foreground",
-                      pathname.startsWith('/pengaturan') ? "text-foreground" : "text-muted-foreground"
-                    )}
-                  >
-                    <Settings className="h-5 w-5" />
-                    <span>Pengaturan</span>
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "hover:text-foreground flex items-center gap-2",
+                    isActive(item.href, pathname) ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  {item.label}
+                  {item.href === '/kasir' && orderQueue.length > 0 && (
+                    <span className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
+                      {orderQueue.length}
+                    </span>
+                  )}
                 </Link>
+              ))}
+            </nav>
+            <div className="border-t pt-4">
+              <Link
+                  href={settingsHref}
+                  className={cn(
+                    "flex items-center gap-2 text-lg font-medium hover:text-foreground",
+                    pathname.startsWith('/pengaturan') ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  <Settings className="h-5 w-5" />
+                  <span>Pengaturan</span>
+              </Link>
             </div>
           </div>
         </SheetContent>
