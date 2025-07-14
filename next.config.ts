@@ -31,6 +31,27 @@ const nextConfig: NextConfig = {
         destination: '/pengaturan/profil',
         permanent: true,
       },
+       // Redirects for moved pages
+      {
+        source: '/laporan',
+        destination: '/analisa',
+        permanent: true,
+      },
+      {
+        source: '/minuman',
+        destination: '/racik/minuman',
+        permanent: true,
+      },
+      {
+        source: '/penjualan',
+        destination: '/kasir/log',
+        permanent: true,
+      },
+      {
+        source: '/operasional',
+        destination: '/analisa',
+        permanent: true,
+      },
     ]
   },
 };

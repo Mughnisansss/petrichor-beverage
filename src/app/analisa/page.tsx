@@ -122,6 +122,7 @@ export default function AnalisaPage() {
         let cost = 0;
         periodSales.forEach(sale => {
             revenue += sale.totalSalePrice || 0;
+            // USE CENTRALIZED LOGIC
             cost += calculateSaleHpp(sale, drinks, foods, rawMaterials);
         });
         const finalOperationalCost = calculateOperationalCostForPeriod(periodRange, operationalCosts);
@@ -140,6 +141,7 @@ export default function AnalisaPage() {
           if (!salesByProduct[product.id]) {
             salesByProduct[product.id] = { name: product.name, quantity: 0, revenue: 0, profit: 0, type: sale.productType };
           }
+          // USE CENTRALIZED LOGIC
           const hpp = calculateSaleHpp(sale, drinks, foods, rawMaterials);
           salesByProduct[product.id].quantity += sale.quantity || 0;
           salesByProduct[product.id].revenue += sale.totalSalePrice || 0;

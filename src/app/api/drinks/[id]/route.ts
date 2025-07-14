@@ -48,5 +48,5 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   }
   
   await writeDb(data);
-  return NextResponse.json({ message: 'Drink deleted' }, { status: 200 });
+  return NextResponse.json({ message: 'Minuman berhasil dihapus.' }, { status: 200 });
 }

@@ -502,11 +502,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       };
     });
     
+    // API call first
     await currentService.batchAddSales(salesPayload);
-    await fetchData();
+    // Then update local state optimistically
+    setDbData(prevData => {
+      const newData = { ...prevData };
+      deductStockForSaleItems(salesPayload, newData);
+      const newSales = salesPayload.map(s => ({ ...s, id: nanoid(), date: new Date().toISOString() }));
+      newData.sales.unshift(...newSales);
+      newData.sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      return newData;
+    });
 
     setOrderQueue(prevQueue => prevQueue.filter(o => o.id !== orderId));
-  }, [orderQueue, currentService, setOrderQueue, fetchData]);
+  }, [orderQueue, currentService, setOrderQueue]);
 
   const importData = useCallback(async (data: any): Promise<{ ok: boolean, message: string }> => {
     const { appName, logoImageUri, marqueeText, ...dbDataToImport } = data;
@@ -520,69 +529,173 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return result;
   }, [currentService, setAppName, setLogoImageUri, setMarqueeText]);
 
-  const wrappedService = useMemo(() => {
-    const wrap = <T extends (...args: any[]) => Promise<any>>(fn: T) => {
-      return async (...args: Parameters<T>): Promise<ReturnType<T>> => {
-        const result = await fn(...args);
-        await fetchData();
-        return result;
-      };
+  const contextValue = useMemo(() => {
+    // This is a simplified wrapper for optimistic UI updates.
+    // It updates local state first, then calls the API.
+    const optimisticUpdate = <T, A extends any[]>(
+      stateUpdater: (prev: DbData, ...args: A) => DbData,
+      apiCall: (...args: A) => Promise<T>
+    ) => async (...args: A): Promise<T> => {
+      // Intentionally not awaiting the API call here to make UI feel instant.
+      // For more complex scenarios, you'd handle API errors and revert state.
+      apiCall(...args).catch(console.error);
+      
+      setDbData(prev => stateUpdater(prev, ...args));
+      return Promise.resolve({} as T); // Return a resolved promise
     };
-
+  
     return {
-      addDrink: wrap(currentService.addDrink),
-      updateDrink: wrap(currentService.updateDrink),
-      deleteDrink: wrap(currentService.deleteDrink),
-      addFood: wrap(currentService.addFood),
-      updateFood: wrap(currentService.updateFood),
-      deleteFood: wrap(currentService.deleteFood),
-      addSale: wrap(currentService.addSale),
-      deleteSale: wrap(currentService.deleteSale),
-      batchAddSales: wrap(currentService.batchAddSales),
-      addOperationalCost: wrap(currentService.addOperationalCost),
-      updateOperationalCost: wrap(currentService.updateOperationalCost),
-      deleteOperationalCost: wrap(currentService.deleteOperationalCost),
-      addRawMaterial: wrap(currentService.addRawMaterial),
-      updateRawMaterial: wrap(currentService.updateRawMaterial),
-      deleteRawMaterial: wrap(currentService.deleteRawMaterial),
-      importRawMaterialsFromCsv: wrap(currentService.importRawMaterialsFromCsv),
-      importOperationalCostsFromCsv: wrap(currentService.importOperationalCostsFromCsv),
-    }
-  }, [currentService, fetchData]);
+      drinks: dbData.drinks,
+      foods: dbData.foods,
+      sales: dbData.sales,
+      operationalCosts: dbData.operationalCosts,
+      rawMaterials: dbData.rawMaterials,
+      cart,
+      orderQueue,
+      isLoading,
+      storageMode,
+      setStorageMode,
+      appName,
+      setAppName,
+      logoImageUri,
+      setLogoImageUri,
+      marqueeText,
+      setMarqueeText,
+      fetchData,
+      importData,
+      addToCart,
+      updateCartItemQuantity,
+      removeFromCart,
+      clearCart,
+      submitCustomerOrder,
+      updateQueuedOrderStatus,
+      processQueuedOrder,
 
+      addDrink: optimisticUpdate((prev, newDrinkData: Omit<Drink, 'id' | 'costPrice'>) => {
+        const costPrice = calculateItemCostPrice(newDrinkData.ingredients, prev.rawMaterials);
+        const newDrink = { ...newDrinkData, id: nanoid(), costPrice };
+        return { ...prev, drinks: [...prev.drinks, newDrink] };
+      }, currentService.addDrink),
 
-  const contextValue = useMemo(() => ({
-    drinks: dbData.drinks,
-    foods: dbData.foods,
-    sales: dbData.sales,
-    operationalCosts: dbData.operationalCosts,
-    rawMaterials: dbData.rawMaterials,
-    cart,
-    orderQueue,
-    isLoading,
-    storageMode,
-    setStorageMode,
-    appName,
-    setAppName,
-    logoImageUri,
-    setLogoImageUri,
-    marqueeText,
-    setMarqueeText,
-    fetchData,
-    ...wrappedService,
-    importData,
-    addToCart,
-    updateCartItemQuantity,
-    removeFromCart,
-    clearCart,
-    submitCustomerOrder,
-    updateQueuedOrderStatus,
-    processQueuedOrder,
-  }), [
+      updateDrink: optimisticUpdate((prev, id: string, drinkUpdate: Partial<Omit<Drink, 'id'>>) => {
+        if (drinkUpdate.ingredients) {
+            drinkUpdate.costPrice = calculateItemCostPrice(drinkUpdate.ingredients, prev.rawMaterials);
+        }
+        return { ...prev, drinks: prev.drinks.map(d => d.id === id ? { ...d, ...drinkUpdate } : d) };
+      }, currentService.updateDrink),
+
+      deleteDrink: async (id: string) => {
+        const result = await currentService.deleteDrink(id);
+        if(result.ok) {
+           setDbData(prev => ({ ...prev, drinks: prev.drinks.filter(d => d.id !== id) }));
+        }
+        return result;
+      },
+
+      addFood: optimisticUpdate((prev, newFoodData: Omit<Food, 'id'|'costPrice'>) => {
+        const costPrice = calculateItemCostPrice(newFoodData.ingredients, prev.rawMaterials);
+        const newFood = { ...newFoodData, id: nanoid(), costPrice };
+        return { ...prev, foods: [...(prev.foods || []), newFood] };
+      }, currentService.addFood),
+
+      updateFood: optimisticUpdate((prev, id: string, foodUpdate: Partial<Omit<Food, 'id'>>) => {
+        if (foodUpdate.ingredients) {
+            foodUpdate.costPrice = calculateItemCostPrice(foodUpdate.ingredients, prev.rawMaterials);
+        }
+        return { ...prev, foods: (prev.foods || []).map(f => f.id === id ? { ...f, ...foodUpdate } : f) };
+      }, currentService.updateFood),
+
+      deleteFood: async (id: string) => {
+        const result = await currentService.deleteFood(id);
+        if(result.ok) {
+           setDbData(prev => ({ ...prev, foods: prev.foods.filter(f => f.id !== id) }));
+        }
+        return result;
+      },
+
+      addSale: optimisticUpdate((prev, sale: Omit<Sale, 'id' | 'date'>) => {
+        const newSale = { ...sale, id: nanoid(), date: new Date().toISOString() };
+        const newState = { ...prev, sales: [newSale, ...prev.sales] };
+        deductStockForSaleItems([sale], newState);
+        return newState;
+      }, currentService.addSale),
+      
+      deleteSale: async (id: string) => {
+        // Deleting sales shouldn't affect stock, so it's a simple update.
+        const result = await currentService.deleteSale(id);
+        if (result.ok) {
+          setDbData(prev => ({ ...prev, sales: prev.sales.filter(s => s.id !== id) }));
+        }
+        return result;
+      },
+
+      batchAddSales: (sales: Omit<Sale, 'id' | 'date'>[]): Promise<Sale[]> => {
+          // This one is already handled inside processQueuedOrder
+          return currentService.batchAddSales(sales);
+      },
+
+      addOperationalCost: optimisticUpdate((prev, cost: Omit<OperationalCost, 'id'|'date'>) => {
+        const newCost = { ...cost, id: nanoid(), date: new Date().toISOString() };
+        const newCosts = [newCost, ...prev.operationalCosts].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return { ...prev, operationalCosts: newCosts };
+      }, currentService.addOperationalCost),
+      
+      updateOperationalCost: optimisticUpdate((prev, id: string, costUpdate: Omit<OperationalCost, 'id'|'date'>) => {
+        const newCosts = prev.operationalCosts.map(c => c.id === id ? { ...c, ...costUpdate } : c).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return { ...prev, operationalCosts: newCosts };
+      }, currentService.updateOperationalCost),
+
+      deleteOperationalCost: async (id: string) => {
+        const result = await currentService.deleteOperationalCost(id);
+        if (result.ok) {
+          setDbData(prev => ({ ...prev, operationalCosts: prev.operationalCosts.filter(c => c.id !== id) }));
+        }
+        return result;
+      },
+
+      addRawMaterial: optimisticUpdate((prev, material: Omit<RawMaterial, 'id'>) => {
+        const newMaterial = { ...material, id: nanoid() };
+        return { ...prev, rawMaterials: [...prev.rawMaterials, newMaterial] };
+      }, currentService.addRawMaterial),
+
+      updateRawMaterial: optimisticUpdate((prev, id: string, materialUpdate: Omit<RawMaterial, 'id'>) => {
+        const newState = { ...prev };
+        const index = newState.rawMaterials.findIndex(m => m.id === id);
+        if(index > -1) {
+          const oldCostPerUnit = newState.rawMaterials[index].costPerUnit;
+          newState.rawMaterials[index] = { ...newState.rawMaterials[index], ...materialUpdate, id };
+          if(newState.rawMaterials[index].costPerUnit !== oldCostPerUnit) {
+            recalculateDependentProductCosts(newState, id);
+          }
+        }
+        return newState;
+      }, currentService.updateRawMaterial),
+
+      deleteRawMaterial: async (id: string) => {
+        const result = await currentService.deleteRawMaterial(id);
+        if(result.ok) {
+           setDbData(prev => ({ ...prev, rawMaterials: prev.rawMaterials.filter(m => m.id !== id) }));
+        }
+        return result;
+      },
+      
+       importRawMaterialsFromCsv: async (materials: Omit<RawMaterial, 'id'>[]) => {
+        const result = await currentService.importRawMaterialsFromCsv(materials);
+        await fetchData(); // Full refetch needed here
+        return result;
+      },
+      
+      importOperationalCostsFromCsv: async (costs: Omit<OperationalCost, 'id'>[]) => {
+        const result = await currentService.importOperationalCostsFromCsv(costs);
+        await fetchData(); // Full refetch needed here
+        return result;
+      },
+    };
+  }, [
     dbData, cart, orderQueue, isLoading, storageMode, setStorageMode, appName, setAppName, 
     logoImageUri, setLogoImageUri, marqueeText, setMarqueeText, fetchData, 
-    wrappedService, importData, addToCart, updateCartItemQuantity, removeFromCart, clearCart,
-    submitCustomerOrder, updateQueuedOrderStatus, processQueuedOrder,
+    importData, addToCart, updateCartItemQuantity, removeFromCart, clearCart,
+    submitCustomerOrder, updateQueuedOrderStatus, processQueuedOrder, currentService,
   ]);
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
