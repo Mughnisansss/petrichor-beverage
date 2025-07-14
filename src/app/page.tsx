@@ -7,7 +7,8 @@ import Image from "next/image";
 import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowRight, BarChart2, ShoppingCart, CupSoda, Settings } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { ArrowRight, BarChart2, ShoppingCart, CupSoda, Settings, Palette } from "lucide-react";
 
 const FeatureCard = ({ icon: Icon, title, description, href }: { icon: React.ElementType, title: string, description: string, href: string }) => (
   <Link href={href} className="group">
@@ -39,6 +40,14 @@ export default function DashboardPage() {
             seindah wangi tanah setelah hujan.
           </p>
         </div>
+
+        <Alert>
+            <Palette className="h-4 w-4" />
+            <AlertTitle>Informasi Fitur</AlertTitle>
+            <AlertDescription>
+                Fitur kustomisasi tema sedang dalam perbaikan dan akan segera kembali dengan peningkatan. Terima kasih atas pengertian Anda.
+            </AlertDescription>
+        </Alert>
         
         <div>
           <h2 className="text-2xl font-semibold mb-6">Fitur Unggulan</h2>
