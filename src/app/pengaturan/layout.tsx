@@ -5,9 +5,12 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Database, Store, Palette } from "lucide-react"
+import { Database, Store, Heart } from "lucide-react"
 import { MainLayout } from "@/components/main-layout"
 import { Separator } from "@/components/ui/separator"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Palette } from "lucide-react";
+
 
 const sidebarNavItems = [
   {
@@ -15,15 +18,15 @@ const sidebarNavItems = [
     href: "/pengaturan/profil",
     icon: Store,
   },
-   {
-    title: "Tampilan",
-    href: "/pengaturan/tampilan",
-    icon: Palette,
-  },
   {
     title: "Manajemen Data",
     href: "/pengaturan/data",
     icon: Database,
+  },
+   {
+    title: "Donasi",
+    href: "/pengaturan/donasi",
+    icon: Heart,
   },
 ]
 
@@ -44,6 +47,13 @@ export default function PengaturanLayout({ children }: PengaturanLayoutProps) {
           </p>
         </div>
         <Separator />
+         <Alert>
+            <Palette className="h-4 w-4" />
+            <AlertTitle>Informasi Fitur</AlertTitle>
+            <AlertDescription>
+                Fitur kustomisasi tema sedang dalam perbaikan dan akan segera kembali dengan peningkatan. Terima kasih atas pengertian Anda.
+            </AlertDescription>
+        </Alert>
         <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
           <aside className="lg:w-1/5">
             <nav className="flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1">

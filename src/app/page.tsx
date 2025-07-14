@@ -34,20 +34,12 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-12">
         <div className="text-center py-12 px-6 bg-muted/50 rounded-lg border">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-            selamat datang di Petrichor app
+            Selamat Datang di Petrichor
           </h1>
           <p className="text-lg text-muted-foreground mt-4 max-w-2xl mx-auto">
-            seindah wangi tanah setelah hujan.
+            Aplikasi kasir dan manajemen kafe, seindah wangi tanah setelah hujan.
           </p>
         </div>
-
-        <Alert>
-            <Palette className="h-4 w-4" />
-            <AlertTitle>Informasi Fitur</AlertTitle>
-            <AlertDescription>
-                Fitur kustomisasi tema sedang dalam perbaikan dan akan segera kembali dengan peningkatan. Terima kasih atas pengertian Anda.
-            </AlertDescription>
-        </Alert>
         
         <div>
           <h2 className="text-2xl font-semibold mb-6">Fitur Unggulan</h2>
