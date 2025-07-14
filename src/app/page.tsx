@@ -73,7 +73,7 @@ export default function DashboardPage() {
              <FeatureCard 
               icon={Settings}
               title="Pengaturan Aplikasi"
-              description="Personalisasi aplikasi, kelola akun, dan lakukan backup atau restore data Anda dengan aman."
+              description="Personalisasi aplikasi, kelola data, dan lakukan backup atau restore data Anda dengan aman."
               href="/pengaturan"
             />
           </div>

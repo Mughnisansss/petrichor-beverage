@@ -1,10 +1,11 @@
+
 "use client"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Heart, Database, Store, Palette } from "lucide-react"
+import { Database, Store, Palette } from "lucide-react"
 import { MainLayout } from "@/components/main-layout"
 import { Separator } from "@/components/ui/separator"
 
@@ -14,15 +15,15 @@ const sidebarNavItems = [
     href: "/pengaturan/profil",
     icon: Store,
   },
+   {
+    title: "Tampilan",
+    href: "/pengaturan/tampilan",
+    icon: Palette,
+  },
   {
     title: "Manajemen Data",
     href: "/pengaturan/data",
     icon: Database,
-  },
-  {
-    title: "Donasi",
-    href: "/pengaturan/donasi",
-    icon: Heart,
   },
 ]
 
@@ -39,7 +40,7 @@ export default function PengaturanLayout({ children }: PengaturanLayoutProps) {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Pengaturan</h2>
           <p className="text-muted-foreground">
-            Kelola profil, data, dan dukung pengembangan aplikasi.
+            Kelola profil, tampilan, dan data aplikasi.
           </p>
         </div>
         <Separator />
