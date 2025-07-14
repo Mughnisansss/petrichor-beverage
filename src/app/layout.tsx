@@ -3,10 +3,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AppProvider } from '@/context/AppContext';
-import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'Petrichor',
+  title: 'SipSavvy',
   description: 'Aplikasi pelacak penjualan dan laba untuk bisnis minuman.',
 };
 
@@ -23,12 +22,10 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Pacifico&display=swap" rel="stylesheet" />
       </head>
       <body>
-        <ThemeProvider>
-          <AppProvider>
-            {children}
-          </AppProvider>
-          <Toaster />
-        </ThemeProvider>
+        <AppProvider>
+          {children}
+        </AppProvider>
+        <Toaster />
       </body>
     </html>
   );

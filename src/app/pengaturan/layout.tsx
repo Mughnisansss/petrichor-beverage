@@ -15,11 +15,6 @@ const sidebarNavItems = [
     icon: Store,
   },
   {
-    title: "Tampilan",
-    href: "/pengaturan/tampilan",
-    icon: Palette,
-  },
-  {
     title: "Manajemen Data",
     href: "/pengaturan/data",
     icon: Database,
@@ -44,7 +39,7 @@ export default function PengaturanLayout({ children }: PengaturanLayoutProps) {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Pengaturan</h2>
           <p className="text-muted-foreground">
-            Kelola profil, tampilan, data, dan dukung pengembangan aplikasi.
+            Kelola profil, data, dan dukung pengembangan aplikasi.
           </p>
         </div>
         <Separator />
