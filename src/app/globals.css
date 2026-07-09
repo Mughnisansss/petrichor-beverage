@@ -1,0 +1,71 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 100% 97%; /* Off-white: Alice Blue #F0F8FF */
+    --foreground: 210 13% 20%;
+    
+    --card: 210 100% 100%; /* White */
+    --card-foreground: 210 13% 20%;
+    
+    --popover: 210 100% 100%;
+    --popover-foreground: 210 13% 20%;
+    
+    --primary: 197 71% 73%; /* Sky Blue #87CEEB */
+    --primary-foreground: 210 13% 15%; /* Darker text for contrast on sky blue */
+    
+    --secondary: 210 31% 52%; /* Deep Blue #4682B4 */
+    --secondary-foreground: 210 100% 98%; /* White text on deep blue */
+    
+    --muted: 210 50% 94%;
+    --muted-foreground: 210 15% 45%;
+    
+    --accent: 210 31% 52%; /* Deep Blue for interactive elements */
+    --accent-foreground: 210 100% 98%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 210 20% 88%;
+    --input: 210 20% 88%;
+    --ring: 197 71% 73%; /* Sky Blue for focus rings */
+    
+    --radius: 0.5rem;
+    
+    --chart-1: 210 31% 52%; /* Deep Blue */
+    --chart-2: 197 71% 73%; /* Sky Blue */
+    
+    /* Font variables */
+    --font-body: 'Inter', sans-serif;
+    --font-headline: 'Inter', sans-serif;
+    --font-accent: 'Pacifico', cursive;
+  }
+
+  /* No dark mode override, single light theme */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: var(--font-body, 'Inter', sans-serif);
+  }
+  .font-body {
+    font-family: var(--font-body, 'Inter', sans-serif);
+  }
+  .font-headline {
+    font-family: var(--font-headline, 'Inter', sans-serif);
+  }
+  .font-accent {
+    font-family: var(--font-accent, 'Pacifico', cursive);
+  }
+  .font-pacifico {
+    font-family: 'Pacifico', cursive;
+  }
+}

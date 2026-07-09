@@ -1,0 +1,224 @@
+// Prisma Schema for Petrichor
+// PostgreSQL Database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// AUTHENTICATION & USER MANAGEMENT
+// ============================================
+
+// Role Model
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique // admin, manager, cashier, staff
+  description String?
+  permissions Json     // Array of permission strings
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       User[]
+
+  @@map("roles")
+}
+
+// User Model
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // For credentials auth
+  roleId        String
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  role          Role      @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  sessions      Session[]
+  accounts      Account[]
+  sales         Sale[]
+
+  @@index([email])
+  @@index([roleId])
+  @@map("users")
+}
+
+// Session Model (for NextAuth)
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// Account Model (for NextAuth OAuth)
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+// Verification Token Model (for NextAuth)
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================
+// APPLICATION DATA
+// ============================================
+
+// App Settings Model
+model AppSettings {
+  id           String   @id @default(cuid())
+  appName      String   @default("Petrichor")
+  logoImageUri String?
+  marqueeText  String   @default("Welcome to {appName}!")
+  themeId      String   @default("default")
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+
+  @@map("app_settings")
+}
+
+// Raw Material (Bahan Baku)
+model RawMaterial {
+  id                  String   @id @default(cuid())
+  name                String
+  unit                String
+  totalQuantity       Float
+  totalCost           Float
+  costPerUnit         Float
+  lastPurchaseQuantity Float?
+  lastPurchaseCost    Float?
+  category            String   @default("main") // main, packaging, topping
+  sellingPrice        Float?
+  purchaseSource      Json?    // { storeName, storeAddress, purchaseLink }
+  lowStockThreshold   Float?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("raw_materials")
+}
+
+// Drink Model
+model Drink {
+  id                String   @id @default(cuid())
+  name              String
+  imageUri          String?
+  subCategory       String?
+  costPrice         Float
+  sellingPrice      Float
+  ingredients       Json     // Array of { rawMaterialId, quantity }
+  availableToppings Json?    // Array of rawMaterialId strings
+  packagingOptions  Json?    // Array of { id, name, additionalPrice, ingredients }
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("drinks")
+}
+
+// Food Model
+model Food {
+  id                String   @id @default(cuid())
+  name              String
+  imageUri          String?
+  subCategory       String?
+  costPrice         Float
+  sellingPrice      Float
+  ingredients       Json     // Array of { rawMaterialId, quantity }
+  availableToppings Json?    // Array of rawMaterialId strings
+  packagingOptions  Json?    // Array of { id, name, additionalPrice, ingredients }
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("foods")
+}
+
+// Sale Model
+model Sale {
+  id                    String   @id @default(cuid())
+  productId             String
+  productType           String   // drink, food
+  quantity              Int
+  discount              Float    @default(0)
+  date                  DateTime @default(now())
+  totalSalePrice        Float
+  selectedToppings      Json?    // Array of { rawMaterialId, quantity }
+  selectedPackagingId   String?
+  selectedPackagingName String?
+  createdById           String?  // User who made the sale (optional for backward compatibility)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  createdBy             User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([date])
+  @@index([productId])
+  @@map("sales")
+}
+
+// Operational Cost
+model OperationalCost {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  date        DateTime @default(now())
+  recurrence  String   @default("sekali") // sekali, harian, mingguan, bulanan
+  createdById String?  // User who created the cost (optional for backward compatibility)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+  @@map("operational_costs")
+}
+
+// Order Queue (for POS system)
+model QueuedOrder {
+  id        String   @id @default(cuid())
+  queueNumber Int
+  status    String   @default("pending") // pending, ready
+  items     Json     // Array of CartItem objects
+  createdById String? // User who created the order (optional for backward compatibility)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([queueNumber])
+  @@index([status])
+  @@map("queued_orders")
+}
