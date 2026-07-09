@@ -214,7 +214,7 @@ const localStorageService = {
   addSale: async (sale: Omit<Sale, 'id' | 'date'>): Promise<Sale> => {
     const data = getLocalData();
     deductStockForSaleItems([sale], data);
-    const newSale = { ...sale, id: nanoid(), date: new Date().toISOString(), createdById: undefined }; // Optional for backward compatibility; // Optional for backward compatibility
+    const newSale = { ...sale, id: nanoid(), date: new Date().toISOString(), createdById: undefined };
     data.sales.unshift(newSale);
     setLocalData(data);
     return Promise.resolve(newSale);
@@ -228,7 +228,7 @@ const localStorageService = {
   batchAddSales: async (sales: Omit<Sale, 'id' | 'date'>[]): Promise<Sale[]> => {
     const data = getLocalData();
     deductStockForSaleItems(sales, data);
-    const newSales = sales.map(s => ({ ...s, id: nanoid(), date: new Date().toISOString(), createdById: undefined }; // Optional for backward compatibility)); // Optional for backward compatibility
+    const newSales = sales.map(s => ({ ...s, id: nanoid(), date: new Date().toISOString(), createdById: undefined }));
     data.sales.unshift(...newSales);
     data.sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setLocalData(data);
@@ -236,7 +236,7 @@ const localStorageService = {
   },
   addOperationalCost: async (cost: Omit<OperationalCost, 'id' | 'date'>): Promise<OperationalCost> => {
     const data = getLocalData();
-    const newCost = { ...cost, id: nanoid(), date: new Date().toISOString(), createdById: undefined }; // Optional for backward compatibility;
+    const newCost = { ...cost, id: nanoid(), date: new Date().toISOString(), createdById: undefined };
     if(!data.operationalCosts) data.operationalCosts = [];
     data.operationalCosts.unshift(newCost);
     setLocalData(data);
@@ -596,7 +596,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setDbData(prevData => {
       const newData = { ...prevData };
       deductStockForSaleItems(salesPayload, newData);
-      const newSales = salesPayload.map(s => ({ ...s, id: nanoid(), date: new Date().toISOString(), createdById: undefined }; // Optional for backward compatibility));
+      const newSales = salesPayload.map(s => ({ ...s, id: nanoid(), date: new Date().toISOString(), createdById: undefined }));
       newData.sales.unshift(...newSales);
       newData.sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       return newData;
@@ -706,7 +706,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       },
 
       addSale: optimisticUpdate((prev, sale: Omit<Sale, 'id' | 'date'>) => {
-        const newSale = { ...sale, id: nanoid(), date: new Date().toISOString(), createdById: undefined }; // Optional for backward compatibility;
+        const newSale = { ...sale, id: nanoid(), date: new Date().toISOString(), createdById: undefined };
         const newState = { ...prev, sales: [newSale, ...prev.sales] };
         deductStockForSaleItems([sale], newState);
         return newState;
@@ -727,7 +727,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       },
 
       addOperationalCost: optimisticUpdate((prev, cost: Omit<OperationalCost, 'id'|'date'>) => {
-        const newCost = { ...cost, id: nanoid(), date: new Date().toISOString(), createdById: undefined }; // Optional for backward compatibility;
+        const newCost = { ...cost, id: nanoid(), date: new Date().toISOString(), createdById: undefined };
         const newCosts = [newCost, ...prev.operationalCosts].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         return { ...prev, operationalCosts: newCosts };
       }, currentService.addOperationalCost),
